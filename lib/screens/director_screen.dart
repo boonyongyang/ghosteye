@@ -1,0 +1,440 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../config/constants.dart';
+import '../models/cinematic_mode.dart';
+import '../models/inference_pipeline_metrics.dart';
+import '../models/onboarding_status.dart';
+import '../providers/camera_provider.dart';
+import '../providers/cinematic_mode_provider.dart';
+import '../providers/gemma_provider.dart';
+import '../providers/inference_provider.dart';
+import '../providers/inference_pipeline_metrics_provider.dart';
+import '../providers/onboarding_provider.dart';
+import '../providers/session_controls_provider.dart';
+import '../providers/script_provider.dart';
+import '../services/app_haptics.dart';
+import '../services/camera_service.dart';
+import '../widgets/camera_preview.dart';
+import '../widgets/cinematic_mode_selector.dart';
+import '../widgets/director_tips_sheet.dart';
+import '../widgets/inference_indicator.dart';
+import '../widgets/script_history_sheet.dart';
+import '../widgets/teleprompter_overlay.dart';
+
+class DirectorScreen extends ConsumerStatefulWidget {
+  const DirectorScreen({super.key});
+
+  @override
+  ConsumerState<DirectorScreen> createState() => _DirectorScreenState();
+}
+
+class _DirectorScreenState extends ConsumerState<DirectorScreen> {
+  bool _scheduledFirstRunTips = false;
+  bool _showingTipsSheet = false;
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(inferenceProvider);
+
+    ref.listen<CinematicMode>(cinematicModeProvider, (previous, next) {
+      if (previous == next) {
+        return;
+      }
+      unawaited(_resetScene(ref));
+    });
+
+    final cameraState = ref.watch(cameraSessionViewProvider);
+    final gemmaState = ref.watch(gemmaStateViewProvider).valueOrNull;
+    final onboardingState = ref.watch(onboardingProvider);
+    final inferenceStatus = ref.watch(inferenceStatusProvider);
+    final captureEnabled = ref.watch(captureEnabledProvider);
+    final pipelineMetrics = ref.watch(inferencePipelineMetricsProvider);
+
+    _maybeShowFirstRunTips(
+      cameraState: cameraState,
+      onboardingState: onboardingState,
+    );
+
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: <Widget>[
+          DirectorCameraPreview(cameraState: cameraState),
+          const Align(
+            alignment: Alignment.bottomCenter,
+            child: TeleprompterOverlay(),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              AppConstants.appTitle.toUpperCase(),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            Text(
+                              'Live screenplay in your pocket.',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                      InferenceIndicator(
+                        status: inferenceStatus,
+                        captureEnabled: captureEnabled,
+                        isDegraded: gemmaState?.usedFallback ?? false,
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  _DirectorActions(
+                    captureEnabled: captureEnabled,
+                    onToggleCapture: () => captureEnabled
+                        ? unawaited(_pauseCapture(ref))
+                        : _resumeCapture(ref),
+                    onClearScript: () => unawaited(_resetScene(ref)),
+                    onShowHistory: () =>
+                        unawaited(_showHistorySheet(context, ref)),
+                    onShowTips: () => unawaited(_showDirectorTips()),
+                  ),
+                  const SizedBox(height: 12),
+                  if (kDebugMode)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: <Widget>[
+                        _DebugBadge(
+                          label: cameraState.valueOrNull == null
+                              ? 'CAMERA OFF'
+                              : 'SAMPLE ${cameraState.valueOrNull!.sampleInterval.inMilliseconds}ms',
+                        ),
+                        _DebugBadge(
+                          label:
+                              'PREP ${pipelineMetrics.settings.backend.name.toUpperCase()} ${pipelineMetrics.settings.maxDimension}px Q${pipelineMetrics.settings.jpegQuality}',
+                        ),
+                        if (gemmaState?.activeBackend case final backend?)
+                          _DebugBadge(
+                            label: gemmaState!.usedFallback
+                                ? 'MODEL ${backend.name.toUpperCase()} FALLBACK'
+                                : 'MODEL ${backend.name.toUpperCase()}',
+                          ),
+                        if (_medianMetricLabel(
+                          'COPY',
+                          pipelineMetrics.frameCopy,
+                        )
+                            case final label?)
+                          _DebugBadge(label: label),
+                        if (_medianMetricLabel(
+                          'PRE',
+                          pipelineMetrics.preprocessing,
+                        )
+                            case final label?)
+                          _DebugBadge(label: label),
+                        if (_medianMetricLabel(
+                          'INPUT',
+                          pipelineMetrics.modelInput,
+                        )
+                            case final label?)
+                          _DebugBadge(label: label),
+                        if (_medianMetricLabel(
+                          '1ST',
+                          pipelineMetrics.firstToken,
+                        )
+                            case final label?)
+                          _DebugBadge(label: label),
+                        if (_medianMetricLabel(
+                          'FULL',
+                          pipelineMetrics.fullResponse,
+                        )
+                            case final label?)
+                          _DebugBadge(label: label),
+                        if (inferenceStatus.lastInferenceDuration
+                            case final duration?)
+                          _DebugBadge(
+                            label: 'LAST ${duration.inMilliseconds}ms',
+                          ),
+                      ],
+                    ),
+                  const SizedBox(height: 12),
+                  const Align(
+                    alignment: Alignment.bottomCenter,
+                    child: CinematicModeSelector(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _maybeShowFirstRunTips({
+    required AsyncValue<CameraSession> cameraState,
+    required AsyncValue<OnboardingStatus> onboardingState,
+  }) {
+    if (_scheduledFirstRunTips || _showingTipsSheet) {
+      return;
+    }
+
+    final onboarding = onboardingState.valueOrNull;
+    final cameraSession = cameraState.valueOrNull;
+    final cameraReady =
+        cameraSession != null && cameraSession.controller.value.isInitialized;
+
+    if (onboarding == null || onboarding.directorTipsSeen || !cameraReady) {
+      return;
+    }
+
+    _scheduledFirstRunTips = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      unawaited(_showDirectorTips(firstRun: true));
+    });
+  }
+
+  Future<void> _showDirectorTips({bool firstRun = false}) async {
+    if (_showingTipsSheet) {
+      return;
+    }
+
+    _showingTipsSheet = true;
+    final wasCaptureEnabled = ref.read(captureEnabledProvider);
+    if (wasCaptureEnabled) {
+      await _pauseCapture(ref);
+    }
+    if (!mounted) {
+      _showingTipsSheet = false;
+      return;
+    }
+
+    final primaryLabel = firstRun
+        ? 'Start shooting'
+        : wasCaptureEnabled
+            ? 'Back to scene'
+            : 'Close tips';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: !firstRun,
+      enableDrag: !firstRun,
+      builder: (sheetContext) {
+        return FractionallySizedBox(
+          heightFactor: 0.74,
+          child: DirectorTipsSheet(
+            primaryLabel: primaryLabel,
+            onPrimaryPressed: () {
+              Navigator.of(sheetContext).pop();
+            },
+          ),
+        );
+      },
+    );
+
+    if (firstRun) {
+      await ref.read(onboardingProvider.notifier).markDirectorTipsSeen();
+    }
+    if (wasCaptureEnabled && mounted) {
+      _resumeCapture(ref);
+    }
+    _showingTipsSheet = false;
+  }
+}
+
+Future<void> _pauseCapture(WidgetRef ref) async {
+  ref.read(captureEnabledProvider.notifier).state = false;
+  await _interruptGeneration(ref);
+  _setStatusAfterSceneReset(ref);
+}
+
+void _resumeCapture(WidgetRef ref) {
+  ref.read(captureEnabledProvider.notifier).state = true;
+  final previousStatus = ref.read(inferenceStatusProvider);
+  ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
+    activity: InferenceActivity.idle,
+    lastInferenceDuration: previousStatus.lastInferenceDuration,
+  );
+}
+
+Future<void> _resetScene(WidgetRef ref) async {
+  await _interruptGeneration(ref);
+  ref.read(scriptProvider.notifier).clear();
+  await ref.read(gemmaProvider.notifier).resetConversation();
+  _setStatusAfterSceneReset(ref);
+}
+
+Future<void> _interruptGeneration(WidgetRef ref) async {
+  await ref.read(gemmaProvider.notifier).cancelGeneration();
+  ref.read(scriptProvider.notifier).cancelActiveResponse();
+  ref.read(cameraProvider.notifier).completeInference();
+}
+
+Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      return FractionallySizedBox(
+        heightFactor: 0.78,
+        child: ScriptHistorySheet(
+          onSelectSession: (session) async {
+            Navigator.of(sheetContext).pop();
+            await _pauseCapture(ref);
+            ref.read(scriptProvider.notifier).loadSessionForReview(session);
+          },
+        ),
+      );
+    },
+  );
+}
+
+void _setStatusAfterSceneReset(WidgetRef ref) {
+  final previousStatus = ref.read(inferenceStatusProvider);
+  final captureEnabled = ref.read(captureEnabledProvider);
+  ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
+    activity:
+        captureEnabled ? InferenceActivity.idle : InferenceActivity.paused,
+    lastInferenceDuration: previousStatus.lastInferenceDuration,
+  );
+}
+
+String? _medianMetricLabel(String label, DurationMetricSnapshot metric) {
+  final median = metric.median;
+  if (median == null) {
+    return null;
+  }
+  return '$label MED ${median.inMilliseconds}ms';
+}
+
+class _DirectorActions extends StatelessWidget {
+  const _DirectorActions({
+    required this.captureEnabled,
+    required this.onToggleCapture,
+    required this.onClearScript,
+    required this.onShowHistory,
+    required this.onShowTips,
+  });
+
+  final bool captureEnabled;
+  final VoidCallback onToggleCapture;
+  final VoidCallback onClearScript;
+  final VoidCallback onShowHistory;
+  final VoidCallback onShowTips;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: <Widget>[
+        _ActionChip(
+          icon: captureEnabled
+              ? Icons.pause_circle_outline
+              : Icons.play_circle_outline,
+          label: captureEnabled ? 'Pause' : 'Resume',
+          onTap: onToggleCapture,
+          hapticPattern: AppHapticPattern.action,
+        ),
+        _ActionChip(
+          icon: Icons.layers_clear_outlined,
+          label: 'Clear',
+          onTap: onClearScript,
+          hapticPattern: AppHapticPattern.emphasis,
+        ),
+        _ActionChip(
+          icon: Icons.history_toggle_off_outlined,
+          label: 'History',
+          onTap: onShowHistory,
+          hapticPattern: AppHapticPattern.selection,
+        ),
+        _ActionChip(
+          icon: Icons.lightbulb_outline,
+          label: 'Tips',
+          onTap: onShowTips,
+          hapticPattern: AppHapticPattern.selection,
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    required this.hapticPattern,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final AppHapticPattern hapticPattern;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withOpacity(0.52),
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: () {
+          AppHaptics.trigger(hapticPattern);
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 18, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DebugBadge extends StatelessWidget {
+  const _DebugBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ),
+    );
+  }
+}
