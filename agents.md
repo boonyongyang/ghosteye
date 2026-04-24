@@ -1,11 +1,11 @@
 # Ghosteye Agent Handoff
 
-This file is for any future agent or engineer picking up work in this repo. It summarizes the current runtime, the important constraints, the most relevant files, and the remaining work that should stay visible.
+This file is for a future agent or engineer picking up work in this repo. It keeps the runtime decisions, current blockers, key files, and guardrails visible without duplicating the full checklist from `plan.md` or the future backlog from `roadmap.md`.
 
-## Repo status
+## Current mainline state
 
-- Project status: `mainline Gemma 3n source refactor, onboarding, branding pass, and session history completed`
-- Confidence status: `static analysis and automated tests passing after the onboarding pass`
+- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, and session history completed`
+- Confidence status: `make verify passing after the legacy-cleanup pass`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
 
@@ -32,20 +32,18 @@ Ghosteye is a Flutter camera app that:
 1. `LaunchGateScreen` decides whether the app routes into onboarding or setup.
 2. `ModelSourceService` resolves the active source and owns imported local file persistence.
 3. `GemmaService` handles install/open, backend fallback, and source-aware failure classification.
-4. `DirectorScreen` owns the live camera-to-screenplay experience, pause/resume controls, and the first-run tips handoff.
+4. `DirectorScreen` owns the live camera-to-screenplay experience, the command dock, pause/resume controls, and the first-run tips handoff.
 5. `FramePreprocessor` converts camera frames with a Dart backend by default and an optional internal FFI backend for supported platforms.
 6. `ScriptController` parses Fountain-style output, while `ScriptHistoryService` persists recent takes.
 
 ## Model source rules
-
-Ghosteye no longer assumes Hugging Face is the only delivery path.
 
 Source resolution order is:
 
 1. persisted imported local model path
 2. `GHOSTEYE_GEMMA_MODEL_PATH`
 3. `GHOSTEYE_GEMMA_MODEL_URL`
-4. legacy Hugging Face fallback URL
+4. explicit setup error if nothing is configured
 
 Important behavior:
 
@@ -53,7 +51,8 @@ Important behavior:
 - local paths and imported files install via `flutter_gemma` file source
 - imported files are copied into app documents storage
 - installed source signatures are persisted so switching source forces reinstall
-- Hugging Face-specific copy should only appear when the active source is actually Hugging Face
+- the mainline app no longer hardcodes a legacy Hugging Face fallback or a `HUGGINGFACE_TOKEN` alias
+- Hugging Face-specific copy should only appear when the configured managed URL itself points to Hugging Face
 
 ## Runtime inputs
 
@@ -63,17 +62,15 @@ Important behavior:
   Explicit local model file path override
 - `GHOSTEYE_GEMMA_TOKEN`
   Optional token for gated model downloads
-- `HUGGINGFACE_TOKEN`
-  Legacy alias only
 
 ## Repo map
 
 - `README.md`
-  Public-facing overview, setup, and current feature/status summary
+  Public-facing overview, setup, and release-readiness summary
 - `CONTRIBUTING.md`
   Maintainer workflow, validation expectations, and doc-sync rules
 - `plan.md`
-  Working checklist of completed vs pending work
+  Canonical checklist of completed vs pending work
 - `roadmap.md`
   Prioritized backlog with acceptance criteria
 - `Makefile`
@@ -96,7 +93,9 @@ Important behavior:
 - `make todo`
   Search remaining TODO/FIXME markers
 - `make bundle-ids`
-  Search remaining example app identifiers before release
+  Search remaining shipping app identifiers before release
+- `make docs-audit`
+  Check checked-in Markdown for absolute local filesystem links
 
 ## Files to inspect first
 
@@ -113,11 +112,13 @@ Important behavior:
 - `lib/screens/launch_gate_screen.dart`
   Decides whether `/` routes to onboarding or setup
 - `lib/screens/onboarding_screen.dart`
-  Skippable three-page onboarding flow before model setup
+  Skippable four-step onboarding flow with a model-source handoff before setup
 - `lib/services/app_haptics.dart`
   Centralizes system haptic feedback for onboarding, buttons, and key controls
 - `lib/screens/splash_screen.dart`
-  Source-specific progress, guidance, and recovery actions
+  Guided setup workspace with source summary, preflight context, progress, guidance, and recovery actions
+- `lib/screens/director_screen.dart`
+  Live camera workspace, command dock, pause/resume control, history/export/tips actions, and first-run tips handoff
 - `lib/widgets/director_tips_sheet.dart`
   First-take guidance and replayable `Tips` content inside the director screen
 - `lib/providers/script_history_provider.dart`
@@ -149,79 +150,19 @@ Important behavior:
   `stylized eye merged with a camera shutter, noir-tech mood, deep charcoal and midnight teal base, cyan glow, restrained ember accent, no text, crisp app-icon silhouette`
 - If the icon changes, regenerate derived assets instead of editing one platform manually.
 
-## Verification state
+## Current blockers
 
-- [x] `flutter pub get`
-- [x] `flutter analyze` after branding pass
-- [x] `flutter test` after branding pass
-- [ ] Android hardware validation
-- [ ] iPhone hardware validation
-- [ ] Production managed model hosting
-- [ ] Store/release metadata
-- [ ] Gemma 4 spike branch
-
-## Known publication gaps
-
-- A top-level open-source license has not been chosen yet.
-- Android/iOS still use example app identifiers and package names.
-- Public screenshots, support links, privacy-policy details, and GitHub-facing metadata are still pending.
-- `packages/ghosteye_frame_ffi` should remain clearly internal unless someone decides to publish it separately.
-
-## Open work
-
-### Hardware validation
-
-- [ ] Verify fresh-install launch gate and intro flow on Android
-- [ ] Verify fresh-install launch gate and intro flow on iPhone
-- [ ] Verify managed-download first launch on Android
-- [ ] Verify managed-download first launch on iPhone
-- [ ] Verify first-time director tips pause/resume flow on both platforms
-- [ ] Verify imported local model reuse after relaunch
-- [ ] Verify reset from imported model back to managed download
-- [ ] Verify GPU-to-CPU fallback behavior and messaging on real devices
-
-### Production rollout
-
-- [ ] Host the Gemma 3n `.task` artifact on infrastructure you control
-- [ ] Decide if the managed URL is public or token-gated
-- [ ] Set the production `GHOSTEYE_GEMMA_MODEL_URL`
-- [ ] Decide whether the legacy Hugging Face fallback stays available in release builds
-
-### Release polish
-
-- [ ] Replace example bundle identifiers and package names
-- [ ] Capture App Store / Play Store screenshots
-- [ ] Finalize store-listing copy, privacy-policy requirements, and support links
-
-### Gemma 4 spike
-
-- [ ] Create a separate spike branch
-- [ ] Upgrade Flutter on the spike branch
-- [ ] Upgrade `flutter_gemma` on the spike branch
-- [ ] Verify Gemma 4 install behavior
-- [ ] Verify Android camera-to-model viability
-- [ ] Verify iOS multimodal viability
-- [ ] Measure model-size and startup-time impact
-- [ ] Record a go/no-go recommendation
-
-## Suggested next product work
-
-- [ ] Export or share a take as Fountain/plain text
-- [ ] Attach a representative frame thumbnail to each beat
-- [ ] Add model-storage diagnostics and cache-reset controls
-- [ ] Add user controls for sampling pace and responsiveness
-
-## Recommended next order
-
-1. Finalize repo and release basics: license decision, production app IDs, managed model hosting, and auth policy.
-2. Run the real-device Android and iPhone validation matrix.
-3. Capture release assets and GitHub/store metadata once the runtime path is stable.
-4. Build creator workflow improvements: export/share, thumbnails, diagnostics, then pacing controls.
-5. Keep Gemma 4 work isolated on a separate spike branch until it proves cross-platform viability.
+- Production hosting for the Gemma 3n `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
+- Final managed-download auth policy
+- Android and physical-iPhone validation of the setup path
+- Production Android/iOS identifiers
+- License choice, support/privacy URLs, screenshots, and store metadata
+- A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
 
 ## Guardrails for future work
 
 - Keep mainline focused on Gemma 3n unless the Gemma 4 spike proves cross-platform multimodal parity.
+- Keep `README.md` public-facing. Use `plan.md` for checklist state and `roadmap.md` for future backlog.
 - Do not delete completed checklist items from `plan.md`; mark them as completed instead.
 - If you change source precedence, onboarding behavior, or runtime setup copy, update `README.md`, `plan.md`, and this file together.
 - If you update branding, regenerate platform assets via `tool/generate_brand_assets.dart` and update the brand prompt here if the visual direction changes.

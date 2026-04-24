@@ -14,7 +14,7 @@ SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
 .PHONY: help bootstrap doctor analyze test verify format fix clean pub-outdated \
 	run-android run-ios build-apk-debug build-ios-debug brand-assets todo \
-	bundle-ids docs
+	bundle-ids docs docs-audit
 
 help:
 	@printf "Ghosteye maintainer commands\n\n"
@@ -36,7 +36,8 @@ help:
 	@printf "Repo diagnostics:\n"
 	@printf "  make brand-assets     regenerate icons and launch assets from %s\n" "$(SOURCE_IMAGE)"
 	@printf "  make todo             search repo TODO/FIXME markers\n"
-	@printf "  make bundle-ids       search remaining example app identifiers\n"
+	@printf "  make bundle-ids       search remaining shipping app identifiers\n"
+	@printf "  make docs-audit       check markdown for absolute local filesystem links\n"
 	@printf "  make docs             print the core repo docs to keep in sync\n"
 
 bootstrap:
@@ -91,7 +92,15 @@ todo:
 	@rg -n "TODO|FIXME|XXX|HACK|TBD" $(SCAN_DIRS) -g '!build/**' -g '!ios/build/**' -g '!packages/ghosteye_frame_ffi/example/**' || true
 
 bundle-ids:
-	@rg -n "com\\.example|PRODUCT_BUNDLE_IDENTIFIER|applicationId" android ios packages/ghosteye_frame_ffi -g '!build/**' -g '!ios/build/**' -g '!packages/ghosteye_frame_ffi/example/**' || true
+	@rg -n "com\\.example|PRODUCT_BUNDLE_IDENTIFIER|applicationId" android/app ios/Runner ios/Runner.xcodeproj -g '!build/**' -g '!ios/build/**' || true
+
+docs-audit:
+	@if rg -n "\\]\\((/Users/|file://|[A-Za-z]:[/\\\\])" . -g '*.md' -g '!build/**' -g '!ios/build/**'; then \
+		echo "Found absolute local filesystem links in checked-in Markdown."; \
+		exit 1; \
+	else \
+		echo "No absolute local filesystem links found in checked-in Markdown."; \
+	fi
 
 docs:
 	@printf "README.md\n"

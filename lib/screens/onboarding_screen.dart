@@ -39,12 +39,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     ),
     _OnboardingPageData(
       eyebrow: 'FIRST-RUN SETUP',
-      title: 'Let the model prep before the camera rolls',
+      title: 'Prep the model before the camera rolls',
       body:
-          'The first launch may ask for camera permission and prepare a large on-device model. Wi-Fi helps, and CPU fallback can feel slower if the GPU runtime misses.',
+          'The first launch prepares Gemma on the device. Setup will show the active source, preflight checks, and recovery actions before the camera opens.',
       details: <String>[
-        'Managed download and local import both stay in the setup flow.',
-        'Source-specific recovery remains available if setup stalls.',
+        'Managed download is the default when a model URL is configured.',
+        'Local import stays available for sideloading and recovery.',
       ],
       backgroundColors: <Color>[
         Color(0xFF050608),
@@ -72,6 +72,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       accent: Color(0xFF00C9FF),
       secondaryAccent: Color(0xFFF2B95C),
       motifLabel: 'LIVE SCREENPLAY',
+    ),
+    _OnboardingPageData(
+      eyebrow: 'SETUP HANDOFF',
+      title: 'Choose the model path',
+      body:
+          'Next, Ghosteye opens the setup workspace. Use the managed download if it is configured, or import a local Gemma file when you need a fallback.',
+      details: <String>[
+        'Setup checks network, storage, power, and privacy before capture.',
+        'If anything fails, retry or switch source without reinstalling.',
+      ],
+      handoffItems: <_SetupHandoffItem>[
+        _SetupHandoffItem(
+          icon: Icons.cloud_download_outlined,
+          title: 'Managed download',
+          detail: 'Recommended when the app has a configured model URL.',
+        ),
+        _SetupHandoffItem(
+          icon: Icons.file_open_outlined,
+          title: 'Local import',
+          detail: 'Use a .task file for sideloading, testing, or recovery.',
+        ),
+      ],
+      backgroundColors: <Color>[
+        Color(0xFF050608),
+        Color(0xFF10151D),
+        Color(0xFF16120B),
+      ],
+      accent: Color(0xFFF2B95C),
+      secondaryAccent: Color(0xFF00C9FF),
+      motifLabel: 'MODEL SOURCE',
     ),
   ];
 
@@ -383,6 +413,13 @@ class _OnboardingPosterPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 12),
                             ],
+                            if (page.handoffItems.isNotEmpty) ...<Widget>[
+                              const SizedBox(height: 8),
+                              _SetupHandoffPreview(
+                                accent: page.secondaryAccent,
+                                items: page.handoffItems,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -566,6 +603,83 @@ class _OnboardingDetailRow extends StatelessWidget {
   }
 }
 
+class _SetupHandoffPreview extends StatelessWidget {
+  const _SetupHandoffPreview({
+    required this.accent,
+    required this.items,
+  });
+
+  final Color accent;
+  final List<_SetupHandoffItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.22),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          children: <Widget>[
+            for (var index = 0; index < items.length; index++) ...<Widget>[
+              _SetupHandoffRow(
+                accent: accent,
+                item: items[index],
+              ),
+              if (index != items.length - 1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Divider(height: 1, color: Colors.white10),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SetupHandoffRow extends StatelessWidget {
+  const _SetupHandoffRow({
+    required this.accent,
+    required this.item,
+  });
+
+  final Color accent;
+  final _SetupHandoffItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Icon(item.icon, color: accent, size: 22),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(item.title, style: theme.textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                item.detail,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: Colors.white.withOpacity(0.78),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _GlassPillButton extends StatelessWidget {
   const _GlassPillButton({
     required this.label,
@@ -714,6 +828,7 @@ class _OnboardingPageData {
     required this.title,
     required this.body,
     required this.details,
+    this.handoffItems = const <_SetupHandoffItem>[],
     required this.backgroundColors,
     required this.accent,
     required this.secondaryAccent,
@@ -724,8 +839,21 @@ class _OnboardingPageData {
   final String title;
   final String body;
   final List<String> details;
+  final List<_SetupHandoffItem> handoffItems;
   final List<Color> backgroundColors;
   final Color accent;
   final Color secondaryAccent;
   final String motifLabel;
+}
+
+class _SetupHandoffItem {
+  const _SetupHandoffItem({
+    required this.icon,
+    required this.title,
+    required this.detail,
+  });
+
+  final IconData icon;
+  final String title;
+  final String detail;
 }

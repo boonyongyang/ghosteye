@@ -16,12 +16,14 @@ import 'package:ghosteye/providers/inference_pipeline_metrics_provider.dart';
 import 'package:ghosteye/providers/gemma_provider.dart';
 import 'package:ghosteye/providers/inference_provider.dart';
 import 'package:ghosteye/providers/onboarding_provider.dart';
+import 'package:ghosteye/providers/script_export_provider.dart';
 import 'package:ghosteye/providers/script_history_provider.dart';
 import 'package:ghosteye/providers/session_controls_provider.dart';
 import 'package:ghosteye/providers/script_provider.dart';
 import 'package:ghosteye/screens/director_screen.dart';
 import 'package:ghosteye/services/camera_service.dart';
 import 'package:ghosteye/services/gemma_service.dart';
+import 'package:ghosteye/services/script_export_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeCameraNotifier extends CameraControllerNotifier {
@@ -121,6 +123,37 @@ class _FakeScriptHistoryNotifier extends ScriptHistoryController {
   }
 }
 
+class _FakeScriptExportService extends ScriptExportService {
+  _FakeScriptExportService();
+
+  ScriptExportFormat? sharedFormat;
+  ScriptExportFormat? copiedFormat;
+  String? sharedTitle;
+  String? copiedTitle;
+
+  @override
+  Future<void> shareDocument({
+    required ScriptExportFormat format,
+    required List<ScriptEntry> entries,
+    required String title,
+    DateTime? capturedAt,
+  }) async {
+    sharedFormat = format;
+    sharedTitle = title;
+  }
+
+  @override
+  Future<void> copyDocument({
+    required ScriptExportFormat format,
+    required List<ScriptEntry> entries,
+    required String title,
+    DateTime? capturedAt,
+  }) async {
+    copiedFormat = format;
+    copiedTitle = title;
+  }
+}
+
 class _FakeMetricsNotifier extends InferencePipelineMetricsNotifier {
   _FakeMetricsNotifier(InferencePipelineMetrics initialState)
       : super(settings: initialState.settings) {
@@ -163,6 +196,7 @@ Future<ProviderContainer> _pumpDirectorScreen(
     introComplete: true,
     directorTipsSeen: true,
   ),
+  ScriptExportService? exportService,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final container = ProviderContainer(
@@ -223,6 +257,9 @@ Future<ProviderContainer> _pumpDirectorScreen(
           ],
         ),
       ),
+      scriptExportServiceProvider.overrideWithValue(
+        exportService ?? ScriptExportService(),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -256,6 +293,8 @@ void main() {
     );
 
     expect(find.text('PAUSED'), findsOneWidget);
+    expect(find.text('Resume'), findsOneWidget);
+    expect(find.text('Capture is paused'), findsOneWidget);
     expect(find.text('Open Settings'), findsOneWidget);
     expect(find.text('Retry Camera'), findsOneWidget);
   });
@@ -277,6 +316,8 @@ void main() {
     );
 
     expect(find.text('CPU THINKING'), findsOneWidget);
+    expect(find.text('Pause'), findsOneWidget);
+    expect(find.text('Capture is live'), findsOneWidget);
     expect(find.textContaining('MODEL CPU FALLBACK'), findsOneWidget);
   });
 
@@ -536,5 +577,69 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Current live take'), findsNothing);
+  });
+
+  testWidgets('DirectorScreen exports the current take', (tester) async {
+    final exportService = _FakeScriptExportService();
+    await _pumpDirectorScreen(
+      tester,
+      inferenceStatus: const InferenceStatusState(),
+      captureEnabled: true,
+      scriptState: ScriptState(
+        entries: <ScriptEntry>[
+          const ScriptEntry(
+            type: ScriptEntryType.action,
+            text: 'Current live take',
+          ),
+        ],
+      ),
+      gemmaState: const GemmaState(
+        phase: GemmaPhase.ready,
+        activeBackend: RuntimeBackend.gpu,
+      ),
+      exportService: exportService,
+    );
+
+    await tester.tap(find.text('Export'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export take'), findsOneWidget);
+    expect(find.text('Share Fountain'), findsOneWidget);
+
+    await tester.tap(find.text('Share Fountain'));
+    await tester.pumpAndSettle();
+
+    expect(exportService.sharedFormat, ScriptExportFormat.fountain);
+    expect(exportService.sharedTitle, 'Current take');
+  });
+
+  testWidgets('DirectorScreen exports a saved take from history',
+      (tester) async {
+    final exportService = _FakeScriptExportService();
+    await _pumpDirectorScreen(
+      tester,
+      inferenceStatus: const InferenceStatusState(),
+      captureEnabled: true,
+      scriptState: ScriptState(),
+      gemmaState: const GemmaState(
+        phase: GemmaPhase.ready,
+        activeBackend: RuntimeBackend.gpu,
+      ),
+      exportService: exportService,
+    );
+
+    await tester.tap(find.text('History'));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Export take'), findsOneWidget);
+    await tester.tap(find.byTooltip('Export take').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Export take'), findsOneWidget);
+    await tester.tap(find.text('Copy Plain Text'));
+    await tester.pumpAndSettle();
+
+    expect(exportService.copiedFormat, ScriptExportFormat.plainText);
+    expect(exportService.copiedTitle, 'Saved take');
   });
 }

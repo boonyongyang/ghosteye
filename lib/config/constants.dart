@@ -21,14 +21,10 @@ class AppConstants {
   static const maxChatHistoryCharacters = 6000;
   static const settingsUri = 'app-settings:';
   static const modelDisplayName = 'Gemma 3 Nano';
-  static const legacyModelRepository = 'google/gemma-3n-E2B-it-litert-preview';
   static const defaultModelFileName = 'gemma-3n-E2B-it-int4.task';
   static const directorPromptSuffix =
       'Continue the screenplay. Describe what is happening in this new shot. '
       'Stay in character and respond in 2-4 Fountain-format lines.';
-
-  static const legacyModelUrl =
-      'https://huggingface.co/google/gemma-3n-E2B-it-litert-preview/resolve/main/gemma-3n-E2B-it-int4.task';
 
   static String? get configuredModelUrl {
     const override = String.fromEnvironment('GHOSTEYE_GEMMA_MODEL_URL');
@@ -70,13 +66,8 @@ class AppConstants {
   static bool get enableFramePipelineMetrics => kDebugMode;
 
   static String? get modelAccessToken {
-    const ghosteyeToken = String.fromEnvironment('GHOSTEYE_GEMMA_TOKEN');
-    if (ghosteyeToken.isNotEmpty) {
-      return ghosteyeToken;
-    }
-
-    const huggingFaceToken = String.fromEnvironment('HUGGINGFACE_TOKEN');
-    return huggingFaceToken.isEmpty ? null : huggingFaceToken;
+    const token = String.fromEnvironment('GHOSTEYE_GEMMA_TOKEN');
+    return token.isEmpty ? null : token;
   }
 
   static String modelIdFromLocation(String location) {

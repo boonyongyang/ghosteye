@@ -9,9 +9,11 @@ class ScriptHistorySheet extends ConsumerWidget {
   const ScriptHistorySheet({
     super.key,
     required this.onSelectSession,
+    required this.onExportSession,
   });
 
   final Future<void> Function(ScriptSession session) onSelectSession;
+  final Future<void> Function(ScriptSession session) onExportSession;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,6 +90,7 @@ class ScriptHistorySheet extends ConsumerWidget {
                         return _HistoryCard(
                           session: session,
                           onOpen: () => onSelectSession(session),
+                          onExport: () => onExportSession(session),
                           onDelete: () {
                             ref
                                 .read(scriptHistoryProvider.notifier)
@@ -120,11 +123,13 @@ class _HistoryCard extends StatelessWidget {
   const _HistoryCard({
     required this.session,
     required this.onOpen,
+    required this.onExport,
     required this.onDelete,
   });
 
   final ScriptSession session;
   final Future<void> Function() onOpen;
+  final Future<void> Function() onExport;
   final VoidCallback onDelete;
 
   @override
@@ -153,6 +158,14 @@ class _HistoryCard extends StatelessWidget {
                       _formatTimestamp(session.updatedAt.toLocal()),
                       style: theme.textTheme.bodySmall,
                     ),
+                  ),
+                  IconButton(
+                    tooltip: 'Export take',
+                    onPressed: () {
+                      AppHaptics.trigger(AppHapticPattern.selection);
+                      onExport();
+                    },
+                    icon: const Icon(Icons.ios_share_outlined),
                   ),
                   IconButton(
                     tooltip: 'Delete take',

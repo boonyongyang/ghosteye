@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, and setup state: `implemented`
+- Branding, onboarding, setup, and director controls: `setup workspace, setup-handoff onboarding, and command dock implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -14,13 +14,13 @@ This file turns the current backlog into an execution order. Use it when choosin
 These items should happen before broad external testing or store submission.
 
 - [ ] Finalize public repo basics
-  Acceptance criteria: a top-level license is chosen, the repo landing docs point to setup and roadmap surfaces, no obvious scaffold/package docs remain in the public tree, and the internal FFI package no longer carries stale generated/template artifacts
+  Acceptance criteria: a top-level license is chosen, the README stays public-facing with relative repo links, no obvious scaffold/package docs remain in the public tree, and the internal FFI package stays clearly documented as internal-only
 - [ ] Choose the production Android application ID and iOS bundle ID
   Acceptance criteria: no `com.example.ghosteye` identifiers remain in shipping configs
 - [ ] Host the Gemma 3n `.task` artifact on production infrastructure
   Acceptance criteria: a stable managed URL exists and is documented in `config.json.example` or deployment docs
 - [ ] Decide the managed-download auth policy
-  Acceptance criteria: app behavior is defined for public download, bearer-token gating, and legacy fallback handling
+  Acceptance criteria: app behavior is defined for public download, bearer-token gating, and missing-source recovery guidance
 - [ ] Validate Android first-run setup on physical hardware
   Acceptance criteria: managed download succeeds, relaunch reuse works, imported local model works, reset-to-managed works
 - [ ] Validate iPhone first-run setup on physical hardware

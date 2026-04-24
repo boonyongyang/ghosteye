@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import '../config/constants.dart';
 import '../models/cinematic_mode.dart';
 import '../models/inference_pipeline_metrics.dart';
 import '../models/onboarding_status.dart';
+import '../models/script_entry.dart';
 import '../providers/camera_provider.dart';
 import '../providers/cinematic_mode_provider.dart';
 import '../providers/gemma_provider.dart';
@@ -22,6 +24,7 @@ import '../widgets/camera_preview.dart';
 import '../widgets/cinematic_mode_selector.dart';
 import '../widgets/director_tips_sheet.dart';
 import '../widgets/inference_indicator.dart';
+import '../widgets/script_export_sheet.dart';
 import '../widgets/script_history_sheet.dart';
 import '../widgets/teleprompter_overlay.dart';
 
@@ -53,6 +56,7 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
     final inferenceStatus = ref.watch(inferenceStatusProvider);
     final captureEnabled = ref.watch(captureEnabledProvider);
     final pipelineMetrics = ref.watch(inferencePipelineMetricsProvider);
+    final scriptState = ref.watch(scriptProvider);
 
     _maybeShowFirstRunTips(
       cameraState: cameraState,
@@ -107,6 +111,14 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
                     onClearScript: () => unawaited(_resetScene(ref)),
                     onShowHistory: () =>
                         unawaited(_showHistorySheet(context, ref)),
+                    onShowExport: () => unawaited(
+                      _showExportSheet(
+                        context,
+                        title: 'Current take',
+                        entries: scriptState.entries,
+                        capturedAt: scriptState.activeSessionStartedAt,
+                      ),
+                    ),
                     onShowTips: () => unawaited(_showDirectorTips()),
                   ),
                   const SizedBox(height: 12),
@@ -299,6 +311,38 @@ Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
             await _pauseCapture(ref);
             ref.read(scriptProvider.notifier).loadSessionForReview(session);
           },
+          onExportSession: (session) async {
+            Navigator.of(sheetContext).pop();
+            await _showExportSheet(
+              context,
+              title: 'Saved take',
+              entries: session.entries,
+              capturedAt: session.updatedAt,
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showExportSheet(
+  BuildContext context, {
+  required String title,
+  required List<ScriptEntry> entries,
+  DateTime? capturedAt,
+}) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (sheetContext) {
+      return FractionallySizedBox(
+        heightFactor: 0.68,
+        child: ScriptExportSheet(
+          title: title,
+          entries: entries,
+          capturedAt: capturedAt,
         ),
       );
     },
@@ -329,6 +373,7 @@ class _DirectorActions extends StatelessWidget {
     required this.onToggleCapture,
     required this.onClearScript,
     required this.onShowHistory,
+    required this.onShowExport,
     required this.onShowTips,
   });
 
@@ -336,77 +381,190 @@ class _DirectorActions extends StatelessWidget {
   final VoidCallback onToggleCapture;
   final VoidCallback onClearScript;
   final VoidCallback onShowHistory;
+  final VoidCallback onShowExport;
   final VoidCallback onShowTips;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: <Widget>[
-        _ActionChip(
-          icon: captureEnabled
-              ? Icons.pause_circle_outline
-              : Icons.play_circle_outline,
-          label: captureEnabled ? 'Pause' : 'Resume',
-          onTap: onToggleCapture,
-          hapticPattern: AppHapticPattern.action,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.38),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _CaptureToggleButton(
+                        captureEnabled: captureEnabled,
+                        onTap: onToggleCapture,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    _DockAction(
+                      icon: Icons.layers_clear_outlined,
+                      label: 'Clear',
+                      onTap: onClearScript,
+                      hapticPattern: AppHapticPattern.emphasis,
+                      compact: true,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _DockAction(
+                        icon: Icons.history_toggle_off_outlined,
+                        label: 'History',
+                        onTap: onShowHistory,
+                        hapticPattern: AppHapticPattern.selection,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DockAction(
+                        icon: Icons.ios_share_outlined,
+                        label: 'Export',
+                        onTap: onShowExport,
+                        hapticPattern: AppHapticPattern.selection,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DockAction(
+                        icon: Icons.lightbulb_outline,
+                        label: 'Tips',
+                        onTap: onShowTips,
+                        hapticPattern: AppHapticPattern.selection,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
-        _ActionChip(
-          icon: Icons.layers_clear_outlined,
-          label: 'Clear',
-          onTap: onClearScript,
-          hapticPattern: AppHapticPattern.emphasis,
-        ),
-        _ActionChip(
-          icon: Icons.history_toggle_off_outlined,
-          label: 'History',
-          onTap: onShowHistory,
-          hapticPattern: AppHapticPattern.selection,
-        ),
-        _ActionChip(
-          icon: Icons.lightbulb_outline,
-          label: 'Tips',
-          onTap: onShowTips,
-          hapticPattern: AppHapticPattern.selection,
-        ),
-      ],
+      ),
     );
   }
 }
 
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({
+class _CaptureToggleButton extends StatelessWidget {
+  const _CaptureToggleButton({
+    required this.captureEnabled,
+    required this.onTap,
+  });
+
+  final bool captureEnabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final icon =
+        captureEnabled ? Icons.pause_circle_outline : Icons.play_circle_outline;
+    final label = captureEnabled ? 'Pause' : 'Resume';
+    final detail = captureEnabled ? 'Capture is live' : 'Capture is paused';
+
+    return Material(
+      color: theme.colorScheme.primary,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () {
+          AppHaptics.trigger(AppHapticPattern.action);
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              Icon(icon, size: 24, color: Colors.black),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      label,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.black,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      detail,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.black.withOpacity(0.72),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DockAction extends StatelessWidget {
+  const _DockAction({
     required this.icon,
     required this.label,
     required this.onTap,
     required this.hapticPattern,
+    this.compact = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final AppHapticPattern hapticPattern;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withOpacity(0.52),
-      borderRadius: BorderRadius.circular(999),
+      color: Colors.white.withOpacity(0.08),
+      borderRadius: BorderRadius.circular(8),
       child: InkWell(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(8),
         onTap: () {
           AppHaptics.trigger(hapticPattern);
           onTap();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 12 : 10,
+            vertical: compact ? 13 : 10,
+          ),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(icon, size: 18, color: Colors.white),
-              const SizedBox(width: 8),
-              Text(label, style: Theme.of(context).textTheme.bodyMedium),
+              Icon(icon, size: 20, color: Colors.white),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
             ],
           ),
         ),

@@ -81,7 +81,7 @@ void main() {
   });
 
   test(
-      'resolveSource uses configured managed download URL before legacy fallback',
+      'resolveSource uses configured managed download URL when no local path is set',
       () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
@@ -100,7 +100,7 @@ void main() {
     expect(source.token, 'managed-token');
   });
 
-  test('resolveSource falls back to the legacy Hugging Face URL', () async {
+  test('resolveSource throws when no model source is configured', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(
@@ -108,11 +108,10 @@ void main() {
       documentsDirectory: Directory.systemTemp,
     );
 
-    final source = await service.resolveSource();
-
-    expect(source.origin, ModelSourceOrigin.legacyHuggingFace);
-    expect(source.kind, ModelSourceKind.network);
-    expect(source.location, contains('huggingface.co'));
+    await expectLater(
+      service.resolveSource(),
+      throwsA(isA<NoModelSourceConfiguredException>()),
+    );
   });
 
   test('importLocalModel copies the file and persists the imported path',

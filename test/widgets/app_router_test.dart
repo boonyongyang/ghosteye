@@ -95,13 +95,18 @@ void main() {
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
-    expect(find.text('Let the model prep before the camera rolls'),
-        findsOneWidget);
+    expect(find.text('Prep the model before the camera rolls'), findsOneWidget);
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(
         find.text('Direct the tone, then keep the good takes'), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose the model path'), findsOneWidget);
+    expect(find.text('Managed download'), findsOneWidget);
+    expect(find.text('Local import'), findsOneWidget);
 
     await tester.tap(find.text('Start setup'));
     await tester.pump();

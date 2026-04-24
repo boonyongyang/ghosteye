@@ -28,6 +28,7 @@ enum RuntimeBackend {
 }
 
 enum GemmaStartupFailureKind {
+  modelSource,
   missingToken,
   modelAccess,
   network,
@@ -108,6 +109,13 @@ GemmaStartupFailure classifyGemmaStartupFailure(
 }) {
   if (error is GemmaStartupFailure) {
     return error;
+  }
+
+  if (error is NoModelSourceConfiguredException) {
+    return const GemmaStartupFailure(
+      kind: GemmaStartupFailureKind.modelSource,
+      message: NoModelSourceConfiguredException.message,
+    );
   }
 
   if (source?.isFile ?? false) {
@@ -238,6 +246,11 @@ InferenceFailure classifyInferenceFailure(
 
   if (error is GemmaStartupFailure) {
     return switch (error.kind) {
+      GemmaStartupFailureKind.modelSource => InferenceFailure(
+          kind: InferenceFailureKind.modelSource,
+          message: error.message,
+          originalError: error,
+        ),
       GemmaStartupFailureKind.missingToken ||
       GemmaStartupFailureKind.modelAccess =>
         InferenceFailure(
@@ -457,7 +470,6 @@ class GemmaService {
       final needsInstall = !installed || installedSignature != source.signature;
 
       if (needsInstall) {
-        _assertDownloadAccess(source);
         await _installModel(source: source, onProgress: onProgress);
         await _modelSourceService.saveInstalledSourceSignature(source);
       }
@@ -623,19 +635,6 @@ class GemmaService {
     }
   }
 
-  void _assertDownloadAccess(ModelSourceConfig source) {
-    final isLegacyHuggingFaceFallback =
-        source.origin == ModelSourceOrigin.legacyHuggingFace;
-    if (!isLegacyHuggingFaceFallback || source.token != null) {
-      return;
-    }
-
-    throw GemmaStartupFailure(
-      kind: GemmaStartupFailureKind.missingToken,
-      message: _missingTokenMessage(source),
-    );
-  }
-
   Future<void> _closeChat() async {
     if (_chat != null) {
       try {
@@ -696,24 +695,16 @@ class GemmaService {
 }
 
 String _missingTokenMessage(ModelSourceConfig? source) {
-  if (source?.isLegacyHuggingFace ?? false) {
-    return 'A Hugging Face token is required before Ghosteye can download ${AppConstants.modelDisplayName} from the legacy fallback source.';
-  }
-
   if (source?.isHuggingFace ?? false) {
-    return 'The active Hugging Face model source requires authentication before Ghosteye can continue.';
+    return 'The configured Hugging Face model source requires authentication before Ghosteye can continue.';
   }
 
-  return 'The configured model download requires valid credentials before Ghosteye can continue.';
+  return 'The configured managed model download requires valid credentials before Ghosteye can continue.';
 }
 
 String _modelAccessMessage(ModelSourceConfig? source) {
-  if (source?.isLegacyHuggingFace ?? false) {
-    return 'The current Hugging Face token cannot access ${AppConstants.legacyModelRepository}.';
-  }
-
   if (source?.isHuggingFace ?? false) {
-    return 'Ghosteye could not access the active Hugging Face model source.';
+    return 'Ghosteye could not access the configured Hugging Face model source.';
   }
 
   if (source?.isFile ?? false) {
@@ -726,8 +717,6 @@ String _modelAccessMessage(ModelSourceConfig? source) {
 String _networkFailureMessage(ModelSourceConfig? source, String? details) {
   final baseMessage = switch (source?.kind) {
     ModelSourceKind.file => _localModelFailureMessage(source),
-    ModelSourceKind.network when source?.isLegacyHuggingFace ?? false =>
-      'Network access is required for the initial ${AppConstants.modelDisplayName} download from the legacy Hugging Face fallback.',
     ModelSourceKind.network =>
       'Network access is required while Ghosteye downloads ${AppConstants.modelDisplayName}.',
     null =>

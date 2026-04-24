@@ -11,6 +11,16 @@ typedef LoadPreferencesFn = Future<SharedPreferences> Function();
 typedef LoadDocumentsDirectoryFn = Future<Directory> Function();
 typedef PickModelFileFn = Future<PickedModelFile?> Function();
 
+class NoModelSourceConfiguredException implements Exception {
+  const NoModelSourceConfiguredException();
+
+  static const message =
+      'Ghosteye needs a managed model download URL or a local model file before setup can continue.';
+
+  @override
+  String toString() => message;
+}
+
 class PickedModelFile {
   const PickedModelFile({
     required this.path,
@@ -29,7 +39,6 @@ class ModelSourceService {
     String? configuredModelPath,
     String? configuredModelUrl,
     String? configuredToken,
-    String legacyModelUrl = AppConstants.legacyModelUrl,
   })  : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance,
         _loadDocumentsDirectory =
             loadDocumentsDirectory ?? getApplicationDocumentsDirectory,
@@ -38,8 +47,7 @@ class ModelSourceService {
             configuredModelPath ?? AppConstants.configuredModelPath,
         _configuredModelUrl =
             configuredModelUrl ?? AppConstants.configuredModelUrl,
-        _configuredToken = configuredToken ?? AppConstants.modelAccessToken,
-        _legacyModelUrl = legacyModelUrl;
+        _configuredToken = configuredToken ?? AppConstants.modelAccessToken;
 
   static const importedModelPathKey = 'ghosteye.imported_model_path';
   static const installedSourceSignatureKey =
@@ -58,7 +66,6 @@ class ModelSourceService {
   final String? _configuredModelPath;
   final String? _configuredModelUrl;
   final String? _configuredToken;
-  final String _legacyModelUrl;
 
   Future<ModelSourceConfig> resolveSource() async {
     final preferences = await _loadPreferences();
@@ -93,13 +100,7 @@ class ModelSourceService {
       );
     }
 
-    return ModelSourceConfig(
-      kind: ModelSourceKind.network,
-      origin: ModelSourceOrigin.legacyHuggingFace,
-      location: _legacyModelUrl,
-      label: 'Legacy Hugging Face download',
-      token: _configuredToken,
-    );
+    throw const NoModelSourceConfiguredException();
   }
 
   Future<String?> loadInstalledSourceSignature() async {

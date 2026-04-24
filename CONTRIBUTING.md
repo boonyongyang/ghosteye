@@ -51,7 +51,9 @@ Use `make help` to print the command list. The main targets are:
 - `make todo`
   Search for TODO/FIXME markers
 - `make bundle-ids`
-  Search for remaining example bundle identifiers
+  Search for remaining shipping app bundle identifiers
+- `make docs-audit`
+  Check checked-in Markdown for absolute local filesystem links
 
 ## Validation expectations
 
@@ -59,6 +61,12 @@ Before landing meaningful app or setup-flow changes, run:
 
 ```bash
 make verify
+```
+
+If you changed checked-in Markdown, also run:
+
+```bash
+make docs-audit
 ```
 
 For source-loading, onboarding, or setup-state changes, also verify the affected device flow manually when hardware is available. The current automated suite is useful, but it does not replace real-device camera and model-install validation.
@@ -71,6 +79,7 @@ Keep these files aligned when related behavior changes:
 - Update `README.md`, `plan.md`, `roadmap.md`, and `agents.md` together when the feature backlog meaningfully changes.
 - Regenerate assets with `make brand-assets` if the Ghosteye icon or launch art changes.
 - Extend tests before updating docs when adding a new setup or recovery path.
+- Use relative repo links in checked-in Markdown. Do not commit absolute local filesystem paths such as `/Users/...`.
 
 ## Current contribution priorities
 

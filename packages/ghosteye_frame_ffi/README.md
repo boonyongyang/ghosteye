@@ -2,7 +2,7 @@
 
 `ghosteye_frame_ffi` is an internal Flutter FFI plugin used by Ghosteye to speed up camera-frame preprocessing before images are handed to the Gemma runtime.
 
-It is a path dependency inside the main app repo, not a standalone package intended for `pub.dev`.
+It is a path dependency inside the main app repo, not a standalone package intended for `pub.dev`, and the main Ghosteye app is the only supported integration harness.
 
 ## What it does
 
@@ -29,14 +29,12 @@ The real question for this package is not "can it compile?" but "does it materia
   iOS build entry point
 - `macos/Classes/ghosteye_frame_ffi.c`
   macOS build entry point
-- `ffigen.yaml`
-  Binding-generation config
+- `android/src/main/AndroidManifest.xml`
+  Internal Android plugin namespace and packaging surface
 
-## Regenerating bindings
+## Binding strategy
 
-```bash
-dart run ffigen --config ffigen.yaml
-```
+The Dart wrapper in `lib/ghosteye_frame_ffi.dart` is hand-maintained to match the native header. If you change the C interface, update the Dart FFI declarations in the same pass and verify the frame-preprocessor tests from the app repo.
 
 ## Verifying from the app repo
 

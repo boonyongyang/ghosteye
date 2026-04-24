@@ -78,11 +78,41 @@ void main() {
     expect(
         find.textContaining('Downloading Gemma 3 Nano (42%)'), findsOneWidget);
     expect(find.textContaining('Source: managed download'), findsOneWidget);
+    expect(find.text('Active source'), findsOneWidget);
+    expect(find.text('Before camera opens'), findsOneWidget);
+    expect(find.text('Source controls'), findsOneWidget);
+    expect(find.text('Network'), findsOneWidget);
+    expect(find.text('Storage'), findsOneWidget);
+    expect(find.text('Power'), findsOneWidget);
+    expect(find.text('Privacy'), findsOneWidget);
     expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
   testWidgets(
-      'SplashScreen shows token guidance for legacy Hugging Face fallback',
+      'SplashScreen shows setup guidance when no model source is configured',
+      (tester) async {
+    final notifier = _FakeGemmaNotifier(
+      const GemmaState(
+        phase: GemmaPhase.error,
+        message:
+            'Ghosteye needs a managed model download URL or a local model file before setup can continue.',
+        failureKind: GemmaStartupFailureKind.modelSource,
+      ),
+    );
+
+    await _pumpSplashScreen(tester, notifier);
+
+    expect(find.text('Model setup failed'), findsOneWidget);
+    expect(
+      find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('Hugging Face'), findsNothing);
+    expect(find.text('Import local model'), findsOneWidget);
+    expect(find.text('Source controls'), findsNothing);
+  });
+
+  testWidgets('SplashScreen shows managed-download token guidance',
       (tester) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
@@ -91,23 +121,17 @@ void main() {
         failureKind: GemmaStartupFailureKind.missingToken,
         source: ModelSourceConfig(
           kind: ModelSourceKind.network,
-          origin: ModelSourceOrigin.legacyHuggingFace,
-          location:
-              'https://huggingface.co/google/gemma-3n-E2B-it-litert-preview/resolve/main/gemma.task',
-          label: 'Legacy Hugging Face download',
+          origin: ModelSourceOrigin.envUrl,
+          location: 'https://cdn.example.com/gemma.task',
+          label: 'Managed download',
         ),
       ),
     );
 
     await _pumpSplashScreen(tester, notifier);
 
-    expect(find.text('Model setup failed'), findsOneWidget);
-    expect(find.textContaining('legacy Hugging Face fallback'), findsOneWidget);
-    expect(
-      find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
-      findsOneWidget,
-    );
-    expect(find.text('Import local model'), findsOneWidget);
+    expect(find.textContaining('GHOSTEYE_GEMMA_TOKEN'), findsOneWidget);
+    expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
   testWidgets('SplashScreen offers local import recovery actions',

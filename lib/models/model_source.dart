@@ -9,7 +9,6 @@ enum ModelSourceOrigin {
   importedFile,
   envPath,
   envUrl,
-  legacyHuggingFace,
 }
 
 class ModelSourceConfig {
@@ -32,10 +31,7 @@ class ModelSourceConfig {
 
   bool get isImportedFile => origin == ModelSourceOrigin.importedFile;
 
-  bool get isLegacyHuggingFace => origin == ModelSourceOrigin.legacyHuggingFace;
-
-  bool get isHuggingFace =>
-      location.contains('huggingface.co') || isLegacyHuggingFace;
+  bool get isHuggingFace => location.contains('huggingface.co');
 
   String get modelId => AppConstants.modelIdFromLocation(location);
 

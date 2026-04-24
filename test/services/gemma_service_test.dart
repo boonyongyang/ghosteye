@@ -183,23 +183,14 @@ void main() {
     expect(localFailure.message.toLowerCase(), contains('imported model file'));
   });
 
-  test('Gemma startup failures classify Hugging Face token issues separately',
+  test('Gemma startup failures classify missing model source configuration',
       () {
-    const legacySource = ModelSourceConfig(
-      kind: ModelSourceKind.network,
-      origin: ModelSourceOrigin.legacyHuggingFace,
-      location:
-          'https://huggingface.co/google/gemma-3n-E2B-it-litert-preview/resolve/main/gemma.task',
-      label: 'Legacy Hugging Face download',
-    );
-
     final failure = classifyGemmaStartupFailure(
-      Exception('403 forbidden while requesting model access'),
-      source: legacySource,
+      const NoModelSourceConfiguredException(),
     );
 
-    expect(failure.kind, GemmaStartupFailureKind.modelAccess);
-    expect(failure.message, contains('Hugging Face'));
+    expect(failure.kind, GemmaStartupFailureKind.modelSource);
+    expect(failure.message, contains('managed model download URL'));
   });
 
   test('Inference failures classify timeout and backend issues', () {
@@ -272,5 +263,27 @@ void main() {
     expect(installedSource!.kind, ModelSourceKind.file);
     expect(installedSource!.location, '/tmp/gemma.task');
     expect(snapshot.source.origin, ModelSourceOrigin.envPath);
+  });
+
+  test('GemmaService surfaces an explicit error when no model source is set',
+      () async {
+    final sourceService = await _createSourceService();
+    final service = GemmaService(
+      modelSourceService: sourceService,
+      isModelInstalled: (_) async => true,
+      createModel: (_) async => _FakeInferenceModel(),
+    );
+    addTearDown(service.dispose);
+
+    await expectLater(
+      service.ensureReady(),
+      throwsA(
+        isA<GemmaStartupFailure>().having(
+          (failure) => failure.kind,
+          'kind',
+          GemmaStartupFailureKind.modelSource,
+        ),
+      ),
+    );
   });
 }
