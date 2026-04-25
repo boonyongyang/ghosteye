@@ -342,7 +342,6 @@ void _workerMain(_WorkerBootstrapMessage bootstrap) {
             ffi: ffi ??= GhosteyeFrameFfi(
               libraryPath: bootstrap.ffiLibraryPath,
             ),
-            codec: codec,
             frame: frame,
             maxDimension: maxDimension,
             jpegQuality: jpegQuality,
@@ -370,20 +369,20 @@ void _workerMain(_WorkerBootstrapMessage bootstrap) {
 
 Uint8List _convertWithFfi({
   required GhosteyeFrameFfi ffi,
-  required ImageConverterService codec,
   required FrameData frame,
   required int maxDimension,
   required int jpegQuality,
 }) {
-  final rgbImage = switch (frame.format) {
-    'bgra8888' => ffi.convertBgra8888ToRgb(
+  return switch (frame.format) {
+    'bgra8888' => ffi.convertBgra8888ToJpeg(
         bytes: frame.planes.first.bytes,
         width: frame.width,
         height: frame.height,
         bytesPerRow: frame.planes.first.bytesPerRow,
         maxDimension: maxDimension,
+        quality: jpegQuality,
       ),
-    'yuv420' => ffi.convertYuv420ToRgb(
+    'yuv420' => ffi.convertYuv420ToJpeg(
         yPlane: frame.planes[0].bytes,
         yBytesPerRow: frame.planes[0].bytesPerRow,
         uPlane: frame.planes[1].bytes,
@@ -395,14 +394,8 @@ Uint8List _convertWithFfi({
         width: frame.width,
         height: frame.height,
         maxDimension: maxDimension,
+        quality: jpegQuality,
       ),
     _ => throw UnsupportedError('Unsupported camera format: ${frame.format}'),
   };
-
-  return codec.encodeRgbToImageBytes(
-    rgbBytes: rgbImage.bytes,
-    width: rgbImage.width,
-    height: rgbImage.height,
-    jpegQuality: jpegQuality,
-  );
 }

@@ -39,7 +39,7 @@ class AppConstants {
   static String get configuredFramePreprocessorBackend {
     const override = String.fromEnvironment(
       'GHOSTEYE_FRAME_PREPROCESSOR_BACKEND',
-      defaultValue: 'dart',
+      defaultValue: 'ffi',
     );
     return override.toLowerCase();
   }

@@ -238,4 +238,81 @@ void main() {
     await preprocessor.preprocess(_buildBgraFrame());
     expect(ffi.activeAllocationCount, 0);
   });
+
+  group('GhosteyeFrameFfi native JPEG encoding', () {
+    test('convertBgra8888ToJpeg returns a decodable JPEG with correct dimensions',
+        () {
+      if (ffiLibraryPath == null) return;
+
+      final ffi = GhosteyeFrameFfi(libraryPath: ffiLibraryPath);
+      final frame = _buildBgraFrame();
+      final jpegBytes = ffi.convertBgra8888ToJpeg(
+        bytes: frame.planes.first.bytes,
+        width: frame.width,
+        height: frame.height,
+        bytesPerRow: frame.planes.first.bytesPerRow,
+        maxDimension: 768,
+        quality: 88,
+      );
+
+      final decoded = img.decodeJpg(jpegBytes);
+      expect(decoded, isNotNull);
+      expect(decoded!.width, equals(frame.width));
+      expect(decoded.height, equals(frame.height));
+      expect(ffi.activeAllocationCount, equals(0));
+    });
+
+    test('convertYuv420ToJpeg returns a decodable JPEG with correct dimensions',
+        () {
+      if (ffiLibraryPath == null) return;
+
+      final ffi = GhosteyeFrameFfi(libraryPath: ffiLibraryPath);
+      final frame = _buildYuvFrame();
+      final jpegBytes = ffi.convertYuv420ToJpeg(
+        yPlane: frame.planes[0].bytes,
+        yBytesPerRow: frame.planes[0].bytesPerRow,
+        uPlane: frame.planes[1].bytes,
+        uBytesPerRow: frame.planes[1].bytesPerRow,
+        uBytesPerPixel: frame.planes[1].bytesPerPixel,
+        vPlane: frame.planes[2].bytes,
+        vBytesPerRow: frame.planes[2].bytesPerRow,
+        vBytesPerPixel: frame.planes[2].bytesPerPixel,
+        width: frame.width,
+        height: frame.height,
+        maxDimension: 768,
+        quality: 88,
+      );
+
+      final decoded = img.decodeJpg(jpegBytes);
+      expect(decoded, isNotNull);
+      expect(decoded!.width, equals(frame.width));
+      expect(decoded.height, equals(frame.height));
+      expect(ffi.activeAllocationCount, equals(0));
+    });
+
+    test('native JPEG output is visually aligned with Dart backend output', () async {
+      if (ffiLibraryPath == null) return;
+
+      final dartPreprocessor = _buildPreprocessor(FramePreprocessorBackend.dart);
+      addTearDown(dartPreprocessor.dispose);
+
+      final ffi = GhosteyeFrameFfi(libraryPath: ffiLibraryPath);
+      final frame = _buildBgraFrame();
+
+      final dartResult = await dartPreprocessor.preprocess(frame);
+      final dartDecoded = img.decodeJpg(dartResult.imageBytes)!;
+
+      final jpegBytes = ffi.convertBgra8888ToJpeg(
+        bytes: frame.planes.first.bytes,
+        width: frame.width,
+        height: frame.height,
+        bytesPerRow: frame.planes.first.bytesPerRow,
+        maxDimension: 2,
+        quality: 88,
+      );
+      final ffiDecoded = img.decodeJpg(jpegBytes)!;
+
+      _expectSimilarPixels(ffiDecoded, dartDecoded);
+    });
+  });
 }
