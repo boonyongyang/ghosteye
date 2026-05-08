@@ -4,15 +4,15 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, and session history implemented`
-- Verification status: `make verify passing after the legacy-cleanup pass`
+- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, session history, and export/share implemented`
+- Verification status: `make verify passing on 2026-05-09 after setup UI/status cleanup and docs sync`
 - Deployment readiness: `needs hardware validation, production hosting, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
 - Next product phase: `setup, onboarding, and director UX revamp before broader release polish`
 
 ## Current phase readout
 
-Ghosteye is no longer in the foundation-only phase. The main app already has a working route gate, source-aware model setup, branded launch assets, immersive onboarding, director tips, local history, and an in-progress export/share workflow in the current worktree. The next risk is not another isolated feature; it is whether the first-run journey feels coherent, modern, trustworthy, and usable for someone who is not already familiar with local Gemma model setup.
+Ghosteye is no longer in the foundation-only phase. The main app already has a working route gate, source-aware model setup, branded launch assets, immersive onboarding, director tips, local history, and export/share for active and saved takes. The next risk is not another isolated feature; it is whether the first-run journey feels coherent, modern, trustworthy, and usable for someone who is not already familiar with local Gemma model setup.
 
 Treat the next phase as a product-experience revamp across setup, onboarding, and the live director workspace. Keep the Gemma 3n runtime path stable while improving the way users understand, recover, control, and return to the app.
 
@@ -21,7 +21,7 @@ Treat the next phase as a product-experience revamp across setup, onboarding, an
 - [x] Onboarding currently explains the concept, but it does not actively guide the user through the model setup decision that follows.
 - [x] Setup is still presented like a technical splash state. It needs to become a clear setup workspace with source choice, preflight checks, progress, recovery, and diagnostic detail.
 - [x] The director screen is camera-first, which is good, but the controls read like debug-era action chips instead of a polished shooting console with hierarchy.
-- [ ] History and export make the app more useful, but they still feel like utility sheets rather than a creator library.
+- [ ] History and export now work, but they still feel like utility sheets rather than a creator library.
 - [ ] The current visual language is cinematic but narrow. It needs a more durable modern system: camera-led surfaces, cleaner typography, better motion, stronger iconography, and less reliance on generic dark gradients.
 - [ ] Trust signals are present in copy, but users need inspectable state: active model source, storage impact, backend, privacy posture, and recovery options.
 
@@ -41,8 +41,8 @@ Treat the next phase as a product-experience revamp across setup, onboarding, an
 ### Phase 0: Baseline and current worktree confirmation
 
 - [x] Run `make verify` before starting implementation so the current dirty worktree has a known baseline.
-- [ ] Confirm whether the current export/share implementation is intended to land now.
-- [ ] If export/share is accepted, mark the export items complete in this file and in `roadmap.md`.
+- [x] Confirm whether the current export/share implementation is intended to land now.
+- [x] If export/share is accepted, mark the export items complete in this file and in `roadmap.md`.
 - [ ] Capture before screenshots or short screen recordings for onboarding, setup success, setup failure, director, history, and export.
 - [ ] Review the app on at least one compact phone viewport before changing layout density.
 
@@ -55,9 +55,9 @@ Acceptance criteria:
 ### Phase 1: Product architecture and design system
 
 - [ ] Define the first-run journey as explicit states: launch gate, intro, model source choice, preflight, install/progress, camera permission, first take, review/export.
-- [ ] Replace one-off surfaces with shared components for bottom sheets, glass/dim overlays, status rows, icon actions, segmented controls, progress panels, and destructive actions.
+- [x] Replace one-off surfaces with shared components for bottom sheets, glass/dim overlays, status rows, icon actions, segmented controls, progress panels, and destructive actions.
 - [ ] Revisit typography so display type stays cinematic, while setup, diagnostics, and repeated controls use a cleaner, more readable operational style.
-- [ ] Add a small state vocabulary for `ready`, `needs action`, `working`, `degraded`, and `failed` so setup and director indicators feel consistent.
+- [x] Add a small state vocabulary for `ready`, `needs action`, `working`, `degraded`, and `failed` so setup and director indicators feel consistent.
 - [ ] Reduce generic gradient/orb decoration in high-value screens and use real product signals instead: live camera, brand art, progress, model source, and screenplay preview.
 - [ ] Audit contrast, text fitting, button labels, safe areas, compact-height behavior, and dynamic text scale.
 
@@ -76,7 +76,7 @@ Acceptance criteria:
 - [x] Show setup progress with source label, current phase, percentage when available, and a plain-language explanation of what is happening.
 - [ ] Add recoverable actions for retry, import another file, switch back to managed download, reset cached install, and open diagnostic details.
 - [x] Preserve prior working source on failed import or canceled file picker.
-- [ ] Add a post-install summary before camera opens: active source, backend, CPU fallback warning if needed, and next action.
+- [x] Add a post-install summary before camera opens: active source, backend, CPU fallback warning if needed, and next action.
 - [x] Add a developer-only detail block when no source is configured, with `config.json` and `--dart-define` guidance.
 
 Acceptance criteria:
@@ -92,7 +92,7 @@ Acceptance criteria:
 - [x] Add a final setup handoff screen that clearly explains managed download versus local import before routing to setup.
 - [x] Use brand art, product UI fragments, or camera-led motion instead of abstract decoration where possible.
 - [x] Keep `Skip` available, but make skip land in the same recoverable setup workspace.
-- [ ] Add reduced-motion and compact-height behavior for the pager.
+- [x] Add reduced-motion and compact-height behavior for the pager.
 - [x] Keep returning-user bypass behavior intact.
 
 Acceptance criteria:
@@ -125,7 +125,7 @@ Acceptance criteria:
 - [ ] Add favorite/pin support for strong takes.
 - [ ] Add optional thumbnails from representative captured frames if performance allows.
 - [ ] Add search/filter by mode, date, and title once there is enough metadata.
-- [ ] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
+- [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
 - [ ] Consider a lightweight "shot notes" field that stays local and exports with the take.
 - [ ] Consider custom cinematic presets after the default three modes feel stable.
 
@@ -171,14 +171,11 @@ Acceptance criteria:
 
 ## Suggested updated build order
 
-1. Confirm and verify the current export/share worktree.
-2. Implement the shared UI primitives and setup state vocabulary.
-3. Revamp the setup screen into a recoverable setup workspace.
-4. Revamp onboarding so it hands off cleanly to setup.
-5. Revamp the director controls into a modern shooting console.
-6. Promote history/export into a take library workflow.
-7. Add settings/model diagnostics and performance presets.
-8. Run hardware validation and release-readiness cleanup.
+1. Finish recoverable setup actions and diagnostic details, especially reset cached install and explicit source switching.
+2. Polish director mode, review, empty, paused, degraded, and permission states.
+3. Promote history/export into a take library workflow.
+4. Add settings/model diagnostics and performance presets.
+5. Run hardware validation and release-readiness cleanup.
 
 ## Feature candidates to consider
 
@@ -226,11 +223,13 @@ Acceptance criteria:
 - [x] Add system haptic feedback to onboarding, buttons, selections, and key action controls
 - [x] Persist recent screenplay takes locally as timestamped sessions
 - [x] Add a lightweight history sheet to reopen saved takes in paused review mode
+- [x] Add export/share for active and saved takes as Fountain or plain text through share sheet and clipboard actions
 - [x] Remove the internal FFI package example app and unused generated binding artifacts
 - [x] Add unit coverage for source resolution and install dispatch
 - [x] Add unit coverage for onboarding persistence and legacy-install seeding
 - [x] Add widget coverage for splash copy and recovery actions
 - [x] Add widget coverage for launch gating and director onboarding behavior
+- [x] Add unit and widget coverage for export/share formatting and active/saved-take export actions
 - [x] Run `flutter pub get`
 - [x] Run `flutter analyze`
 - [x] Run `flutter test`
@@ -248,7 +247,7 @@ Acceptance criteria:
 
 ### Production rollout
 
-- [ ] Host the Gemma 3n `.task` artifact on production infrastructure
+- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
 - [ ] Decide whether the managed model URL is public or token-gated
 - [ ] Set the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 
@@ -330,7 +329,7 @@ Acceptance criteria:
 
 ## Near-term feature backlog
 
-- [ ] Verify and land the current export/share workflow for active and saved takes
+- [x] Verify and land the current export/share workflow for active and saved takes
 - [ ] Pair each saved take with a captured frame thumbnail when performance permits
 - [ ] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [ ] Add pace and responsiveness controls for frame sampling and inference cadence

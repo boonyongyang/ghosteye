@@ -56,7 +56,7 @@ Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` 
 1. Persisted imported local file (`shared_preferences` key `ghosteye.imported_model_path`)
 2. `GHOSTEYE_GEMMA_MODEL_PATH` compile-time define
 3. `GHOSTEYE_GEMMA_MODEL_URL` compile-time define
-4. Legacy Hugging Face fallback URL (constant in `AppConstants`)
+4. Explicit setup error if nothing is configured
 
 Source signatures are persisted so switching source forces reinstall. Managed URLs use `flutter_gemma` network install; local files use file install with copy into app storage. `GemmaService` tracks a `GemmaRuntimeSnapshot` (backend=GPU/CPU, source, fallback flag) after successful init. Hugging Face-specific copy should only appear when the active source is actually Hugging Face.
 
@@ -121,3 +121,13 @@ flutter run --dart-define=GHOSTEYE_FRAME_JPEG_QUALITY=75
 - `roadmap.md` — prioritized backlog with acceptance criteria
 - `agents.md` — agent handoff context, guardrails, and current blockers
 - `CONTRIBUTING.md` — maintainer workflow and doc-sync rules
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)

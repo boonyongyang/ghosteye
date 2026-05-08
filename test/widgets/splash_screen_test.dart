@@ -88,6 +88,29 @@ void main() {
     expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
+  testWidgets('SplashScreen shows ready summary before opening camera',
+      (tester) async {
+    final notifier = _FakeGemmaNotifier(
+      const GemmaState(
+        phase: GemmaPhase.ready,
+        source: ModelSourceConfig(
+          kind: ModelSourceKind.network,
+          origin: ModelSourceOrigin.envUrl,
+          location: 'https://cdn.example.com/gemma.litertlm',
+          label: 'Managed download',
+        ),
+        activeBackend: RuntimeBackend.gpu,
+      ),
+    );
+
+    await _pumpSplashScreen(tester, notifier);
+
+    expect(find.text('Model ready'), findsOneWidget);
+    expect(find.text('Active configuration'), findsOneWidget);
+    expect(find.text('Runtime: GPU'), findsOneWidget);
+    expect(find.text('Open camera'), findsOneWidget);
+  });
+
   testWidgets(
       'SplashScreen shows setup guidance when no model source is configured',
       (tester) async {

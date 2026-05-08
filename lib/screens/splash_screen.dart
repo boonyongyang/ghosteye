@@ -3,11 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../config/constants.dart';
+import '../models/app_status.dart';
 import '../models/model_source.dart';
 import '../providers/gemma_provider.dart';
 import '../services/app_haptics.dart';
 import '../services/gemma_service.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/diagnostic_block.dart';
+import '../widgets/section_block.dart';
+import '../widgets/status_panel.dart';
+import '../widgets/status_row.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -18,6 +23,7 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _started = false;
+  bool _showPostInstallSummary = false;
 
   @override
   void initState() {
@@ -26,10 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   void _startSetup() {
-    if (_started) {
-      return;
-    }
-
+    if (_started) return;
     _started = true;
     Future<void>.microtask(ref.read(gemmaProvider.notifier).ensureReady);
   }
@@ -38,16 +41,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     ref.invalidate(gemmaProvider);
     setState(() {
       _started = false;
+      _showPostInstallSummary = false;
     });
     _startSetup();
   }
 
   Future<void> _importLocalModel() async {
+    setState(() => _showPostInstallSummary = false);
     await ref.read(gemmaProvider.notifier).importLocalModel();
   }
 
   Future<void> _useManagedDownload() async {
+    setState(() => _showPostInstallSummary = false);
     await ref.read(gemmaProvider.notifier).useManagedDownload();
+  }
+
+  void _openCamera() {
+    context.go('/director');
   }
 
   @override
@@ -56,8 +66,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         (previous, next) {
       final wasReady = previous?.valueOrNull?.isReady ?? false;
       final isReady = next.valueOrNull?.isReady ?? false;
-      if (!wasReady && isReady && mounted) {
-        context.go('/director');
+      if (!wasReady && isReady && mounted && !_showPostInstallSummary) {
+        setState(() => _showPostInstallSummary = true);
       }
     });
 
@@ -66,9 +76,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     return Scaffold(
       body: _SetupScaffold(
         state: gemmaState,
+        showPostInstallSummary: _showPostInstallSummary,
         onRetry: _retrySetup,
         onImportLocalModel: _importLocalModel,
         onUseManagedDownload: _useManagedDownload,
+        onOpenCamera: _openCamera,
       ),
     );
   }
@@ -77,15 +89,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 class _SetupScaffold extends StatelessWidget {
   const _SetupScaffold({
     required this.state,
+    required this.showPostInstallSummary,
     required this.onRetry,
     required this.onImportLocalModel,
     required this.onUseManagedDownload,
+    required this.onOpenCamera,
   });
 
   final AsyncValue<GemmaState> state;
+  final bool showPostInstallSummary;
   final VoidCallback onRetry;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function() onUseManagedDownload;
+  final VoidCallback onOpenCamera;
 
   @override
   Widget build(BuildContext context) {
@@ -108,7 +124,7 @@ class _SetupScaffold extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(22, 20, 22, 24),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
@@ -117,26 +133,36 @@ class _SetupScaffold extends StatelessWidget {
                   children: <Widget>[
                     const _SetupHeader(),
                     const SizedBox(height: 28),
-                    _SetupStage(
-                      state: state,
-                      onRetry: onRetry,
-                      onImportLocalModel: onImportLocalModel,
-                      onUseManagedDownload: value?.usesImportedModel == true
-                          ? onUseManagedDownload
-                          : null,
-                    ),
-                    const SizedBox(height: 18),
-                    _SourceSummary(source: value?.source),
-                    const SizedBox(height: 18),
-                    _PreflightChecklist(source: value?.source),
-                    if (value?.hasError != true) ...<Widget>[
-                      const SizedBox(height: 18),
-                      _SetupFallbackActions(
-                        isBusy: isBusy,
-                        usesImportedModel: value?.usesImportedModel ?? false,
+                    if ((showPostInstallSummary || value?.isReady == true) &&
+                        value != null)
+                      _PostInstallSummary(
+                        state: value,
+                        onOpenCamera: onOpenCamera,
                         onImportLocalModel: onImportLocalModel,
                         onUseManagedDownload: onUseManagedDownload,
+                      )
+                    else ...<Widget>[
+                      _SetupStage(
+                        state: state,
+                        onRetry: onRetry,
+                        onImportLocalModel: onImportLocalModel,
+                        onUseManagedDownload: value?.usesImportedModel == true
+                            ? onUseManagedDownload
+                            : null,
                       ),
+                      const SizedBox(height: 18),
+                      _SourceSummary(source: value?.source),
+                      const SizedBox(height: 18),
+                      _PreflightChecklist(source: value?.source),
+                      if (value?.hasError != true) ...<Widget>[
+                        const SizedBox(height: 18),
+                        _SetupFallbackActions(
+                          isBusy: isBusy,
+                          usesImportedModel: value?.usesImportedModel ?? false,
+                          onImportLocalModel: onImportLocalModel,
+                          onUseManagedDownload: onUseManagedDownload,
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -254,7 +280,7 @@ class _SetupProgress extends StatelessWidget {
       ModelSourceKind.network =>
         'Source: managed download. First launch downloads a large on-device model, so Wi-Fi is recommended before camera access starts.',
       null =>
-        'Choose a managed URL or import a local .task file so setup can continue.',
+        'Choose a managed URL or import a local .litertlm or .task file so setup can continue.',
     };
 
     final detail = switch (state.phase) {
@@ -265,15 +291,16 @@ class _SetupProgress extends StatelessWidget {
       _ => sourceDetail,
     };
 
-    return _SetupPanel(
-      statusColor: _statusColor(context, state),
+    final status = _statusFor(state);
+
+    return StatusPanel(
+      statusColor: status.color(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           _StageLabel(
-            icon: state.phase == GemmaPhase.ready
-                ? Icons.check_circle_outline
-                : Icons.auto_awesome_motion_outlined,
+            icon: status.icon,
+            iconColor: status.color(context),
             label: label,
           ),
           const SizedBox(height: 16),
@@ -288,14 +315,13 @@ class _SetupProgress extends StatelessWidget {
     );
   }
 
-  Color _statusColor(BuildContext context, GemmaState state) {
+  AppStatus _statusFor(GemmaState state) {
     return switch (state.phase) {
-      GemmaPhase.ready => const Color(0xFF4DD08A),
-      GemmaPhase.downloading ||
-      GemmaPhase.checking =>
-        Theme.of(context).colorScheme.primary,
-      GemmaPhase.error => Theme.of(context).colorScheme.error,
-      GemmaPhase.idle => Colors.white54,
+      GemmaPhase.ready when state.usedFallback => AppStatus.degraded,
+      GemmaPhase.ready => AppStatus.ready,
+      GemmaPhase.downloading || GemmaPhase.checking => AppStatus.working,
+      GemmaPhase.error => AppStatus.failed,
+      GemmaPhase.idle => AppStatus.needsAction,
     };
   }
 }
@@ -319,19 +345,21 @@ class _SetupError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const status = AppStatus.failed;
     final helpText = _buildSupportHint(
       failureKind: failureKind,
       rawMessage: message,
       source: source,
     );
 
-    return _SetupPanel(
-      statusColor: Theme.of(context).colorScheme.error,
+    return StatusPanel(
+      statusColor: status.color(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const _StageLabel(
-            icon: Icons.error_outline,
+          _StageLabel(
+            icon: status.icon,
+            iconColor: status.color(context),
             label: 'Model setup failed',
           ),
           const SizedBox(height: 12),
@@ -341,7 +369,7 @@ class _SetupError extends StatelessWidget {
           ),
           if (helpText != null) ...<Widget>[
             const SizedBox(height: 12),
-            _DiagnosticBlock(text: helpText),
+            DiagnosticBlock(text: helpText),
           ],
           const SizedBox(height: 18),
           Wrap(
@@ -387,7 +415,7 @@ class _SetupError extends StatelessWidget {
   }) {
     switch (failureKind) {
       case GemmaStartupFailureKind.modelSource:
-        return 'Run with --dart-define=GHOSTEYE_GEMMA_MODEL_URL=https://your-host/model.task '
+        return 'Run with --dart-define=GHOSTEYE_GEMMA_MODEL_URL=https://your-host/model.litertlm '
             'or import a local model file from this screen before the first run continues.';
       case GemmaStartupFailureKind.missingToken:
         if (source?.isHuggingFace ?? false) {
@@ -420,7 +448,7 @@ class _SetupError extends StatelessWidget {
             ? 'The imported file is missing or unreadable. Import another supported model file, '
                 'or switch back to managed download.'
             : 'The configured local model path could not be opened. Check '
-                '--dart-define=GHOSTEYE_GEMMA_MODEL_PATH=/absolute/path/to/model.task '
+                '--dart-define=GHOSTEYE_GEMMA_MODEL_PATH=/absolute/path/to/model.litertlm '
                 'or import another model file.';
       case GemmaStartupFailureKind.unknown:
       case null:
@@ -456,6 +484,130 @@ class _SetupError extends StatelessWidget {
   }
 }
 
+class _PostInstallSummary extends StatelessWidget {
+  const _PostInstallSummary({
+    required this.state,
+    required this.onOpenCamera,
+    required this.onImportLocalModel,
+    required this.onUseManagedDownload,
+  });
+
+  final GemmaState state;
+  final VoidCallback onOpenCamera;
+  final Future<void> Function() onImportLocalModel;
+  final Future<void> Function() onUseManagedDownload;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final status = state.usedFallback ? AppStatus.degraded : AppStatus.ready;
+    final backendLabel = state.activeBackend?.name.toUpperCase() ?? 'unknown';
+    final sourceLabel = state.source?.label ?? 'configured source';
+    final sourceKind = state.source?.kind == ModelSourceKind.file
+        ? 'Local file'
+        : 'Managed download';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        StatusPanel(
+          statusColor: status.color(context),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _StageLabel(
+                icon: status.icon,
+                iconColor: status.color(context),
+                label: 'Model ready',
+              ),
+              const SizedBox(height: 16),
+              const LinearProgressIndicator(value: 1.0),
+              const SizedBox(height: 18),
+              SectionBlock(
+                title: 'Active configuration',
+                child: Column(
+                  children: <Widget>[
+                    StatusRow(
+                      icon: state.source?.kind == ModelSourceKind.file
+                          ? Icons.sd_storage_outlined
+                          : Icons.cloud_download_outlined,
+                      iconColor: theme.colorScheme.primary,
+                      title: sourceLabel,
+                      detail: sourceKind,
+                    ),
+                    const _SectionDivider(),
+                    StatusRow(
+                      icon: state.usedFallback
+                          ? Icons.warning_amber_outlined
+                          : Icons.memory_outlined,
+                      iconColor: state.usedFallback
+                          ? const Color(0xFFF2B95C)
+                          : theme.colorScheme.primary,
+                      title: 'Runtime: $backendLabel',
+                      detail: state.usedFallback
+                          ? 'GPU unavailable — running on CPU. Inference may be slower.'
+                          : '${AppConstants.modelDisplayName} loaded and ready.',
+                    ),
+                  ],
+                ),
+              ),
+              if (state.usedFallback) ...<Widget>[
+                const SizedBox(height: 14),
+                const DiagnosticBlock(
+                  icon: Icons.warning_amber_outlined,
+                  iconColor: Color(0xFFF2B95C),
+                  text:
+                      'GPU backend initialization failed. Ghosteye is running on CPU which may produce '
+                      'slower inference. On physical hardware, GPU should initialize correctly.',
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: () {
+            AppHaptics.trigger(AppHapticPattern.action);
+            onOpenCamera();
+          },
+          icon: const Icon(Icons.videocam_outlined),
+          label: const Text('Open camera'),
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SectionBlock(
+          title: 'Source controls',
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: <Widget>[
+              OutlinedButton.icon(
+                onPressed: () {
+                  AppHaptics.trigger(AppHapticPattern.action);
+                  onImportLocalModel();
+                },
+                icon: const Icon(Icons.file_open_outlined),
+                label: const Text('Import local model'),
+              ),
+              if (state.usesImportedModel)
+                TextButton.icon(
+                  onPressed: () {
+                    AppHaptics.trigger(AppHapticPattern.selection);
+                    onUseManagedDownload();
+                  },
+                  icon: const Icon(Icons.cloud_download_outlined),
+                  label: const Text('Use managed download'),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _SourceSummary extends StatelessWidget {
   const _SourceSummary({required this.source});
 
@@ -463,6 +615,7 @@ class _SourceSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final title = source?.label ?? 'Choose a model source';
     final detail = switch (source?.kind) {
       ModelSourceKind.network =>
@@ -475,14 +628,15 @@ class _SourceSummary extends StatelessWidget {
     };
     final metadata = source == null
         ? 'No active source'
-        : '${source!.kind.name.toUpperCase()} - ${source!.modelId}';
+        : '${source!.kind.name.toUpperCase()} — ${source!.modelId}';
 
-    return _SectionBlock(
+    return SectionBlock(
       title: 'Active source',
-      child: _InfoRow(
+      child: StatusRow(
         icon: source?.kind == ModelSourceKind.file
             ? Icons.sd_storage_outlined
             : Icons.cloud_download_outlined,
+        iconColor: theme.colorScheme.primary,
         title: title,
         detail: detail,
         trailing: metadata,
@@ -502,40 +656,40 @@ class _PreflightChecklist extends StatelessWidget {
         ? 'Local source selected. Network is only needed if you switch back to managed download.'
         : 'Use Wi-Fi for the first model download. Camera frames still stay on-device.';
 
-    return _SectionBlock(
+    return SectionBlock(
       title: 'Before camera opens',
       child: Column(
         children: <Widget>[
-          _PreflightRow(
+          StatusRow(
             icon: Icons.wifi_tethering_outlined,
-            label: 'Network',
+            title: 'Network',
             detail: networkDetail,
           ),
-          const _Divider(),
-          const _PreflightRow(
+          const _SectionDivider(),
+          const StatusRow(
             icon: Icons.inventory_2_outlined,
-            label: 'Storage',
+            title: 'Storage',
             detail:
                 'Keep room for a large on-device model file and future saved takes.',
           ),
-          const _Divider(),
-          const _PreflightRow(
+          const _SectionDivider(),
+          const StatusRow(
             icon: Icons.battery_charging_full_outlined,
-            label: 'Power',
+            title: 'Power',
             detail:
                 'First install and first inference can run warm. Start with enough battery for setup.',
           ),
-          const _Divider(),
-          const _PreflightRow(
+          const _SectionDivider(),
+          const StatusRow(
             icon: Icons.privacy_tip_outlined,
-            label: 'Privacy',
+            title: 'Privacy',
             detail:
                 'The network is for model delivery only. Scene frames and generated takes stay local.',
           ),
-          const _Divider(),
-          const _PreflightRow(
+          const _SectionDivider(),
+          const StatusRow(
             icon: Icons.phone_iphone_outlined,
-            label: 'Device',
+            title: 'Device',
             detail:
                 'Use Android hardware or a physical iPhone for reliable runtime validation.',
           ),
@@ -560,7 +714,7 @@ class _SetupFallbackActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _SectionBlock(
+    return SectionBlock(
       title: 'Source controls',
       child: Wrap(
         spacing: 10,
@@ -593,103 +747,26 @@ class _SetupFallbackActions extends StatelessWidget {
   }
 }
 
-class _SetupPanel extends StatelessWidget {
-  const _SetupPanel({
-    required this.statusColor,
-    required this.child,
-  });
-
-  final Color statusColor;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xCC11151C),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(8),
-                ),
-              ),
-              child: const SizedBox(width: 4),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: child,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SectionBlock extends StatelessWidget {
-  const _SectionBlock({
-    required this.title,
-    required this.child,
-  });
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          title,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.primary.withOpacity(0.88),
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 10),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.24),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: child,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _StageLabel extends StatelessWidget {
   const _StageLabel({
     required this.icon,
     required this.label,
+    this.iconColor,
   });
 
   final IconData icon;
   final String label;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        Icon(icon, size: 22, color: Theme.of(context).colorScheme.primary),
+        Icon(
+          icon,
+          size: 22,
+          color: iconColor ?? Theme.of(context).colorScheme.primary,
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -702,124 +779,8 @@ class _StageLabel extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.title,
-    required this.detail,
-    required this.trailing,
-  });
-
-  final IconData icon;
-  final String title;
-  final String detail;
-  final String trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Icon(icon, color: theme.colorScheme.primary, size: 24),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(title, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 6),
-              Text(detail, style: theme.textTheme.bodySmall),
-              const SizedBox(height: 10),
-              Text(
-                trailing,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PreflightRow extends StatelessWidget {
-  const _PreflightRow({
-    required this.icon,
-    required this.label,
-    required this.detail,
-  });
-
-  final IconData icon;
-  final String label;
-  final String detail;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Icon(icon, color: Colors.white70, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(label, style: theme.textTheme.titleMedium),
-                const SizedBox(height: 4),
-                Text(detail, style: theme.textTheme.bodySmall),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _DiagnosticBlock extends StatelessWidget {
-  const _DiagnosticBlock({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.28),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Icon(Icons.info_outline, size: 18, color: Colors.white70),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  const _Divider();
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
 
   @override
   Widget build(BuildContext context) {

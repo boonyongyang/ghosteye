@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import '../config/constants.dart';
 import '../providers/onboarding_provider.dart';
 import '../services/app_haptics.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/glass_surface.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -259,9 +258,17 @@ class _OnboardingPosterPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final isCompact = constraints.maxHeight < 650;
+        final topPad =
+            isCompact ? constraints.maxHeight * 0.08 : constraints.maxHeight * 0.16;
+        final bottomPad =
+            isCompact ? constraints.maxHeight * 0.20 : constraints.maxHeight * 0.28;
+        final titleFontSize = isCompact ? 30.0 : 42.0;
+
         return AnimatedBuilder(
           animation: controller,
           builder: (context, child) {
@@ -271,8 +278,8 @@ class _OnboardingPosterPage extends StatelessWidget {
               rawPage = controller.page ?? pageIndex.toDouble();
             }
             final pageDelta = rawPage - pageIndex;
-            final parallax = pageDelta * 48;
-            final rotation = pageDelta * 0.08;
+            final parallax = reduceMotion ? 0.0 : pageDelta * 48;
+            final rotation = reduceMotion ? 0.0 : pageDelta * 0.08;
 
             return DecoratedBox(
               decoration: BoxDecoration(
@@ -340,15 +347,10 @@ class _OnboardingPosterPage extends StatelessWidget {
                     ),
                   ),
                   SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+                    physics: const ClampingScrollPhysics(),
                     padding: EdgeInsets.zero,
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        24,
-                        constraints.maxHeight * 0.16,
-                        24,
-                        constraints.maxHeight * 0.28,
-                      ),
+                      padding: EdgeInsets.fromLTRB(24, topPad, 24, bottomPad),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           minHeight: constraints.maxHeight * 0.56,
@@ -383,7 +385,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                               child: Text(
                                 page.title,
                                 style: theme.textTheme.displaySmall?.copyWith(
-                                  fontSize: 42,
+                                  fontSize: titleFontSize,
                                   height: 0.92,
                                   shadows: const <Shadow>[
                                     Shadow(
@@ -458,69 +460,58 @@ class _OnboardingControlBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return ClipRRect(
+    return GlassSurface(
       borderRadius: BorderRadius.circular(28),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.18),
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Text(
-                      '0${currentPage + 1}',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: accent,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _PageIndicators(
-                        currentPage: currentPage,
-                        pageCount: pageCount,
-                        accent: accent,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '0$pageCount',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
+      blur: 28,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                '0${currentPage + 1}',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: accent,
                 ),
-                const SizedBox(height: 14),
-                Row(
-                  children: <Widget>[
-                    SizedBox(
-                      width: 104,
-                      child: currentPage == 0
-                          ? const SizedBox.shrink()
-                          : OutlinedButton(
-                              onPressed: submitting ? null : () => onBack(),
-                              child: const Text('Back'),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: submitting ? null : () => onNext(),
-                        child: Text(isLastPage ? 'Start setup' : 'Next'),
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _PageIndicators(
+                  currentPage: currentPage,
+                  pageCount: pageCount,
+                  accent: accent,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '0$pageCount',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
           ),
-        ),
+          const SizedBox(height: 14),
+          Row(
+            children: <Widget>[
+              SizedBox(
+                width: 104,
+                child: currentPage == 0
+                    ? const SizedBox.shrink()
+                    : OutlinedButton(
+                        onPressed: submitting ? null : () => onBack(),
+                        child: const Text('Back'),
+                      ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: submitting ? null : () => onNext(),
+                  child: Text(isLastPage ? 'Start setup' : 'Next'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -691,21 +682,13 @@ class _GlassPillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.16),
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white12),
-          ),
-          child: TextButton(
-            onPressed: onPressed,
-            child: Text(label),
-          ),
-        ),
+    return GlassPill(
+      blur: 18,
+      backgroundColor: Colors.black.withOpacity(0.16),
+      padding: EdgeInsets.zero,
+      child: TextButton(
+        onPressed: onPressed,
+        child: Text(label),
       ),
     );
   }

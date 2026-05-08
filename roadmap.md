@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, and director controls: `setup workspace, setup-handoff onboarding, and command dock implemented`
+- Branding, onboarding, setup, director controls, and export: `setup workspace, setup-handoff onboarding, command dock, and active/saved-take export implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -17,7 +17,7 @@ These items should happen before broad external testing or store submission.
   Acceptance criteria: a top-level license is chosen, the README stays public-facing with relative repo links, no obvious scaffold/package docs remain in the public tree, and the internal FFI package stays clearly documented as internal-only
 - [ ] Choose the production Android application ID and iOS bundle ID
   Acceptance criteria: no `com.example.ghosteye` identifiers remain in shipping configs
-- [ ] Host the Gemma 3n `.task` artifact on production infrastructure
+- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
   Acceptance criteria: a stable managed URL exists and is documented in `config.json.example` or deployment docs
 - [ ] Decide the managed-download auth policy
   Acceptance criteria: app behavior is defined for public download, bearer-token gating, and missing-source recovery guidance
@@ -48,9 +48,9 @@ Acceptance criteria:
 
 ### 2. Export and share
 
-- [ ] Export a take as Fountain text
-- [ ] Export a take as plain text
-- [ ] Support share-sheet handoff
+- [x] Export a take as Fountain text
+- [x] Export a take as plain text
+- [x] Support share-sheet handoff
 
 Why it matters:
 - The app becomes more useful once screenplay output can leave the device.
@@ -113,11 +113,10 @@ Rule:
 ## Suggested build order
 
 1. Release readiness
-2. Export and share
-3. Frame thumbnails
-4. Model diagnostics
-5. Sampling controls
-6. Gemma 4 spike
+2. Frame thumbnails
+3. Model diagnostics
+4. Sampling controls
+5. Gemma 4 spike
 
 ## Notes for future agents
 

@@ -4,8 +4,8 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, and session history completed`
-- Confidence status: `make verify passing after the legacy-cleanup pass`
+- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, session history, and export/share completed`
+- Confidence status: `make verify passing on 2026-05-09 after setup UI/status cleanup and docs sync`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
 
@@ -17,6 +17,7 @@ Ghosteye is a Flutter camera app that:
 - runs on-device multimodal Gemma inference
 - turns the scene into screenplay-style text
 - renders the text as a teleprompter overlay
+- exports active or saved takes as Fountain or plain text through share and clipboard actions
 - supports `NOIR`, `SCI-FI`, and `SITCOM` cinematic modes
 
 ## Current runtime decisions
@@ -35,6 +36,7 @@ Ghosteye is a Flutter camera app that:
 4. `DirectorScreen` owns the live camera-to-screenplay experience, the command dock, pause/resume controls, and the first-run tips handoff.
 5. `FramePreprocessor` converts camera frames with a Dart backend by default and an optional internal FFI backend for supported platforms.
 6. `ScriptController` parses Fountain-style output, while `ScriptHistoryService` persists recent takes.
+7. `ScriptExportService` builds Fountain/plain-text exports for active and saved takes.
 
 ## Model source rules
 
@@ -62,6 +64,8 @@ Important behavior:
   Explicit local model file path override
 - `GHOSTEYE_GEMMA_TOKEN`
   Optional token for gated model downloads
+- Supported local/imported file extensions:
+  `.litertlm`, `.task`, `.bin`, and `.tflite`
 
 ## Repo map
 
@@ -82,12 +86,28 @@ Important behavior:
 
 - `make help`
   Print the maintainer command list
+- `make config-copy`
+  Create `config.json` from the checked-in template when missing
+- `make config-check`
+  Show whether `config.json` will be passed into Flutter
+- `make devices`
+  List connected devices before choosing a run target
 - `make verify`
   Standard local verification pass
+- `make run DEVICE=<device-id>`
+  Run on a chosen connected device using `config.json` when present
+- `make run-local-model MODEL_PATH=/absolute/path/model.litertlm`
+  Run with a local model file override
 - `make run-android`
   Run the app on Android using `config.json` when present
+- `make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm`
+  Run Android with a local model file override
 - `make run-ios IOS_DEVICE=<physical-device-id>`
   Run the app on a physical iPhone
+- `make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm`
+  Run iPhone with a local model file override
+- `make logs DEVICE=<device-id>`
+  Stream Flutter logs from a connected device
 - `make brand-assets`
   Regenerate icons and launch assets from the Ghosteye master image
 - `make todo`
@@ -115,6 +135,18 @@ Important behavior:
   Skippable four-step onboarding flow with a model-source handoff before setup
 - `lib/services/app_haptics.dart`
   Centralizes system haptic feedback for onboarding, buttons, and key controls
+- `lib/models/app_status.dart`
+  Shared setup/director status vocabulary for ready, needs-action, working, degraded, and failed states
+- `lib/widgets/glass_surface.dart`
+  Shared glass panel and pill primitives used by onboarding and future overlay controls
+- `lib/widgets/diagnostic_block.dart`
+  Shared inline diagnostic/help block for setup and future model-center detail
+- `lib/widgets/section_block.dart`
+  Shared titled content block for setup panels and future settings/library surfaces
+- `lib/widgets/status_panel.dart`
+  Shared status-accented panel for setup progress, errors, and post-install summaries
+- `lib/widgets/status_row.dart`
+  Shared icon/title/detail row used in setup source and preflight panels
 - `lib/screens/splash_screen.dart`
   Guided setup workspace with source summary, preflight context, progress, guidance, and recovery actions
 - `lib/screens/director_screen.dart`
@@ -125,6 +157,12 @@ Important behavior:
   Loads, persists, and clears recent screenplay takes
 - `lib/widgets/script_history_sheet.dart`
   UI for reviewing and reopening saved takes
+- `lib/providers/script_export_provider.dart`
+  Provides the export service used by director and history surfaces
+- `lib/services/script_export_service.dart`
+  Builds Fountain/plain-text exports and dispatches share or clipboard actions
+- `lib/widgets/script_export_sheet.dart`
+  UI for exporting the current take or a saved take
 - `tool/generate_brand_assets.dart`
   Rebuilds the launcher icons, web icons, and native launch assets from one image
 - `assets/branding/ghosteye-icon-source-ai.png`
@@ -152,7 +190,7 @@ Important behavior:
 
 ## Current blockers
 
-- Production hosting for the Gemma 3n `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
+- Production hosting for the Gemma 3n `.litertlm` or `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path
 - Production Android/iOS identifiers
@@ -167,3 +205,13 @@ Important behavior:
 - If you change source precedence, onboarding behavior, or runtime setup copy, update `README.md`, `plan.md`, and this file together.
 - If you update branding, regenerate platform assets via `tool/generate_brand_assets.dart` and update the brand prompt here if the visual direction changes.
 - If you add new setup flows, extend tests before changing the docs.
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
+- After modifying code files in this session, run `graphify update .` to keep the graph current (AST-only, no API cost)

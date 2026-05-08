@@ -20,7 +20,7 @@ Ghosteye is a Flutter camera app focused on on-device Gemma inference and screen
 ## Local setup
 
 1. Install a Flutter toolchain compatible with this repo's `pubspec.yaml`.
-2. Copy `config.json.example` to `config.json` if you want a managed download URL or token-based local run config.
+2. Run `make config-copy` if you want a managed download URL or token-based local run config.
 3. Run `make bootstrap`.
 4. Run `make verify`.
 
@@ -32,16 +32,32 @@ Use `make help` to print the command list. The main targets are:
 
 - `make bootstrap`
   Install Flutter dependencies
+- `make config-copy`
+  Create `config.json` from the checked-in example when it is missing
+- `make config-check`
+  Confirm whether `config.json` will be passed to Flutter
+- `make devices`
+  List connected devices before choosing a run target
 - `make analyze`
   Run static analysis
 - `make test`
   Run the automated test suite
 - `make verify`
   Run the standard local verification pass
+- `make run DEVICE=<device-id>`
+  Launch on a chosen connected device using `config.json` when present
+- `make run-local-model MODEL_PATH=/absolute/path/model.litertlm`
+  Launch with a local model path override instead of a managed download URL
 - `make run-android`
   Launch on Android using `config.json` when present
+- `make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm`
+  Launch Android with a local model path override
 - `make run-ios IOS_DEVICE=<physical-device-id>`
   Launch on a physical iPhone
+- `make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm`
+  Launch iPhone with a local model path override
+- `make logs DEVICE=<device-id>`
+  Stream Flutter logs for a connected device
 - `make build-apk-debug`
   Produce a debug Android build
 - `make build-ios-debug`
@@ -84,9 +100,9 @@ Keep these files aligned when related behavior changes:
 ## Current contribution priorities
 
 - Real-device Android and iPhone validation of the managed-download and imported-model flows
-- Production hosting and authentication policy for the Gemma 3n `.task` artifact
+- Production hosting and authentication policy for the Gemma 3n `.litertlm` or `.task` artifact
 - Release metadata, screenshots, support links, and privacy-policy planning
-- Creator workflow improvements after release-readiness work: export/share, frame thumbnails, diagnostics, and pacing controls
+- Creator workflow improvements after release-readiness work: take library polish, frame thumbnails, diagnostics, and pacing controls
 
 ## Open-source and GitHub gaps
 

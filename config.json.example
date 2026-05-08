@@ -1,4 +1,4 @@
 {
-  "GHOSTEYE_GEMMA_MODEL_URL": "https://your-cdn.example.com/models/gemma-3n-E2B-it-int4.task",
+  "GHOSTEYE_GEMMA_MODEL_URL": "https://your-cdn.example.com/models/gemma-3n-E2B-it-int4.litertlm",
   "GHOSTEYE_GEMMA_TOKEN": "optional_bearer_token_for_gated_downloads"
 }
