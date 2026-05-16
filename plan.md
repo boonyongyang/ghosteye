@@ -5,7 +5,7 @@ This file is the repo's working implementation checklist. Completed work stays c
 ## Overall status
 
 - Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites implemented`
-- Verification status: `make verify passing on 2026-05-16 after Phase 5 take library (title, mode, favorites, filter tabs)`
+- Verification status: `make verify passing on 2026-05-17 after Phase 6 performance presets and Model Center sheet`
 - Deployment readiness: `needs hardware validation, production hosting, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
 - Next product phase: `setup, onboarding, and director UX revamp before broader release polish`
@@ -137,14 +137,14 @@ Acceptance criteria:
 
 ### Phase 6: Settings and diagnostics
 
-- [ ] Add a compact settings/model center reachable from setup and director.
-- [ ] Show active model source, source kind, model identifier, installed source signature, and current backend.
+- [x] Add a compact settings/model center reachable from setup and director.
+- [x] Show active model source, source kind, model identifier, installed source signature, and current backend.
 - [ ] Show approximate cached model storage when practical.
-- [ ] Add cache reset and re-download controls with confirmation.
+- [x] Add cache reset and re-download controls with confirmation.
 - [ ] Add source-switch controls that respect the existing precedence rules.
-- [ ] Add a privacy/status screen that states when network is used and when frames stay on-device.
+- [x] Add a privacy/status screen that states when network is used and when frames stay on-device.
 - [ ] Add support diagnostics copy for common setup failures.
-- [ ] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
+- [x] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
 
 Acceptance criteria:
 
