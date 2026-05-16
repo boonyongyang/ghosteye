@@ -241,13 +241,14 @@ class CameraService {
   Duration computeAdaptiveInterval({
     required Duration previous,
     required Duration inferenceDuration,
+    Duration baseInterval = AppConstants.frameSampleInterval,
   }) {
     if (inferenceDuration <= AppConstants.slowInferenceThreshold) {
-      return AppConstants.frameSampleInterval;
+      return baseInterval;
     }
 
     final nextMs = math.max(
-      AppConstants.frameSampleInterval.inMilliseconds,
+      baseInterval.inMilliseconds,
       (inferenceDuration.inMilliseconds * 1.25).round(),
     );
     return Duration(milliseconds: nextMs);

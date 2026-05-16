@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/constants.dart';
+import '../models/performance_preset.dart';
 import '../services/camera_service.dart';
+import 'session_controls_provider.dart';
 
 final cameraServiceProvider = Provider<CameraService>((ref) {
   return CameraService();
@@ -42,10 +44,12 @@ class CameraControllerNotifier extends AsyncNotifier<CameraSession> {
       return;
     }
 
+    final preset = ref.read(performancePresetProvider);
     final service = ref.read(cameraServiceProvider);
     final nextInterval = service.computeAdaptiveInterval(
       previous: session.sampleInterval,
       inferenceDuration: inferenceDuration,
+      baseInterval: preset.baseInterval,
     );
 
     if (nextInterval == session.sampleInterval) {
@@ -54,6 +58,17 @@ class CameraControllerNotifier extends AsyncNotifier<CameraSession> {
 
     session.sampler.updateInterval(nextInterval);
     _session = session.copyWith(sampleInterval: nextInterval);
+    state = AsyncData(_session!);
+  }
+
+  void applyPreset(PerformancePreset preset) {
+    final session = _session;
+    if (session == null) {
+      return;
+    }
+
+    session.sampler.updateInterval(preset.baseInterval);
+    _session = session.copyWith(sampleInterval: preset.baseInterval);
     state = AsyncData(_session!);
   }
 

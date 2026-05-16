@@ -25,6 +25,7 @@ import '../widgets/cinematic_mode_selector.dart';
 import '../widgets/director_tips_sheet.dart';
 import '../widgets/inference_indicator.dart';
 import '../widgets/script_export_sheet.dart';
+import '../widgets/model_center_sheet.dart';
 import '../widgets/script_history_sheet.dart';
 import '../widgets/teleprompter_overlay.dart';
 
@@ -125,6 +126,8 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
                       ),
                     ),
                     onShowTips: () => unawaited(_showDirectorTips()),
+                    onShowModelCenter: () =>
+                        unawaited(_showModelCenterSheet(context, ref)),
                   ),
                   const SizedBox(height: 12),
                   if (kDebugMode)
@@ -304,6 +307,22 @@ Future<void> _interruptGeneration(WidgetRef ref) async {
   ref.read(cameraProvider.notifier).completeInference();
 }
 
+Future<void> _showModelCenterSheet(BuildContext context, WidgetRef ref) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) {
+      return ModelCenterSheet(
+        onResetCachedInstall: () {
+          Navigator.of(context).pop();
+          ref.read(gemmaProvider.notifier).resetCachedInstall();
+        },
+      );
+    },
+  );
+}
+
 Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
   await showModalBottomSheet<void>(
     context: context,
@@ -383,6 +402,7 @@ class _DirectorActions extends StatelessWidget {
     required this.onShowHistory,
     required this.onShowExport,
     required this.onShowTips,
+    required this.onShowModelCenter,
   });
 
   final bool captureEnabled;
@@ -391,6 +411,7 @@ class _DirectorActions extends StatelessWidget {
   final VoidCallback onShowHistory;
   final VoidCallback onShowExport;
   final VoidCallback onShowTips;
+  final VoidCallback onShowModelCenter;
 
   @override
   Widget build(BuildContext context) {
@@ -453,6 +474,15 @@ class _DirectorActions extends StatelessWidget {
                         icon: Icons.lightbulb_outline,
                         label: 'Tips',
                         onTap: onShowTips,
+                        hapticPattern: AppHapticPattern.selection,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DockAction(
+                        icon: Icons.tune_outlined,
+                        label: 'Settings',
+                        onTap: onShowModelCenter,
                         hapticPattern: AppHapticPattern.selection,
                       ),
                     ),
