@@ -27,4 +27,38 @@ void main() {
 
     expect(container.read(cinematicModeProvider), CinematicMode.sitcom);
   });
+
+  testWidgets('CinematicModeSelector shows description for selected mode',
+      (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: CinematicModeSelector(),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text(CinematicMode.noir.shortDescription),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('SCI-FI'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text(CinematicMode.sciFi.shortDescription),
+      findsOneWidget,
+    );
+    expect(
+      find.text(CinematicMode.noir.shortDescription),
+      findsNothing,
+    );
+  });
 }

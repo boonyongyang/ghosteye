@@ -176,6 +176,30 @@ void main() {
     );
   });
 
+  test('clearInstalledSourceSignature removes the persisted signature',
+      () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ModelSourceService.installedSourceSignatureKey: 'some-signature',
+    });
+    final preferences = await SharedPreferences.getInstance();
+    final service = await _createService(
+      preferences: preferences,
+      documentsDirectory: Directory.systemTemp,
+    );
+
+    expect(
+      preferences.getString(ModelSourceService.installedSourceSignatureKey),
+      'some-signature',
+    );
+
+    await service.clearInstalledSourceSignature();
+
+    expect(
+      preferences.getString(ModelSourceService.installedSourceSignatureKey),
+      isNull,
+    );
+  });
+
   test('importLocalModel rejects unsupported file extensions', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();

@@ -5,7 +5,7 @@ This file is the repo's working implementation checklist. Completed work stays c
 ## Overall status
 
 - Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, session history, and export/share implemented`
-- Verification status: `make verify passing on 2026-05-09 after setup UI/status cleanup and docs sync`
+- Verification status: `make verify passing on 2026-05-16 after director state polish and mode descriptions`
 - Deployment readiness: `needs hardware validation, production hosting, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
 - Next product phase: `setup, onboarding, and director UX revamp before broader release polish`
@@ -74,7 +74,7 @@ Acceptance criteria:
 - [x] Keep local import as an obvious fallback, not a buried error action.
 - [x] Add a preflight panel for Wi-Fi/network, storage expectation, battery/thermal note, model size when known, and privacy statement.
 - [x] Show setup progress with source label, current phase, percentage when available, and a plain-language explanation of what is happening.
-- [ ] Add recoverable actions for retry, import another file, switch back to managed download, reset cached install, and open diagnostic details.
+- [x] Add recoverable actions for retry, import another file, switch back to managed download, reset cached install, and open diagnostic details.
 - [x] Preserve prior working source on failed import or canceled file picker.
 - [x] Add a post-install summary before camera opens: active source, backend, CPU fallback warning if needed, and next action.
 - [x] Add a developer-only detail block when no source is configured, with `config.json` and `--dart-define` guidance.
@@ -106,11 +106,11 @@ Acceptance criteria:
 - [x] Replace the loose action-chip cluster with a clear bottom command dock.
 - [x] Make capture state the dominant control: pause/resume should be visually unmistakable.
 - [x] Move secondary actions into predictable surfaces: history/library, export/share, tips, diagnostics/settings.
-- [ ] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
+- [x] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
 - [ ] Add teleprompter controls for text size, scroll density, and output pace if they can be kept simple.
-- [ ] Add a review mode distinction when reopening a saved take so users know capture is paused.
+- [x] Add a review mode distinction when reopening a saved take so users know capture is paused.
 - [ ] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
-- [ ] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
+- [x] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
 
 Acceptance criteria:
 

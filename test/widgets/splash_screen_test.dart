@@ -12,6 +12,7 @@ class _FakeGemmaNotifier extends GemmaNotifier {
   final GemmaState initialState;
   bool importLocalModelCalled = false;
   bool useManagedDownloadCalled = false;
+  bool resetCachedInstallCalled = false;
 
   @override
   Future<GemmaState> build() async => initialState;
@@ -29,6 +30,11 @@ class _FakeGemmaNotifier extends GemmaNotifier {
   @override
   Future<void> useManagedDownload() async {
     useManagedDownloadCalled = true;
+  }
+
+  @override
+  Future<void> resetCachedInstall() async {
+    resetCachedInstallCalled = true;
   }
 
   @override
@@ -126,6 +132,15 @@ void main() {
     await _pumpSplashScreen(tester, notifier);
 
     expect(find.text('Model setup failed'), findsOneWidget);
+    expect(find.text('Show details'), findsOneWidget);
+    expect(
+      find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Show details'));
+    await tester.pump();
+
     expect(
       find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
       findsOneWidget,
@@ -153,8 +168,62 @@ void main() {
 
     await _pumpSplashScreen(tester, notifier);
 
+    expect(find.text('Show details'), findsOneWidget);
+    expect(find.textContaining('GHOSTEYE_GEMMA_TOKEN'), findsNothing);
+
+    await tester.tap(find.text('Show details'));
+    await tester.pump();
+
     expect(find.textContaining('GHOSTEYE_GEMMA_TOKEN'), findsOneWidget);
     expect(find.textContaining('Hugging Face'), findsNothing);
+  });
+
+  testWidgets(
+      'SplashScreen offers reset cached install for model load failure',
+      (tester) async {
+    final notifier = _FakeGemmaNotifier(
+      const GemmaState(
+        phase: GemmaPhase.error,
+        message: 'Model could not be opened',
+        failureKind: GemmaStartupFailureKind.modelLoad,
+        source: ModelSourceConfig(
+          kind: ModelSourceKind.network,
+          origin: ModelSourceOrigin.envUrl,
+          location: 'https://cdn.example.com/gemma.task',
+          label: 'Managed download',
+        ),
+      ),
+    );
+
+    await _pumpSplashScreen(tester, notifier);
+
+    expect(find.text('Reset cached install'), findsOneWidget);
+
+    await tester.tap(find.text('Reset cached install'));
+    await tester.pump();
+    expect(notifier.resetCachedInstallCalled, isTrue);
+  });
+
+  testWidgets(
+      'SplashScreen offers reset cached install in fallback actions for network source',
+      (tester) async {
+    final notifier = _FakeGemmaNotifier(
+      const GemmaState(
+        phase: GemmaPhase.downloading,
+        progress: 20,
+        source: ModelSourceConfig(
+          kind: ModelSourceKind.network,
+          origin: ModelSourceOrigin.envUrl,
+          location: 'https://cdn.example.com/gemma.task',
+          label: 'Managed download',
+        ),
+      ),
+    );
+
+    await _pumpSplashScreen(tester, notifier);
+
+    expect(find.text('Source controls'), findsOneWidget);
+    expect(find.text('Reset cached install'), findsOneWidget);
   });
 
   testWidgets('SplashScreen offers local import recovery actions',

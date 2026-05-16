@@ -538,7 +538,7 @@ void main() {
 
   testWidgets('DirectorScreen can reopen a saved take from history',
       (tester) async {
-    await _pumpDirectorScreen(
+    final container = await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
       captureEnabled: true,
@@ -571,12 +571,84 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('PAUSED'), findsOneWidget);
+    expect(find.text('REVIEWING SAVED TAKE'), findsOneWidget);
     expect(find.text('INT. CAB - NIGHT'), findsOneWidget);
     expect(
       find.text('Streetlight fractures over the windshield.'),
       findsOneWidget,
     );
     expect(find.text('Current live take'), findsNothing);
+    expect(container.read(reviewModeProvider), isTrue);
+  });
+
+  testWidgets('DirectorScreen clears review mode when resuming capture',
+      (tester) async {
+    final container = await _pumpDirectorScreen(
+      tester,
+      inferenceStatus: const InferenceStatusState(),
+      captureEnabled: true,
+      scriptState: ScriptState(),
+      gemmaState: const GemmaState(
+        phase: GemmaPhase.ready,
+        activeBackend: RuntimeBackend.gpu,
+      ),
+    );
+
+    await tester.tap(find.text('History'));
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.text('INT. CAB - NIGHT Streetlight fractures over the windshield.'),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('REVIEWING SAVED TAKE'), findsOneWidget);
+    expect(container.read(reviewModeProvider), isTrue);
+
+    await tester.tap(find.text('Resume'));
+    await tester.pump();
+
+    expect(find.text('REVIEWING SAVED TAKE'), findsNothing);
+    expect(container.read(reviewModeProvider), isFalse);
+    expect(container.read(captureEnabledProvider), isTrue);
+  });
+
+  testWidgets('DirectorScreen shows empty state hint when script is empty',
+      (tester) async {
+    await _pumpDirectorScreen(
+      tester,
+      inferenceStatus: const InferenceStatusState(),
+      captureEnabled: true,
+      scriptState: ScriptState(),
+      gemmaState: const GemmaState(
+        phase: GemmaPhase.ready,
+        activeBackend: RuntimeBackend.gpu,
+      ),
+    );
+
+    expect(
+      find.textContaining('Scene is live'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+      'DirectorScreen shows paused hint when capture is off and script is empty',
+      (tester) async {
+    await _pumpDirectorScreen(
+      tester,
+      inferenceStatus: const InferenceStatusState(
+        activity: InferenceActivity.paused,
+      ),
+      captureEnabled: false,
+      scriptState: ScriptState(),
+      gemmaState: const GemmaState(
+        phase: GemmaPhase.ready,
+        activeBackend: RuntimeBackend.gpu,
+      ),
+    );
+
+    expect(find.text('Capture paused.'), findsOneWidget);
+    expect(find.textContaining('Scene is live'), findsNothing);
   });
 
   testWidgets('DirectorScreen exports the current take', (tester) async {

@@ -12,56 +12,74 @@ class CinematicModeSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedMode = ref.watch(cinematicModeProvider);
 
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      alignment: WrapAlignment.center,
-      children: CinematicMode.values.map((mode) {
-        final isSelected = mode == selectedMode;
-        return InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: () {
-            if (!isSelected) {
-              AppHaptics.trigger(AppHapticPattern.selection);
-            }
-            ref.read(cinematicModeProvider.notifier).state = mode;
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          alignment: WrapAlignment.center,
+          children: CinematicMode.values.map((mode) {
+            final isSelected = mode == selectedMode;
+            return InkWell(
               borderRadius: BorderRadius.circular(999),
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.black54,
-              border: Border.all(
-                color: isSelected ? Colors.transparent : Colors.white24,
-              ),
-              boxShadow: isSelected
-                  ? <BoxShadow>[
-                      BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withOpacity(0.28),
-                        blurRadius: 24,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Text(
-              mode.displayName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.1,
+              onTap: () {
+                if (!isSelected) {
+                  AppHaptics.trigger(AppHapticPattern.selection);
+                }
+                ref.read(cinematicModeProvider.notifier).state = mode;
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.black54,
+                  border: Border.all(
+                    color: isSelected ? Colors.transparent : Colors.white24,
                   ),
-            ),
+                  boxShadow: isSelected
+                      ? <BoxShadow>[
+                          BoxShadow(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.28),
+                            blurRadius: 24,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  mode.displayName,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isSelected ? Colors.black : Colors.white,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                      ),
+                ),
+              ),
+            );
+          }).toList(growable: false),
+        ),
+        const SizedBox(height: 8),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            selectedMode.shortDescription,
+            key: ValueKey<CinematicMode>(selectedMode),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white38,
+                ),
+            textAlign: TextAlign.center,
           ),
-        );
-      }).toList(growable: false),
+        ),
+      ],
     );
   }
 }

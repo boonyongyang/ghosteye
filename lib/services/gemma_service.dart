@@ -512,6 +512,11 @@ class GemmaService {
     await _resetRuntimeState(clearSource: true);
   }
 
+  Future<void> resetCachedInstall() async {
+    await _modelSourceService.clearInstalledSourceSignature();
+    await _resetRuntimeState(clearSource: false);
+  }
+
   Future<void> resetConversation() async {
     await _closeChat();
     _activeMode = null;

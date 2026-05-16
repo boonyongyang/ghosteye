@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/script_provider.dart';
+import '../providers/session_controls_provider.dart';
 import 'script_line_widget.dart';
 import 'typewriter_text.dart';
 
@@ -46,6 +47,7 @@ class _ScriptScrollViewState extends ConsumerState<ScriptScrollView> {
     );
 
     final scriptState = ref.watch(scriptProvider);
+    final captureEnabled = ref.watch(captureEnabledProvider);
     final hasLiveResponse = scriptState.liveResponse.isNotEmpty;
     final itemCount =
         scriptState.entries.length + (hasLiveResponse ? 1 : 0) + 1;
@@ -77,6 +79,21 @@ class _ScriptScrollViewState extends ConsumerState<ScriptScrollView> {
                   .textTheme
                   .bodySmall
                   ?.copyWith(color: Colors.redAccent),
+            ),
+          );
+        }
+
+        if (scriptState.entries.isEmpty && !hasLiveResponse) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(
+              captureEnabled
+                  ? 'Scene is live — screenplay will appear here.'
+                  : 'Capture paused.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white38,
+                    fontStyle: FontStyle.italic,
+                  ),
             ),
           );
         }

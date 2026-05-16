@@ -113,6 +113,11 @@ class ModelSourceService {
     await preferences.setString(installedSourceSignatureKey, source.signature);
   }
 
+  Future<void> clearInstalledSourceSignature() async {
+    final preferences = await _loadPreferences();
+    await preferences.remove(installedSourceSignatureKey);
+  }
+
   Future<ModelSourceConfig?> importLocalModel() async {
     final pickedModel = await _pickModelFile();
     if (pickedModel == null) {

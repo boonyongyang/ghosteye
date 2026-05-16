@@ -56,6 +56,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     await ref.read(gemmaProvider.notifier).useManagedDownload();
   }
 
+  Future<void> _resetCachedInstall() async {
+    await ref.read(gemmaProvider.notifier).resetCachedInstall();
+    ref.invalidate(gemmaProvider);
+    setState(() {
+      _started = false;
+      _showPostInstallSummary = false;
+    });
+    _startSetup();
+  }
+
   void _openCamera() {
     context.go('/director');
   }
@@ -80,6 +90,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         onRetry: _retrySetup,
         onImportLocalModel: _importLocalModel,
         onUseManagedDownload: _useManagedDownload,
+        onResetCachedInstall: _resetCachedInstall,
         onOpenCamera: _openCamera,
       ),
     );
@@ -93,6 +104,7 @@ class _SetupScaffold extends StatelessWidget {
     required this.onRetry,
     required this.onImportLocalModel,
     required this.onUseManagedDownload,
+    required this.onResetCachedInstall,
     required this.onOpenCamera,
   });
 
@@ -101,6 +113,7 @@ class _SetupScaffold extends StatelessWidget {
   final VoidCallback onRetry;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function() onUseManagedDownload;
+  final Future<void> Function() onResetCachedInstall;
   final VoidCallback onOpenCamera;
 
   @override
@@ -149,6 +162,7 @@ class _SetupScaffold extends StatelessWidget {
                         onUseManagedDownload: value?.usesImportedModel == true
                             ? onUseManagedDownload
                             : null,
+                        onResetCachedInstall: onResetCachedInstall,
                       ),
                       const SizedBox(height: 18),
                       _SourceSummary(source: value?.source),
@@ -161,6 +175,10 @@ class _SetupScaffold extends StatelessWidget {
                           usesImportedModel: value?.usesImportedModel ?? false,
                           onImportLocalModel: onImportLocalModel,
                           onUseManagedDownload: onUseManagedDownload,
+                          onResetCachedInstall:
+                              value?.source?.kind == ModelSourceKind.network
+                                  ? onResetCachedInstall
+                                  : null,
                         ),
                       ],
                     ],
@@ -221,12 +239,14 @@ class _SetupStage extends StatelessWidget {
     required this.onRetry,
     required this.onImportLocalModel,
     required this.onUseManagedDownload,
+    required this.onResetCachedInstall,
   });
 
   final AsyncValue<GemmaState> state;
   final VoidCallback onRetry;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function()? onUseManagedDownload;
+  final Future<void> Function() onResetCachedInstall;
 
   @override
   Widget build(BuildContext context) {
@@ -239,6 +259,7 @@ class _SetupStage extends StatelessWidget {
               onRetry: onRetry,
               onImportLocalModel: onImportLocalModel,
               onUseManagedDownload: onUseManagedDownload,
+              onResetCachedInstall: onResetCachedInstall,
             )
           : _SetupProgress(state: value),
       loading: () => const _SetupProgress(state: GemmaState.idle()),
@@ -246,6 +267,7 @@ class _SetupStage extends StatelessWidget {
         message: error.toString(),
         onRetry: onRetry,
         onImportLocalModel: onImportLocalModel,
+        onResetCachedInstall: onResetCachedInstall,
       ),
     );
   }
@@ -326,7 +348,7 @@ class _SetupProgress extends StatelessWidget {
   }
 }
 
-class _SetupError extends StatelessWidget {
+class _SetupError extends StatefulWidget {
   const _SetupError({
     required this.message,
     this.failureKind,
@@ -334,6 +356,7 @@ class _SetupError extends StatelessWidget {
     required this.onRetry,
     required this.onImportLocalModel,
     this.onUseManagedDownload,
+    required this.onResetCachedInstall,
   });
 
   final String message;
@@ -342,14 +365,28 @@ class _SetupError extends StatelessWidget {
   final VoidCallback onRetry;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function()? onUseManagedDownload;
+  final Future<void> Function() onResetCachedInstall;
+
+  @override
+  State<_SetupError> createState() => _SetupErrorState();
+}
+
+class _SetupErrorState extends State<_SetupError> {
+  bool _showDetail = false;
+
+  bool get _shouldOfferReset =>
+      widget.failureKind == GemmaStartupFailureKind.modelLoad ||
+      (widget.failureKind != GemmaStartupFailureKind.modelSource &&
+          widget.failureKind != GemmaStartupFailureKind.missingToken &&
+          widget.source?.kind == ModelSourceKind.network);
 
   @override
   Widget build(BuildContext context) {
     const status = AppStatus.failed;
     final helpText = _buildSupportHint(
-      failureKind: failureKind,
-      rawMessage: message,
-      source: source,
+      failureKind: widget.failureKind,
+      rawMessage: widget.message,
+      source: widget.source,
     );
 
     return StatusPanel(
@@ -364,12 +401,28 @@ class _SetupError extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            message,
+            widget.message,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           if (helpText != null) ...<Widget>[
-            const SizedBox(height: 12),
-            DiagnosticBlock(text: helpText),
+            const SizedBox(height: 6),
+            TextButton.icon(
+              onPressed: () => setState(() => _showDetail = !_showDetail),
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+              ),
+              icon: Icon(
+                _showDetail ? Icons.expand_less : Icons.expand_more,
+                size: 16,
+              ),
+              label: Text(_showDetail ? 'Hide details' : 'Show details'),
+            ),
+            if (_showDetail) ...<Widget>[
+              const SizedBox(height: 4),
+              DiagnosticBlock(text: helpText),
+            ],
           ],
           const SizedBox(height: 18),
           Wrap(
@@ -379,7 +432,7 @@ class _SetupError extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () {
                   AppHaptics.trigger(AppHapticPattern.action);
-                  onRetry();
+                  widget.onRetry();
                 },
                 icon: const Icon(Icons.refresh),
                 label: const Text('Retry setup'),
@@ -387,19 +440,28 @@ class _SetupError extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: () {
                   AppHaptics.trigger(AppHapticPattern.action);
-                  onImportLocalModel();
+                  widget.onImportLocalModel();
                 },
                 icon: const Icon(Icons.file_open_outlined),
                 label: const Text('Import local model'),
               ),
-              if (onUseManagedDownload != null)
+              if (widget.onUseManagedDownload != null)
                 TextButton.icon(
                   onPressed: () {
                     AppHaptics.trigger(AppHapticPattern.selection);
-                    onUseManagedDownload!();
+                    widget.onUseManagedDownload!();
                   },
                   icon: const Icon(Icons.cloud_download_outlined),
                   label: const Text('Use managed download'),
+                ),
+              if (_shouldOfferReset)
+                TextButton.icon(
+                  onPressed: () {
+                    AppHaptics.trigger(AppHapticPattern.emphasis);
+                    widget.onResetCachedInstall();
+                  },
+                  icon: const Icon(Icons.delete_sweep_outlined),
+                  label: const Text('Reset cached install'),
                 ),
             ],
           ),
@@ -441,8 +503,8 @@ class _SetupError extends StatelessWidget {
         return 'Try the first run on a physical iPhone. The simulator is not a reliable target '
             'for this on-device Gemma runtime.';
       case GemmaStartupFailureKind.modelLoad:
-        return 'If the download completed, retry once. If it keeps failing, remove the cached model '
-            'and let Ghosteye download it again.';
+        return 'If the download completed, retry once. If it keeps failing, use '
+            '"Reset cached install" to remove the cached model and let Ghosteye download it again.';
       case GemmaStartupFailureKind.localModel:
         return source?.isImportedFile ?? false
             ? 'The imported file is missing or unreadable. Import another supported model file, '
@@ -705,12 +767,14 @@ class _SetupFallbackActions extends StatelessWidget {
     required this.usesImportedModel,
     required this.onImportLocalModel,
     required this.onUseManagedDownload,
+    this.onResetCachedInstall,
   });
 
   final bool isBusy;
   final bool usesImportedModel;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function() onUseManagedDownload;
+  final Future<void> Function()? onResetCachedInstall;
 
   @override
   Widget build(BuildContext context) {
@@ -740,6 +804,17 @@ class _SetupFallbackActions extends StatelessWidget {
                     },
               icon: const Icon(Icons.cloud_download_outlined),
               label: const Text('Use managed download'),
+            ),
+          if (onResetCachedInstall != null)
+            TextButton.icon(
+              onPressed: isBusy
+                  ? null
+                  : () {
+                      AppHaptics.trigger(AppHapticPattern.emphasis);
+                      onResetCachedInstall!();
+                    },
+              icon: const Icon(Icons.delete_sweep_outlined),
+              label: const Text('Reset cached install'),
             ),
         ],
       ),

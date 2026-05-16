@@ -191,6 +191,10 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
     }
   }
 
+  Future<void> resetCachedInstall() {
+    return ref.read(gemmaServiceProvider).resetCachedInstall();
+  }
+
   Future<void> resetConversation() {
     return ref.read(gemmaServiceProvider).resetConversation();
   }

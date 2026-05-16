@@ -55,6 +55,7 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
     final onboardingState = ref.watch(onboardingProvider);
     final inferenceStatus = ref.watch(inferenceStatusProvider);
     final captureEnabled = ref.watch(captureEnabledProvider);
+    final reviewMode = ref.watch(reviewModeProvider);
     final pipelineMetrics = ref.watch(inferencePipelineMetricsProvider);
     final scriptState = ref.watch(scriptProvider);
 
@@ -103,6 +104,10 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
                     ],
                   ),
                   const Spacer(),
+                  if (!captureEnabled && reviewMode) ...<Widget>[
+                    const _ReviewModeBanner(),
+                    const SizedBox(height: 8),
+                  ],
                   _DirectorActions(
                     captureEnabled: captureEnabled,
                     onToggleCapture: () => captureEnabled
@@ -276,6 +281,7 @@ Future<void> _pauseCapture(WidgetRef ref) async {
 }
 
 void _resumeCapture(WidgetRef ref) {
+  ref.read(reviewModeProvider.notifier).state = false;
   ref.read(captureEnabledProvider.notifier).state = true;
   final previousStatus = ref.read(inferenceStatusProvider);
   ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
@@ -285,6 +291,7 @@ void _resumeCapture(WidgetRef ref) {
 }
 
 Future<void> _resetScene(WidgetRef ref) async {
+  ref.read(reviewModeProvider.notifier).state = false;
   await _interruptGeneration(ref);
   ref.read(scriptProvider.notifier).clear();
   await ref.read(gemmaProvider.notifier).resetConversation();
@@ -310,6 +317,7 @@ Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
             Navigator.of(sheetContext).pop();
             await _pauseCapture(ref);
             ref.read(scriptProvider.notifier).loadSessionForReview(session);
+            ref.read(reviewModeProvider.notifier).state = true;
           },
           onExportSession: (session) async {
             Navigator.of(sheetContext).pop();
@@ -569,6 +577,48 @@ class _DockAction extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ReviewModeBanner extends StatelessWidget {
+  const _ReviewModeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF2B95C).withOpacity(0.12),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: const Color(0xFFF2B95C).withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(
+                Icons.movie_outlined,
+                size: 13,
+                color: Color(0xFFF2B95C),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'REVIEWING SAVED TAKE',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFFF2B95C),
+                      letterSpacing: 1.0,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

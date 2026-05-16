@@ -7,6 +7,15 @@ enum CinematicMode {
 
   final String displayName;
 
+  String get shortDescription => switch (this) {
+        CinematicMode.noir =>
+          'Hard-boiled 1940s shadows. Cynicism, chiaroscuro, wet pavement.',
+        CinematicMode.sciFi =>
+          'Cerebral sci-fi lens. Everything mundane has cosmic weight.',
+        CinematicMode.sitcom =>
+          'Ensemble sitcom writer. Find the absurdity in every beat.',
+      };
+
   String get systemPrompt => switch (this) {
         CinematicMode.noir => _noirPrompt,
         CinematicMode.sciFi => _sciFiPrompt,
