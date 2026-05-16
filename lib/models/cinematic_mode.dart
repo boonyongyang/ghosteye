@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 enum CinematicMode {
   noir('NOIR'),
   sciFi('SCI-FI'),
@@ -6,6 +8,12 @@ enum CinematicMode {
   const CinematicMode(this.displayName);
 
   final String displayName;
+
+  Color get badgeColor => switch (this) {
+        CinematicMode.noir => const Color(0xFFF2B95C),
+        CinematicMode.sciFi => const Color(0xFF67D7EE),
+        CinematicMode.sitcom => const Color(0xFFB39DDB),
+      };
 
   String get shortDescription => switch (this) {
         CinematicMode.noir =>

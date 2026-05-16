@@ -4,8 +4,8 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, session history, and export/share implemented`
-- Verification status: `make verify passing on 2026-05-16 after director state polish and mode descriptions`
+- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites implemented`
+- Verification status: `make verify passing on 2026-05-16 after Phase 5 take library (title, mode, favorites, filter tabs)`
 - Deployment readiness: `needs hardware validation, production hosting, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
 - Next product phase: `setup, onboarding, and director UX revamp before broader release polish`
@@ -120,11 +120,11 @@ Acceptance criteria:
 
 ### Phase 5: Creator workflow features
 
-- [ ] Promote history into a take library with better saved-take cards.
-- [ ] Add take naming or auto-generated titles from the first useful screenplay line.
-- [ ] Add favorite/pin support for strong takes.
+- [x] Promote history into a take library with better saved-take cards.
+- [x] Add take naming or auto-generated titles from the first useful screenplay line.
+- [x] Add favorite/pin support for strong takes.
 - [ ] Add optional thumbnails from representative captured frames if performance allows.
-- [ ] Add search/filter by mode, date, and title once there is enough metadata.
+- [x] Add search/filter by mode, date, and title once there is enough metadata.
 - [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
 - [ ] Consider a lightweight "shot notes" field that stays local and exports with the take.
 - [ ] Consider custom cinematic presets after the default three modes feel stable.

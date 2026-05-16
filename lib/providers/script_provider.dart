@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/script_entry.dart';
 import '../models/script_session.dart';
+import 'cinematic_mode_provider.dart';
 import 'script_history_provider.dart';
 
 const _noChange = Object();
@@ -201,11 +202,13 @@ class ScriptController extends Notifier<ScriptState> {
   Future<void> _syncHistory(ScriptState snapshot) async {
     final sessionId = snapshot.activeSessionId ?? _createSessionId();
     final createdAt = snapshot.activeSessionStartedAt ?? DateTime.now().toUtc();
+    final mode = ref.read(cinematicModeProvider);
 
     await ref.read(scriptHistoryProvider.notifier).syncSession(
           sessionId: sessionId,
           createdAt: createdAt,
           entries: snapshot.entries,
+          mode: mode,
         );
   }
 

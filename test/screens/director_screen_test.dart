@@ -559,15 +559,10 @@ void main() {
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Recent takes'), findsOneWidget);
-    expect(
-        find.text(
-            'INT. CAB - NIGHT Streetlight fractures over the windshield.'),
-        findsOneWidget);
+    expect(find.text('Take Library'), findsOneWidget);
+    expect(find.text('INT. CAB - NIGHT'), findsOneWidget);
 
-    await tester.tap(
-      find.text('INT. CAB - NIGHT Streetlight fractures over the windshield.'),
-    );
+    await tester.tap(find.text('INT. CAB - NIGHT'));
     await tester.pumpAndSettle();
 
     expect(find.text('PAUSED'), findsOneWidget);
@@ -596,9 +591,7 @@ void main() {
 
     await tester.tap(find.text('History'));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.text('INT. CAB - NIGHT Streetlight fractures over the windshield.'),
-    );
+    await tester.tap(find.text('INT. CAB - NIGHT'));
     await tester.pumpAndSettle();
 
     expect(find.text('REVIEWING SAVED TAKE'), findsOneWidget);

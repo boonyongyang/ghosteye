@@ -1,11 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/cinematic_mode.dart';
 import '../models/script_session.dart';
 import '../providers/script_history_provider.dart';
 import '../services/app_haptics.dart';
 
-class ScriptHistorySheet extends ConsumerWidget {
+enum _LibraryFilter { all, favorites, noir, sciFi, sitcom }
+
+extension on _LibraryFilter {
+  String get label => switch (this) {
+        _LibraryFilter.all => 'ALL',
+        _LibraryFilter.favorites => '★',
+        _LibraryFilter.noir => 'NOIR',
+        _LibraryFilter.sciFi => 'SCI-FI',
+        _LibraryFilter.sitcom => 'SITCOM',
+      };
+
+  bool matches(ScriptSession session) => switch (this) {
+        _LibraryFilter.all => true,
+        _LibraryFilter.favorites => session.isFavorite,
+        _LibraryFilter.noir => session.mode == CinematicMode.noir,
+        _LibraryFilter.sciFi => session.mode == CinematicMode.sciFi,
+        _LibraryFilter.sitcom => session.mode == CinematicMode.sitcom,
+      };
+}
+
+class ScriptHistorySheet extends ConsumerStatefulWidget {
   const ScriptHistorySheet({
     super.key,
     required this.onSelectSession,
@@ -16,7 +37,14 @@ class ScriptHistorySheet extends ConsumerWidget {
   final Future<void> Function(ScriptSession session) onExportSession;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScriptHistorySheet> createState() => _ScriptHistorySheetState();
+}
+
+class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
+  _LibraryFilter _filter = _LibraryFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final historyState = ref.watch(scriptHistoryProvider);
 
     return Container(
@@ -47,12 +75,12 @@ class ScriptHistorySheet extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Text(
-                          'Recent takes',
+                          'Take Library',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Text(
-                          'Tap a take to reopen it in the teleprompter. Ghosteye pauses live capture first.',
+                          'Tap a take to reopen it. Ghosteye pauses live capture first.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -69,29 +97,55 @@ class ScriptHistorySheet extends ConsumerWidget {
                       : const SizedBox.shrink(),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+              _FilterBar(
+                selected: _filter,
+                onSelect: (filter) => setState(() => _filter = filter),
+              ),
+              const SizedBox(height: 12),
               Flexible(
                 child: historyState.when(
                   data: (sessions) {
                     if (sessions.isEmpty) {
-                      return const _EmptyHistoryState(
+                      return const _EmptyLibraryState(
                         message:
                             'Ghosteye will save recent screenplay takes here after the first completed scene.',
                       );
                     }
 
+                    final sorted = <ScriptSession>[
+                      ...sessions.where((s) => s.isFavorite),
+                      ...sessions.where((s) => !s.isFavorite),
+                    ];
+                    final visible =
+                        sorted.where(_filter.matches).toList(growable: false);
+
+                    if (visible.isEmpty) {
+                      return _EmptyLibraryState(
+                        message: _filter == _LibraryFilter.favorites
+                            ? 'No favorited takes yet. Tap ★ on a take to pin it.'
+                            : 'No takes recorded in ${_filter.label} mode.',
+                      );
+                    }
+
                     return ListView.separated(
                       shrinkWrap: true,
-                      itemCount: sessions.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 12),
+                      itemCount: visible.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
-                        final session = sessions[index];
-                        return _HistoryCard(
+                        final session = visible[index];
+                        return _TakeCard(
                           session: session,
-                          onOpen: () => onSelectSession(session),
-                          onExport: () => onExportSession(session),
+                          onOpen: () => widget.onSelectSession(session),
+                          onExport: () => widget.onExportSession(session),
+                          onToggleFavorite: () {
+                            AppHaptics.trigger(AppHapticPattern.selection);
+                            ref
+                                .read(scriptHistoryProvider.notifier)
+                                .toggleFavorite(session.id);
+                          },
                           onDelete: () {
+                            AppHaptics.trigger(AppHapticPattern.emphasis);
                             ref
                                 .read(scriptHistoryProvider.notifier)
                                 .deleteSession(session.id);
@@ -106,7 +160,7 @@ class ScriptHistorySheet extends ConsumerWidget {
                       child: CircularProgressIndicator(),
                     ),
                   ),
-                  error: (error, stackTrace) => const _EmptyHistoryState(
+                  error: (_, __) => const _EmptyLibraryState(
                     message: 'Ghosteye could not load saved takes right now.',
                   ),
                 ),
@@ -119,76 +173,164 @@ class ScriptHistorySheet extends ConsumerWidget {
   }
 }
 
-class _HistoryCard extends StatelessWidget {
-  const _HistoryCard({
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.selected, required this.onSelect});
+
+  final _LibraryFilter selected;
+  final ValueChanged<_LibraryFilter> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _LibraryFilter.values.map((filter) {
+          final isActive = filter == selected;
+          final isMode = filter == _LibraryFilter.noir ||
+              filter == _LibraryFilter.sciFi ||
+              filter == _LibraryFilter.sitcom;
+          final modeColor = isMode
+              ? _modeColor(filter)
+              : filter == _LibraryFilter.favorites
+                  ? const Color(0xFFFDD663)
+                  : null;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                AppHaptics.trigger(AppHapticPattern.selection);
+                onSelect(filter);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(999),
+                  color: isActive
+                      ? (modeColor ?? Colors.white).withOpacity(0.15)
+                      : Colors.white.withOpacity(0.05),
+                  border: Border.all(
+                    color: isActive
+                        ? (modeColor ?? Colors.white).withOpacity(0.5)
+                        : Colors.white12,
+                  ),
+                ),
+                child: Text(
+                  filter.label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isActive
+                            ? (modeColor ?? Colors.white)
+                            : Colors.white38,
+                        fontWeight:
+                            isActive ? FontWeight.w700 : FontWeight.w500,
+                        letterSpacing: 0.8,
+                      ),
+                ),
+              ),
+            ),
+          );
+        }).toList(growable: false),
+      ),
+    );
+  }
+
+  Color _modeColor(_LibraryFilter filter) => switch (filter) {
+        _LibraryFilter.noir => CinematicMode.noir.badgeColor,
+        _LibraryFilter.sciFi => CinematicMode.sciFi.badgeColor,
+        _LibraryFilter.sitcom => CinematicMode.sitcom.badgeColor,
+        _ => Colors.white,
+      };
+}
+
+class _TakeCard extends StatelessWidget {
+  const _TakeCard({
     required this.session,
     required this.onOpen,
     required this.onExport,
+    required this.onToggleFavorite,
     required this.onDelete,
   });
 
   final ScriptSession session;
   final Future<void> Function() onOpen;
   final Future<void> Function() onExport;
+  final VoidCallback onToggleFavorite;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final preview = session.preview.isEmpty ? 'Untitled take' : session.preview;
+    final mode = session.mode;
 
     return Material(
       color: const Color(0xFF171C25),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(18),
         onTap: () {
           AppHaptics.trigger(AppHapticPattern.action);
           onOpen();
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      _formatTimestamp(session.updatedAt.toLocal()),
-                      style: theme.textTheme.bodySmall,
-                    ),
+                  if (mode != null) ...<Widget>[
+                    _ModeBadge(mode: mode),
+                    const SizedBox(width: 8),
+                  ],
+                  const Spacer(),
+                  _IconAction(
+                    icon: session.isFavorite
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
+                    color: session.isFavorite
+                        ? const Color(0xFFFDD663)
+                        : Colors.white38,
+                    tooltip: session.isFavorite
+                        ? 'Remove from favorites'
+                        : 'Add to favorites',
+                    onTap: onToggleFavorite,
                   ),
-                  IconButton(
+                  _IconAction(
+                    icon: Icons.ios_share_outlined,
                     tooltip: 'Export take',
-                    onPressed: () {
+                    onTap: () {
                       AppHaptics.trigger(AppHapticPattern.selection);
                       onExport();
                     },
-                    icon: const Icon(Icons.ios_share_outlined),
                   ),
-                  IconButton(
+                  _IconAction(
+                    icon: Icons.delete_outline,
                     tooltip: 'Delete take',
-                    onPressed: () {
-                      AppHaptics.trigger(AppHapticPattern.emphasis);
-                      onDelete();
-                    },
-                    icon: const Icon(Icons.delete_outline),
+                    onTap: onDelete,
                   ),
                 ],
               ),
-              Text(
-                preview,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  session.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '${session.lineCount} lines saved',
-                style: theme.textTheme.bodySmall,
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  '${_formatTimestamp(session.updatedAt.toLocal())} · ${session.lineCount} lines',
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
             ],
           ),
@@ -198,8 +340,60 @@ class _HistoryCard extends StatelessWidget {
   }
 }
 
-class _EmptyHistoryState extends StatelessWidget {
-  const _EmptyHistoryState({required this.message});
+class _ModeBadge extends StatelessWidget {
+  const _ModeBadge({required this.mode});
+
+  final CinematicMode mode;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = mode.badgeColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        mode.displayName,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+              letterSpacing: 0.8,
+            ),
+      ),
+    );
+  }
+}
+
+class _IconAction extends StatelessWidget {
+  const _IconAction({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.color,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      iconSize: 20,
+      onPressed: onTap,
+      icon: Icon(icon, color: color),
+    );
+  }
+}
+
+class _EmptyLibraryState extends StatelessWidget {
+  const _EmptyLibraryState({required this.message});
 
   final String message;
 
