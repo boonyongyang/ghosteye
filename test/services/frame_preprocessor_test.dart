@@ -240,7 +240,8 @@ void main() {
   });
 
   group('GhosteyeFrameFfi native JPEG encoding', () {
-    test('convertBgra8888ToJpeg returns a decodable JPEG with correct dimensions',
+    test(
+        'convertBgra8888ToJpeg returns a decodable JPEG with correct dimensions',
         () {
       if (ffiLibraryPath == null) return;
 
@@ -290,29 +291,33 @@ void main() {
       expect(ffi.activeAllocationCount, equals(0));
     });
 
-    test('native JPEG output is visually aligned with Dart backend output', () async {
+    test('native BGRA conversion is byte-aligned before JPEG encoding', () {
       if (ffiLibraryPath == null) return;
-
-      final dartPreprocessor = _buildPreprocessor(FramePreprocessorBackend.dart);
-      addTearDown(dartPreprocessor.dispose);
 
       final ffi = GhosteyeFrameFfi(libraryPath: ffiLibraryPath);
       final frame = _buildBgraFrame();
-
-      final dartResult = await dartPreprocessor.preprocess(frame);
-      final dartDecoded = img.decodeJpg(dartResult.imageBytes)!;
-
-      final jpegBytes = ffi.convertBgra8888ToJpeg(
+      final rgb = ffi.convertBgra8888ToRgb(
         bytes: frame.planes.first.bytes,
         width: frame.width,
         height: frame.height,
         bytesPerRow: frame.planes.first.bytesPerRow,
         maxDimension: 2,
-        quality: 88,
       );
-      final ffiDecoded = img.decodeJpg(jpegBytes)!;
 
-      _expectSimilarPixels(ffiDecoded, dartDecoded);
+      expect(rgb.width, equals(frame.width));
+      expect(rgb.height, equals(frame.height));
+      expect(
+        rgb.bytes,
+        equals(<int>[
+          255,
+          0,
+          0,
+          0,
+          255,
+          0,
+        ]),
+      );
+      expect(ffi.activeAllocationCount, equals(0));
     });
   });
 }

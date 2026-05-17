@@ -21,6 +21,8 @@ enum InferenceActivity {
   error,
 }
 
+const Object _activeGenerationIdNoChange = Object();
+
 class InferenceStatusState {
   const InferenceStatusState({
     this.activity = InferenceActivity.idle,
@@ -41,7 +43,7 @@ class InferenceStatusState {
     Duration? lastInferenceDuration,
     String? errorMessage,
     InferenceFailureKind? errorKind,
-    int? activeGenerationId,
+    Object? activeGenerationId = _activeGenerationIdNoChange,
   }) {
     return InferenceStatusState(
       activity: activity ?? this.activity,
@@ -49,7 +51,12 @@ class InferenceStatusState {
           lastInferenceDuration ?? this.lastInferenceDuration,
       errorMessage: errorMessage,
       errorKind: errorKind,
-      activeGenerationId: activeGenerationId,
+      activeGenerationId: identical(
+        activeGenerationId,
+        _activeGenerationIdNoChange,
+      )
+          ? this.activeGenerationId
+          : activeGenerationId as int?,
     );
   }
 }
@@ -108,18 +115,30 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
   final onboardingState = ref.watch(onboardingProvider).valueOrNull;
   final mode = ref.watch(cinematicModeProvider);
   final shouldBlockForOnboarding = onboardingState?.directorTipsSeen != true;
+  var disposed = false;
+  ref.onDispose(() => disposed = true);
+
+  void setStatusAfterBuild(InferenceStatusState status) {
+    scheduleMicrotask(() {
+      if (disposed) {
+        return;
+      }
+      ref.read(inferenceStatusProvider.notifier).state = status;
+    });
+  }
 
   if (cameraSession == null || gemmaState == null || !gemmaState.isReady) {
-    ref.read(inferenceStatusProvider.notifier).state =
-        const InferenceStatusState();
+    setStatusAfterBuild(const InferenceStatusState());
     return const Stream.empty();
   }
 
   if (shouldBlockForOnboarding) {
     final previousStatus = ref.read(inferenceStatusProvider);
-    ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
-      activity: InferenceActivity.paused,
-      lastInferenceDuration: previousStatus.lastInferenceDuration,
+    setStatusAfterBuild(
+      InferenceStatusState(
+        activity: InferenceActivity.paused,
+        lastInferenceDuration: previousStatus.lastInferenceDuration,
+      ),
     );
     return const Stream.empty();
   }
