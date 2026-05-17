@@ -4,8 +4,8 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, session history, and export/share completed`
-- Confidence status: `make verify passing on 2026-05-09 after setup UI/status cleanup and docs sync`
+- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
+- Confidence status: `make verify passing on 2026-05-17 after Model Center storage/source controls and debug diagnostics cleanup`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
 
@@ -37,6 +37,7 @@ Ghosteye is a Flutter camera app that:
 5. `FramePreprocessor` converts camera frames with a Dart backend by default and an optional internal FFI backend for supported platforms.
 6. `ScriptController` parses Fountain-style output, while `ScriptHistoryService` persists recent takes.
 7. `ScriptExportService` builds Fountain/plain-text exports for active and saved takes.
+8. `ModelCenterSheet` exposes source/backend/storage/privacy/reset state, source-switch controls, and performance presets, while `DebugMetricsSheet` keeps pipeline timing out of the normal director composition.
 
 ## Model source rules
 
@@ -163,6 +164,10 @@ Important behavior:
   Builds Fountain/plain-text exports and dispatches share or clipboard actions
 - `lib/widgets/script_export_sheet.dart`
   UI for exporting the current take or a saved take
+- `lib/widgets/model_center_sheet.dart`
+  UI for source/backend/privacy/reset state and performance preset controls
+- `lib/widgets/debug_metrics_sheet.dart`
+  Debug-only sheet for sampler, preprocessor, backend, and inference timing metrics
 - `tool/generate_brand_assets.dart`
   Rebuilds the launcher icons, web icons, and native launch assets from one image
 - `assets/branding/ghosteye-icon-source-ai.png`

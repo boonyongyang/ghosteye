@@ -4,11 +4,11 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites implemented`
-- Verification status: `make verify passing on 2026-05-17 after Phase 6 performance presets and Model Center sheet`
+- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
+- Verification status: `make verify passing on 2026-05-17 after Model Center storage/source controls and debug diagnostics cleanup`
 - Deployment readiness: `needs hardware validation, production hosting, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
-- Next product phase: `setup, onboarding, and director UX revamp before broader release polish`
+- Next product phase: `release readiness, frame thumbnails, and teleprompter controls before broader release polish`
 
 ## Current phase readout
 
@@ -23,7 +23,7 @@ Treat the next phase as a product-experience revamp across setup, onboarding, an
 - [x] The director screen is camera-first, which is good, but the controls read like debug-era action chips instead of a polished shooting console with hierarchy.
 - [ ] History and export now work, but they still feel like utility sheets rather than a creator library.
 - [ ] The current visual language is cinematic but narrow. It needs a more durable modern system: camera-led surfaces, cleaner typography, better motion, stronger iconography, and less reliance on generic dark gradients.
-- [ ] Trust signals are present in copy, but users need inspectable state: active model source, storage impact, backend, privacy posture, and recovery options.
+- [x] Trust signals are present in copy, with inspectable state for active model source, local storage impact, backend, privacy posture, and recovery options.
 
 ## Revamp principles
 
@@ -109,7 +109,7 @@ Acceptance criteria:
 - [x] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
 - [ ] Add teleprompter controls for text size, scroll density, and output pace if they can be kept simple.
 - [x] Add a review mode distinction when reopening a saved take so users know capture is paused.
-- [ ] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
+- [x] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
 - [x] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
 
 Acceptance criteria:
@@ -139,9 +139,9 @@ Acceptance criteria:
 
 - [x] Add a compact settings/model center reachable from setup and director.
 - [x] Show active model source, source kind, model identifier, installed source signature, and current backend.
-- [ ] Show approximate cached model storage when practical.
+- [x] Show approximate cached model storage when practical.
 - [x] Add cache reset and re-download controls with confirmation.
-- [ ] Add source-switch controls that respect the existing precedence rules.
+- [x] Add source-switch controls that respect the existing precedence rules.
 - [x] Add a privacy/status screen that states when network is used and when frames stay on-device.
 - [ ] Add support diagnostics copy for common setup failures.
 - [x] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
@@ -314,6 +314,10 @@ Acceptance criteria:
   Builds Fountain/plain-text exports and dispatches share or clipboard actions
 - `lib/widgets/script_export_sheet.dart`
   Presents active-take and saved-take export actions in the current worktree
+- `lib/widgets/model_center_sheet.dart`
+  Shows active source, backend, privacy status, reset action, and performance presets
+- `lib/widgets/debug_metrics_sheet.dart`
+  Keeps pipeline timing and backend diagnostics behind a debug-only director sheet
 - `lib/config/theme.dart`
   Owns the current dark visual system and typography decisions that need revamp scrutiny
 - `README.md`
@@ -331,8 +335,8 @@ Acceptance criteria:
 
 - [x] Verify and land the current export/share workflow for active and saved takes
 - [ ] Pair each saved take with a captured frame thumbnail when performance permits
-- [ ] Add a model center for storage, cache reset, active-source diagnostics, and source switching
-- [ ] Add pace and responsiveness controls for frame sampling and inference cadence
+- [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
+- [x] Add pace and responsiveness controls for frame sampling and inference cadence
 - [ ] Add teleprompter display controls for text size, density, and review mode
 - [ ] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
 

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,9 +15,13 @@ class ModelCenterSheet extends ConsumerWidget {
   const ModelCenterSheet({
     super.key,
     required this.onResetCachedInstall,
+    required this.onImportLocalModel,
+    required this.onUseConfiguredSource,
   });
 
   final VoidCallback onResetCachedInstall;
+  final Future<void> Function() onImportLocalModel;
+  final Future<void> Function() onUseConfiguredSource;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -30,66 +36,76 @@ class ModelCenterSheet extends ConsumerWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(999),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 42,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Model Center',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'MODEL'),
-              const SizedBox(height: 8),
-              _ModelRow(source: gemmaState?.source),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'RUNTIME'),
-              const SizedBox(height: 8),
-              _RuntimeRow(
-                backend: gemmaState?.activeBackend,
-                usedFallback: gemmaState?.usedFallback ?? false,
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'SPEED'),
-              const SizedBox(height: 8),
-              _PresetPicker(
-                selected: preset,
-                onSelect: (next) {
-                  AppHaptics.trigger(AppHapticPattern.selection);
-                  ref.read(performancePresetProvider.notifier).state = next;
-                  ref.read(cameraProvider.notifier).applyPreset(next);
-                },
-              ),
-              const SizedBox(height: 4),
-              Text(
-                preset.description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white38,
-                      fontStyle: FontStyle.italic,
-                    ),
-              ),
-              const SizedBox(height: 20),
-              const _SectionLabel(label: 'PRIVACY'),
-              const SizedBox(height: 8),
-              _PrivacyRow(),
-              const SizedBox(height: 20),
-              const Divider(color: Colors.white12),
-              const SizedBox(height: 12),
-              _ResetButton(onReset: onResetCachedInstall),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  'Model Center',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'MODEL'),
+                const SizedBox(height: 8),
+                _ModelRow(source: gemmaState?.source),
+                const SizedBox(height: 10),
+                _StorageRow(source: gemmaState?.source),
+                const SizedBox(height: 14),
+                _SourceControls(
+                  source: gemmaState?.source,
+                  onImportLocalModel: onImportLocalModel,
+                  onUseConfiguredSource: onUseConfiguredSource,
+                ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'RUNTIME'),
+                const SizedBox(height: 8),
+                _RuntimeRow(
+                  backend: gemmaState?.activeBackend,
+                  usedFallback: gemmaState?.usedFallback ?? false,
+                ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'SPEED'),
+                const SizedBox(height: 8),
+                _PresetPicker(
+                  selected: preset,
+                  onSelect: (next) {
+                    AppHaptics.trigger(AppHapticPattern.selection);
+                    ref.read(performancePresetProvider.notifier).state = next;
+                    ref.read(cameraProvider.notifier).applyPreset(next);
+                  },
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  preset.description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white38,
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'PRIVACY'),
+                const SizedBox(height: 8),
+                _PrivacyRow(),
+                const SizedBox(height: 20),
+                const Divider(color: Colors.white12),
+                const SizedBox(height: 12),
+                _ResetButton(onReset: onResetCachedInstall),
+              ],
+            ),
           ),
         ),
       ),
@@ -194,8 +210,7 @@ class _RuntimeRow extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           backendLabel,
-          style:
-              Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
         ),
         if (usedFallback) ...<Widget>[
           const SizedBox(width: 6),
@@ -206,6 +221,166 @@ class _RuntimeRow extends StatelessWidget {
                 ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+class _StorageRow extends StatefulWidget {
+  const _StorageRow({required this.source});
+
+  final ModelSourceConfig? source;
+
+  @override
+  State<_StorageRow> createState() => _StorageRowState();
+}
+
+class _StorageRowState extends State<_StorageRow> {
+  Future<int?>? _fileSizeFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncFileSizeFuture();
+  }
+
+  @override
+  void didUpdateWidget(covariant _StorageRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.source?.kind != widget.source?.kind ||
+        oldWidget.source?.location != widget.source?.location) {
+      _syncFileSizeFuture();
+    }
+  }
+
+  void _syncFileSizeFuture() {
+    final source = widget.source;
+    _fileSizeFuture = source?.kind == ModelSourceKind.file
+        ? _fileSize(source!.location)
+        : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final source = widget.source;
+    if (source == null) {
+      return const _DetailRow(
+        icon: Icons.inventory_2_outlined,
+        text: 'Storage: no active model source',
+      );
+    }
+
+    if (source.kind != ModelSourceKind.file) {
+      return const _DetailRow(
+        icon: Icons.inventory_2_outlined,
+        text: 'Storage: managed cache size is not exposed yet',
+      );
+    }
+
+    return FutureBuilder<int?>(
+      future: _fileSizeFuture,
+      builder: (context, snapshot) {
+        final label = switch (snapshot.connectionState) {
+          ConnectionState.waiting => 'Storage: checking local file',
+          _ when snapshot.hasData && snapshot.data != null =>
+            'Storage: ${_formatBytes(snapshot.data!)} local model file',
+          _ => 'Storage: local file unavailable',
+        };
+
+        return _DetailRow(
+          icon: Icons.inventory_2_outlined,
+          text: label,
+        );
+      },
+    );
+  }
+
+  static Future<int?> _fileSize(String path) async {
+    final file = File(path);
+    if (!file.existsSync()) {
+      return null;
+    }
+    return file.lengthSync();
+  }
+
+  static String _formatBytes(int bytes) {
+    const units = <String>['B', 'KB', 'MB', 'GB'];
+    var size = bytes.toDouble();
+    var unitIndex = 0;
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+
+    final precision = unitIndex == 0 || size >= 10 ? 0 : 1;
+    return '${size.toStringAsFixed(precision)} ${units[unitIndex]}';
+  }
+}
+
+class _SourceControls extends StatelessWidget {
+  const _SourceControls({
+    required this.source,
+    required this.onImportLocalModel,
+    required this.onUseConfiguredSource,
+  });
+
+  final ModelSourceConfig? source;
+  final Future<void> Function() onImportLocalModel;
+  final Future<void> Function() onUseConfiguredSource;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: <Widget>[
+        OutlinedButton.icon(
+          onPressed: () {
+            AppHaptics.trigger(AppHapticPattern.action);
+            onImportLocalModel();
+          },
+          icon: const Icon(Icons.file_open_outlined, size: 16),
+          label: const Text('Import local model'),
+        ),
+        if (source?.isImportedFile ?? false)
+          TextButton.icon(
+            onPressed: () {
+              AppHaptics.trigger(AppHapticPattern.selection);
+              onUseConfiguredSource();
+            },
+            icon: const Icon(Icons.settings_backup_restore_outlined, size: 16),
+            label: const Text('Use configured source'),
+          ),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 14, color: Colors.white38),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.white54,
+                ),
+          ),
+        ),
       ],
     );
   }
@@ -243,9 +418,8 @@ class _PresetPicker extends StatelessWidget {
                     preset.displayName,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isActive ? Colors.white : Colors.white38,
-                          fontWeight: isActive
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                          fontWeight:
+                              isActive ? FontWeight.w700 : FontWeight.w500,
                           letterSpacing: 0.6,
                         ),
                   ),

@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, and export: `setup workspace, setup-handoff onboarding, command dock, and active/saved-take export implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, and performance presets implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -75,17 +75,18 @@ These features improve trust and operational clarity once users begin relying on
 
 ### 4. Model diagnostics panel
 
-- [ ] Show active source, source kind, and current backend
-- [ ] Show cached-model size or approximate storage usage
-- [ ] Add cache reset and re-download controls
+- [x] Show active source, source kind, and current backend
+- [x] Show cached-model size or approximate storage usage
+- [x] Add cache reset and re-download controls
+- [x] Add source-switch controls for imported local files and configured-source fallback
 
 Acceptance criteria:
 - A user can understand what model Ghosteye is using and reset it without reinstalling the app.
 
 ### 5. Sampling and responsiveness controls
 
-- [ ] Expose a few pacing presets such as `Cinematic`, `Balanced`, and `Fast`
-- [ ] Tune frame sampling and inference cadence by preset
+- [x] Expose a few pacing presets such as `Cinematic`, `Balanced`, and `Fast`
+- [x] Tune frame sampling and inference cadence by preset
 
 Acceptance criteria:
 - The user can choose between slower richer output and faster lighter output.
@@ -114,8 +115,8 @@ Rule:
 
 1. Release readiness
 2. Frame thumbnails
-3. Model diagnostics
-4. Sampling controls
+3. Teleprompter controls
+4. Setup observability
 5. Gemma 4 spike
 
 ## Notes for future agents

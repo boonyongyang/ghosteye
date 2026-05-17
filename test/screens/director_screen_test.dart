@@ -318,7 +318,15 @@ void main() {
     expect(find.text('CPU THINKING'), findsOneWidget);
     expect(find.text('Pause'), findsOneWidget);
     expect(find.text('Capture is live'), findsOneWidget);
-    expect(find.textContaining('MODEL CPU FALLBACK'), findsOneWidget);
+    expect(find.text('DEV METRICS'), findsOneWidget);
+
+    await tester.tap(find.text('DEV METRICS'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('Pipeline Diagnostics'), findsOneWidget);
+    expect(find.text('Model backend'), findsOneWidget);
+    expect(find.text('CPU (fallback)'), findsOneWidget);
   });
 
   testWidgets('DirectorScreen shows rolling preprocessing metrics in debug UI',
@@ -361,12 +369,18 @@ void main() {
       ),
     );
 
-    expect(find.textContaining('PREP FFI 640px Q82'), findsOneWidget);
-    expect(find.textContaining('COPY MED 4ms'), findsOneWidget);
-    expect(find.textContaining('PRE MED 11ms'), findsOneWidget);
-    expect(find.textContaining('INPUT MED 18ms'), findsOneWidget);
-    expect(find.textContaining('1ST MED 320ms'), findsOneWidget);
-    expect(find.textContaining('FULL MED 2100ms'), findsOneWidget);
+    // Metrics now live in the debug sheet — open it first.
+    expect(find.text('DEV METRICS'), findsOneWidget);
+    await tester.tap(find.text('DEV METRICS'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pipeline Diagnostics'), findsOneWidget);
+    expect(find.textContaining('FFI 640px Q82'), findsOneWidget);
+    expect(find.text('4 ms med'), findsOneWidget);
+    expect(find.text('11 ms med'), findsOneWidget);
+    expect(find.text('18 ms med'), findsOneWidget);
+    expect(find.text('320 ms med'), findsOneWidget);
+    expect(find.text('2100 ms med'), findsOneWidget);
   });
 
   testWidgets(

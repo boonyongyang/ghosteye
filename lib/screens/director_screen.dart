@@ -7,14 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/constants.dart';
 import '../models/cinematic_mode.dart';
-import '../models/inference_pipeline_metrics.dart';
 import '../models/onboarding_status.dart';
 import '../models/script_entry.dart';
 import '../providers/camera_provider.dart';
 import '../providers/cinematic_mode_provider.dart';
 import '../providers/gemma_provider.dart';
 import '../providers/inference_provider.dart';
-import '../providers/inference_pipeline_metrics_provider.dart';
 import '../providers/onboarding_provider.dart';
 import '../providers/session_controls_provider.dart';
 import '../providers/script_provider.dart';
@@ -25,6 +23,7 @@ import '../widgets/cinematic_mode_selector.dart';
 import '../widgets/director_tips_sheet.dart';
 import '../widgets/inference_indicator.dart';
 import '../widgets/script_export_sheet.dart';
+import '../widgets/debug_metrics_sheet.dart';
 import '../widgets/model_center_sheet.dart';
 import '../widgets/script_history_sheet.dart';
 import '../widgets/teleprompter_overlay.dart';
@@ -57,7 +56,6 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
     final inferenceStatus = ref.watch(inferenceStatusProvider);
     final captureEnabled = ref.watch(captureEnabledProvider);
     final reviewMode = ref.watch(reviewModeProvider);
-    final pipelineMetrics = ref.watch(inferencePipelineMetricsProvider);
     final scriptState = ref.watch(scriptProvider);
 
     _maybeShowFirstRunTips(
@@ -131,61 +129,18 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (kDebugMode)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _DebugBadge(
-                          label: cameraState.valueOrNull == null
-                              ? 'CAMERA OFF'
-                              : 'SAMPLE ${cameraState.valueOrNull!.sampleInterval.inMilliseconds}ms',
-                        ),
-                        _DebugBadge(
-                          label:
-                              'PREP ${pipelineMetrics.settings.backend.name.toUpperCase()} ${pipelineMetrics.settings.maxDimension}px Q${pipelineMetrics.settings.jpegQuality}',
-                        ),
-                        if (gemmaState?.activeBackend case final backend?)
-                          _DebugBadge(
-                            label: gemmaState!.usedFallback
-                                ? 'MODEL ${backend.name.toUpperCase()} FALLBACK'
-                                : 'MODEL ${backend.name.toUpperCase()}',
+                    Center(
+                      child: GestureDetector(
+                        onTap: () => unawaited(
+                          showModalBottomSheet<void>(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (_) => const DebugMetricsSheet(),
                           ),
-                        if (_medianMetricLabel(
-                          'COPY',
-                          pipelineMetrics.frameCopy,
-                        )
-                            case final label?)
-                          _DebugBadge(label: label),
-                        if (_medianMetricLabel(
-                          'PRE',
-                          pipelineMetrics.preprocessing,
-                        )
-                            case final label?)
-                          _DebugBadge(label: label),
-                        if (_medianMetricLabel(
-                          'INPUT',
-                          pipelineMetrics.modelInput,
-                        )
-                            case final label?)
-                          _DebugBadge(label: label),
-                        if (_medianMetricLabel(
-                          '1ST',
-                          pipelineMetrics.firstToken,
-                        )
-                            case final label?)
-                          _DebugBadge(label: label),
-                        if (_medianMetricLabel(
-                          'FULL',
-                          pipelineMetrics.fullResponse,
-                        )
-                            case final label?)
-                          _DebugBadge(label: label),
-                        if (inferenceStatus.lastInferenceDuration
-                            case final duration?)
-                          _DebugBadge(
-                            label: 'LAST ${duration.inMilliseconds}ms',
-                          ),
-                      ],
+                        ),
+                        child: const _DebugBadge(label: 'DEV METRICS'),
+                      ),
                     ),
                   const SizedBox(height: 12),
                   const Align(
@@ -318,6 +273,14 @@ Future<void> _showModelCenterSheet(BuildContext context, WidgetRef ref) async {
           Navigator.of(context).pop();
           ref.read(gemmaProvider.notifier).resetCachedInstall();
         },
+        onImportLocalModel: () async {
+          Navigator.of(context).pop();
+          await ref.read(gemmaProvider.notifier).importLocalModel();
+        },
+        onUseConfiguredSource: () async {
+          Navigator.of(context).pop();
+          await ref.read(gemmaProvider.notifier).useManagedDownload();
+        },
       );
     },
   );
@@ -384,14 +347,6 @@ void _setStatusAfterSceneReset(WidgetRef ref) {
         captureEnabled ? InferenceActivity.idle : InferenceActivity.paused,
     lastInferenceDuration: previousStatus.lastInferenceDuration,
   );
-}
-
-String? _medianMetricLabel(String label, DurationMetricSnapshot metric) {
-  final median = metric.median;
-  if (median == null) {
-    return null;
-  }
-  return '$label MED ${median.inMilliseconds}ms';
 }
 
 class _DirectorActions extends StatelessWidget {
@@ -620,8 +575,7 @@ class _ReviewModeBanner extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFF2B95C).withOpacity(0.12),
             borderRadius: BorderRadius.circular(999),

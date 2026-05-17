@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +14,8 @@ Widget _buildSheet({
   GemmaState gemmaState = const GemmaState.idle(),
   PerformancePreset initialPreset = PerformancePreset.balanced,
   VoidCallback? onReset,
+  Future<void> Function()? onImportLocalModel,
+  Future<void> Function()? onUseConfiguredSource,
 }) {
   final container = ProviderContainer(
     overrides: <Override>[
@@ -28,6 +32,8 @@ Widget _buildSheet({
       home: Scaffold(
         body: ModelCenterSheet(
           onResetCachedInstall: onReset ?? () {},
+          onImportLocalModel: onImportLocalModel ?? () async {},
+          onUseConfiguredSource: onUseConfiguredSource ?? () async {},
         ),
       ),
     ),
@@ -91,6 +97,59 @@ void main() {
     expect(find.text('LOCAL'), findsOneWidget);
   });
 
+  testWidgets('shows local file storage when file source is available',
+      (tester) async {
+    final directory = Directory.systemTemp.createTempSync(
+      'ghosteye-model-center-test',
+    );
+    addTearDown(() {
+      if (directory.existsSync()) {
+        directory.deleteSync(recursive: true);
+      }
+    });
+    final file = File('${directory.path}/model.bin');
+    file.writeAsBytesSync(List<int>.filled(2048, 1));
+
+    final state = GemmaState(
+      phase: GemmaPhase.ready,
+      activeBackend: RuntimeBackend.gpu,
+      source: ModelSourceConfig(
+        kind: ModelSourceKind.file,
+        origin: ModelSourceOrigin.importedFile,
+        location: file.path,
+        label: 'Local model',
+      ),
+    );
+
+    await tester.pumpWidget(_buildSheet(gemmaState: state));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.textContaining('Storage: 2.0 KB'), findsOneWidget);
+  });
+
+  testWidgets('shows managed storage limitation for network source',
+      (tester) async {
+    const state = GemmaState(
+      phase: GemmaPhase.ready,
+      activeBackend: RuntimeBackend.gpu,
+      source: ModelSourceConfig(
+        kind: ModelSourceKind.network,
+        origin: ModelSourceOrigin.envUrl,
+        location: 'https://example.com/model.bin',
+        label: 'Gemma 3n E2B',
+      ),
+    );
+
+    await tester.pumpWidget(_buildSheet(gemmaState: state));
+    await tester.pump();
+
+    expect(
+      find.text('Storage: managed cache size is not exposed yet'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('shows GPU backend label', (tester) async {
     const state = GemmaState(
       phase: GemmaPhase.ready,
@@ -128,7 +187,8 @@ void main() {
   });
 
   testWidgets('tapping a preset updates description text', (tester) async {
-    await tester.pumpWidget(_buildSheet(initialPreset: PerformancePreset.balanced));
+    await tester
+        .pumpWidget(_buildSheet(initialPreset: PerformancePreset.balanced));
     await tester.pump();
 
     expect(find.text(PerformancePreset.balanced.description), findsOneWidget);
@@ -160,5 +220,38 @@ void main() {
     await tester.pump();
 
     expect(called, isTrue);
+  });
+
+  testWidgets('source controls call import and configured source callbacks',
+      (tester) async {
+    var importCalled = false;
+    var configuredCalled = false;
+    const state = GemmaState(
+      phase: GemmaPhase.ready,
+      activeBackend: RuntimeBackend.gpu,
+      source: ModelSourceConfig(
+        kind: ModelSourceKind.file,
+        origin: ModelSourceOrigin.importedFile,
+        location: '/var/mobile/model.bin',
+        label: 'Local model',
+      ),
+    );
+
+    await tester.pumpWidget(
+      _buildSheet(
+        gemmaState: state,
+        onImportLocalModel: () async => importCalled = true,
+        onUseConfiguredSource: () async => configuredCalled = true,
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Import local model'));
+    await tester.pump();
+    expect(importCalled, isTrue);
+
+    await tester.tap(find.text('Use configured source'));
+    await tester.pump();
+    expect(configuredCalled, isTrue);
   });
 }
