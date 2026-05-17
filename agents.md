@@ -74,6 +74,8 @@ Important behavior:
   Public-facing overview, setup, and release-readiness summary
 - `CONTRIBUTING.md`
   Maintainer workflow, validation expectations, and doc-sync rules
+- `RELEASE_CHECKLIST.md`
+  Focused release gate for GitHub publication and app-store/TestFlight/Play prep
 - `plan.md`
   Canonical checklist of completed vs pending work
 - `roadmap.md`
@@ -195,6 +197,7 @@ Important behavior:
 
 ## Current blockers
 
+- Top-level license choice before public GitHub release
 - Production hosting for the Gemma 3n `.litertlm` or `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path

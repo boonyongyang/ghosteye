@@ -5,8 +5,8 @@ This file is the repo's working implementation checklist. Completed work stays c
 ## Overall status
 
 - Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
-- Verification status: `make verify passing on 2026-05-17 after Model Center storage/source controls and debug diagnostics cleanup`
-- Deployment readiness: `needs hardware validation, production hosting, and store prep`
+- Verification status: `make verify passing on 2026-05-23 after release-prep audit`
+- Deployment readiness: `needs license choice, production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
 - Next product phase: `release readiness, frame thumbnails, and teleprompter controls before broader release polish`
 
@@ -253,6 +253,8 @@ Acceptance criteria:
 
 ### Repo and GitHub readiness
 
+- [x] Add GitHub Actions verification for pushes and pull requests
+- [x] Add `RELEASE_CHECKLIST.md` as the focused release gate
 - [ ] Choose and add a top-level open-source license
 - [ ] Choose the production Android application ID and iOS bundle ID
 - [ ] Decide whether `packages/ghosteye_frame_ffi` remains internal-only or needs full standalone package metadata

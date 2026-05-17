@@ -79,6 +79,8 @@ Before landing meaningful app or setup-flow changes, run:
 make verify
 ```
 
+GitHub Actions runs the same verification on pushes to `main` and on pull requests.
+
 If you changed checked-in Markdown, also run:
 
 ```bash

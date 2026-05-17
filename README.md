@@ -95,10 +95,11 @@ make docs-audit
 ## Project Docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): maintainer workflow and doc-sync rules
+- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): GitHub and app-release blockers
 - [plan.md](plan.md): current implementation checklist and explicit blockers
 - [roadmap.md](roadmap.md): prioritized follow-up work and acceptance criteria
 - [agents.md](agents.md): agent handoff with runtime decisions and guardrails
 
 ## Release Readiness
 
-Ghosteye is not yet in public-release shape. The remaining blockers are tracked in [plan.md](plan.md) and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, final app IDs, store assets, support/privacy links, and license selection.
+Ghosteye is not yet in public-release shape. The remaining blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, final app IDs, store assets, support/privacy links, and license selection.
