@@ -15,6 +15,11 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Install shell dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
