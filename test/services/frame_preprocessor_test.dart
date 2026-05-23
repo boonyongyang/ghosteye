@@ -227,6 +227,8 @@ void main() {
 
   test('FFI preprocessing frees native buffers after each conversion',
       () async {
+    if (ffiLibraryPath == null) return;
+
     final ffi = GhosteyeFrameFfi(libraryPath: ffiLibraryPath);
     final preprocessor = _buildPreprocessor(
       FramePreprocessorBackend.ffi,
