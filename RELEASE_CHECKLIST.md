@@ -4,20 +4,21 @@ This checklist is the release gate for making Ghosteye public on GitHub or prepa
 
 ## Current Gate
 
-- Repo verification: `make verify` passing on 2026-05-23.
-- Markdown audit: `make docs-audit` passing on 2026-05-23.
-- Diff hygiene: `git diff --check` passing on 2026-05-23.
+- Repo verification: `make verify` passing on 2026-05-27.
+- Markdown audit: `make docs-audit` passing on 2026-05-27.
+- Diff hygiene: `git diff --check` passing on 2026-05-27.
 - TODO audit: `make todo` has no current TODO/FIXME markers.
 - GitHub CI: `.github/workflows/verify.yml` runs `make verify` on pushes and pull requests.
-- GitHub repo: `boonyongyang/ghosteye`, currently private.
+- Device testing: `docs/DEVICE_TEST_PLAN.md` documents the required physical Android/iPhone validation pass.
+- GitHub repo: `boonyongyang/ghosteye`, public.
 
 ## Required Before Public GitHub Release
 
-- [ ] Choose and add a top-level open-source license.
-- [ ] Decide whether the GitHub repo should become public before app-store readiness.
-- [ ] Set final GitHub About metadata, topics, and optional homepage URL.
-- [ ] Confirm public docs do not expose private model URLs, tokens, local paths, or unreleased store claims.
-- [ ] Keep `graphify-out/` ignored; it is generated local analysis output.
+- [x] Choose and add a top-level open-source license.
+- [x] Decide whether the GitHub repo should become public before app-store readiness.
+- [x] Set final GitHub About metadata, topics, and optional homepage URL.
+- [x] Confirm public docs do not expose private model URLs, tokens, local paths, or unreleased store claims.
+- [x] Keep `graphify-out/` ignored; it is generated local analysis output.
 
 ## Required Before App/TestFlight/Play Release
 

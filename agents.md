@@ -5,7 +5,7 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 ## Current mainline state
 
 - Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
-- Confidence status: `make verify passing on 2026-05-17 after Model Center storage/source controls and debug diagnostics cleanup`
+- Confidence status: `make verify passing on 2026-05-27 after public GitHub prep`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
 
@@ -72,10 +72,14 @@ Important behavior:
 
 - `README.md`
   Public-facing overview, setup, and release-readiness summary
+- `LICENSE`
+  MIT license for the repository
 - `CONTRIBUTING.md`
   Maintainer workflow, validation expectations, and doc-sync rules
 - `RELEASE_CHECKLIST.md`
   Focused release gate for GitHub publication and app-store/TestFlight/Play prep
+- `docs/DEVICE_TEST_PLAN.md`
+  Physical Android/iPhone validation script for setup, director, export, and recovery flows
 - `plan.md`
   Canonical checklist of completed vs pending work
 - `roadmap.md`
@@ -197,12 +201,11 @@ Important behavior:
 
 ## Current blockers
 
-- Top-level license choice before public GitHub release
 - Production hosting for the Gemma 3n `.litertlm` or `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path
 - Production Android/iOS identifiers
-- License choice, support/privacy URLs, screenshots, and store metadata
+- Support/privacy URLs, screenshots, and store metadata
 - A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
 
 ## Guardrails for future work

@@ -6,7 +6,7 @@ Ghosteye is a Flutter camera app that turns the live scene into scrolling screen
 
 - Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history, active/saved-take export, Model Center storage/source controls, and performance presets.
 - The mainline runtime targets Gemma 3n on Android and physical iPhone hardware.
-- Production hosting, real-device validation, release identifiers, store assets, and license selection are still in progress.
+- Production hosting, real-device validation, release identifiers, and store assets are still in progress.
 - Gemma 4 remains a separate spike, not a mainline migration target.
 
 ## Highlights
@@ -95,11 +95,13 @@ make docs-audit
 ## Project Docs
 
 - [CONTRIBUTING.md](CONTRIBUTING.md): maintainer workflow and doc-sync rules
+- [LICENSE](LICENSE): MIT license for the repository
 - [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md): GitHub and app-release blockers
+- [docs/DEVICE_TEST_PLAN.md](docs/DEVICE_TEST_PLAN.md): physical Android/iPhone validation script
 - [plan.md](plan.md): current implementation checklist and explicit blockers
 - [roadmap.md](roadmap.md): prioritized follow-up work and acceptance criteria
 - [agents.md](agents.md): agent handoff with runtime decisions and guardrails
 
 ## Release Readiness
 
-Ghosteye is not yet in public-release shape. The remaining blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, final app IDs, store assets, support/privacy links, and license selection.
+Ghosteye is close to public GitHub shape, with MIT licensing, passing local verification, and GitHub Actions verification in place. The remaining app-release blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, final app IDs, store assets, and support/privacy links.

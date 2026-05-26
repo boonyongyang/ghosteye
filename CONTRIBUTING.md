@@ -110,7 +110,7 @@ Keep these files aligned when related behavior changes:
 
 The repo is structurally close to being shareable, but a few publication basics are still outstanding:
 
-- A top-level open-source license has not been chosen yet.
+- The repo now uses the MIT license; keep the top-level `LICENSE` file present when publishing.
 - Example Android/iOS application identifiers still need replacement before release.
 - Store screenshots, support links, privacy-policy details, and public repo metadata are still pending.
 - The internal `ghosteye_frame_ffi` package should stay clearly documented as an internal package unless you decide to publish it separately.

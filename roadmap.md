@@ -13,7 +13,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 
 These items should happen before broad external testing or store submission.
 
-- [ ] Finalize public repo basics
+- [x] Finalize public repo basics
   Acceptance criteria: a top-level license is chosen, `RELEASE_CHECKLIST.md` stays current, the README stays public-facing with relative repo links, no obvious scaffold/package docs remain in the public tree, GitHub verification is enabled, and the internal FFI package stays clearly documented as internal-only
 - [ ] Choose the production Android application ID and iOS bundle ID
   Acceptance criteria: no `com.example.ghosteye` identifiers remain in shipping configs
