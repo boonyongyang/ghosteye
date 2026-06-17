@@ -20,8 +20,9 @@ class AppConstants {
   static const maxChatExchanges = 8;
   static const maxChatHistoryCharacters = 6000;
   static const settingsUri = 'app-settings:';
-  static const modelDisplayName = 'Gemma 3 Nano';
-  static const defaultModelFileName = 'gemma-3n-E2B-it-int4.task';
+  static const modelDisplayName = 'Gemma 4 E2B';
+  static const defaultModelTypeName = 'gemma4';
+  static const defaultModelFileName = 'gemma-4-E2B-it.litertlm';
   static const directorPromptSuffix =
       'Continue the screenplay. Describe what is happening in this new shot. '
       'Stay in character and respond in 2-4 Fountain-format lines.';
@@ -34,6 +35,14 @@ class AppConstants {
   static String? get configuredModelPath {
     const override = String.fromEnvironment('GHOSTEYE_GEMMA_MODEL_PATH');
     return override.isEmpty ? null : override;
+  }
+
+  static String get configuredModelTypeName {
+    const override = String.fromEnvironment(
+      'GHOSTEYE_GEMMA_MODEL_TYPE',
+      defaultValue: defaultModelTypeName,
+    );
+    return override.isEmpty ? defaultModelTypeName : override;
   }
 
   static String get configuredFramePreprocessorBackend {

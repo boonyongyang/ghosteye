@@ -4,17 +4,17 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
-- Verification status: `make verify passing on 2026-05-27 after public GitHub prep`
-- Deployment readiness: `needs production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
-- Gemma 4 status: `not started in mainline; separate spike still pending`
+- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
+- Verification status: `make verify passing on 2026-06-03 after Gemma 4 E2B release-readiness cleanup`
+- Deployment readiness: `needs release signing, hardware validation, production model hosting, support/privacy URLs, and store prep`
+- Gemma 4 status: `E2B runtime is mainline; E4B remains a higher-memory follow-up after physical-device validation`
 - Next product phase: `release readiness, frame thumbnails, and teleprompter controls before broader release polish`
 
 ## Current phase readout
 
 Ghosteye is no longer in the foundation-only phase. The main app already has a working route gate, source-aware model setup, branded launch assets, immersive onboarding, director tips, local history, and export/share for active and saved takes. The next risk is not another isolated feature; it is whether the first-run journey feels coherent, modern, trustworthy, and usable for someone who is not already familiar with local Gemma model setup.
 
-Treat the next phase as a product-experience revamp across setup, onboarding, and the live director workspace. Keep the Gemma 3n runtime path stable while improving the way users understand, recover, control, and return to the app.
+Treat the next phase as a product-experience revamp across setup, onboarding, and the live director workspace. Keep the Gemma 4 E2B runtime path stable while improving the way users understand, recover, control, and return to the app.
 
 ## UX revamp diagnosis
 
@@ -158,7 +158,7 @@ Acceptance criteria:
 - [ ] Validate the full first-run flow on physical iPhone hardware.
 - [ ] Measure first-token time, full-response time, setup duration, and fallback frequency.
 - [ ] Decide whether the FFI preprocessing backend provides enough device-level benefit to keep surfaced.
-- [ ] Replace example Android/iOS identifiers.
+- [x] Replace example Android/iOS identifiers.
 - [ ] Finalize production model hosting and auth policy.
 - [ ] Capture release screenshots only after the revamp settles.
 - [ ] Update `README.md`, `roadmap.md`, `agents.md`, and `CONTRIBUTING.md` if behavior or priorities change.
@@ -190,7 +190,7 @@ Acceptance criteria:
 
 ## Completed in mainline
 
-- [x] Keep production on Gemma 3n E2B multimodal for cross-platform on-device inference
+- [x] Move production target to Gemma 4 E2B multimodal for cross-platform on-device inference
 - [x] Remove the hardcoded legacy Hugging Face fallback and the `HUGGINGFACE_TOKEN` alias from mainline release behavior
 - [x] Add source-aware model resolution with this precedence:
   1. persisted imported model path
@@ -202,6 +202,7 @@ Acceptance criteria:
 - [x] Route local files through `flutter_gemma` file installs
 - [x] Persist imported local model files in app storage
 - [x] Persist installed source signatures so source changes force reinstall
+- [x] Include configured model type in installed source signatures for local model-family spikes
 - [x] Add splash-screen recovery actions for `Import local model` and `Use managed download`
 - [x] Replace the setup splash layout with a guided setup workspace that shows active source, preflight context, progress, and recovery actions
 - [x] Make startup and inference guidance source-aware instead of always Hugging Face-specific
@@ -247,7 +248,7 @@ Acceptance criteria:
 
 ### Production rollout
 
-- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
+- [ ] Host the Gemma 4 E2B `.litertlm` artifact on production infrastructure
 - [ ] Decide whether the managed model URL is public or token-gated
 - [ ] Set the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 
@@ -256,27 +257,27 @@ Acceptance criteria:
 - [x] Add GitHub Actions verification for pushes and pull requests
 - [x] Add `RELEASE_CHECKLIST.md` as the focused release gate
 - [x] Choose and add a top-level open-source license
-- [ ] Choose the production Android application ID and iOS bundle ID
+- [x] Choose the production Android application ID and iOS bundle ID
 - [ ] Decide whether `packages/ghosteye_frame_ffi` remains internal-only or needs full standalone package metadata
 - [ ] Add final GitHub About metadata and public repo media once screenshots and support URLs exist
 
 ### Release polish
 
-- [ ] Replace example bundle identifiers and package names
+- [x] Replace example bundle identifiers and package names
 - [ ] Capture release screenshots and promo imagery
 - [ ] Finalize store listing copy, support URL, and privacy-policy requirements
 - [ ] Decide whether the launch screen art should stay static or evolve into a fully custom native splash package
 - [x] Re-run `flutter analyze`
 - [x] Re-run `flutter test`
 
-### Gemma 4 spike
+### Gemma 4 follow-up
 
-- [ ] Create a separate spike branch for Gemma 4 exploration
-- [ ] Upgrade Flutter on the spike branch
-- [ ] Upgrade `flutter_gemma` on the spike branch
-- [ ] Verify Gemma 4 install behavior
-- [ ] Verify Android camera-to-model viability with Gemma 4
-- [ ] Verify iOS multimodal viability with Gemma 4
+- [x] Upgrade Flutter baseline for Gemma 4 E2B
+- [x] Upgrade `flutter_gemma` for Gemma 4 E2B
+- [ ] Verify Gemma 4 E2B install behavior
+- [ ] Verify Android camera-to-model viability with Gemma 4 E2B
+- [ ] Verify iOS multimodal viability with Gemma 4 E2B
+- [ ] Evaluate Gemma 4 E4B only after E2B is stable on target devices
 - [ ] Measure model size and startup-time impact
 - [ ] Record a go/no-go decision with blockers if the spike fails
 
@@ -345,5 +346,5 @@ Acceptance criteria:
 ## Notes for whoever picks this up next
 
 - Do not treat the iOS simulator as a reliable runtime target for the current on-device stack.
-- Do not mix the Gemma 4 spike into the mainline Gemma 3n branch.
+- Do not expand to Gemma 4 E4B until Gemma 4 E2B proves acceptable on physical Android and iPhone hardware.
 - Keep the checklist above updated by converting completed items from `[ ]` to `[x]` instead of deleting them.

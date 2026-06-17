@@ -15,9 +15,9 @@ These items should happen before broad external testing or store submission.
 
 - [x] Finalize public repo basics
   Acceptance criteria: a top-level license is chosen, `RELEASE_CHECKLIST.md` stays current, the README stays public-facing with relative repo links, no obvious scaffold/package docs remain in the public tree, GitHub verification is enabled, and the internal FFI package stays clearly documented as internal-only
-- [ ] Choose the production Android application ID and iOS bundle ID
+- [x] Choose the production Android application ID and iOS bundle ID
   Acceptance criteria: no `com.example.ghosteye` identifiers remain in shipping configs
-- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
+- [ ] Host the Gemma 4 E2B `.litertlm` artifact on production infrastructure
   Acceptance criteria: a stable managed URL exists and is documented in `config.json.example` or deployment docs
 - [ ] Decide the managed-download auth policy
   Acceptance criteria: app behavior is defined for public download, bearer-token gating, and missing-source recovery guidance
@@ -101,15 +101,15 @@ Acceptance criteria:
 
 ## Priority 3: Research and branching work
 
-### Gemma 4 spike
+### Gemma 4 E4B follow-up
 
 - [ ] Create a separate spike branch
-- [ ] Upgrade Flutter and `flutter_gemma` on that branch
+- [x] Upgrade Flutter and `flutter_gemma` for Gemma 4 E2B
 - [ ] Verify install behavior, Android viability, iOS multimodal viability, and startup cost
 - [ ] Record a go/no-go recommendation
 
 Rule:
-- Do not mix this spike into the mainline Gemma 3n branch until it proves cross-platform multimodal parity.
+- Do not expand beyond Gemma 4 E2B until the E2B path proves cross-platform multimodal parity.
 
 ## Suggested build order
 
@@ -117,7 +117,7 @@ Rule:
 2. Frame thumbnails
 3. Teleprompter controls
 4. Setup observability
-5. Gemma 4 spike
+5. Gemma 4 E4B follow-up
 
 ## Notes for future agents
 

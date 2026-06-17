@@ -4,10 +4,10 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
-- Confidence status: `make verify passing on 2026-05-27 after public GitHub prep`
+- Project status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
+- Confidence status: `make verify passing on 2026-06-03 after Gemma 4 E2B release-readiness cleanup`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
-- Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
+- Spike status: `Gemma 4 E2B is now mainline; Gemma 4 E4B remains a higher-memory follow-up`
 
 ## What the app does
 
@@ -22,9 +22,9 @@ Ghosteye is a Flutter camera app that:
 
 ## Current runtime decisions
 
-- Flutter toolchain in mainline: `3.24.4` / Dart `3.5.4`
-- Mainline inference package: `flutter_gemma 0.11.8`
-- Mainline model family: Gemma 3n E2B multimodal
+- Flutter toolchain in mainline: `3.38.9` / Dart `3.10.8`
+- Mainline inference package: `flutter_gemma 0.16.1`
+- Mainline model family: Gemma 4 E2B multimodal
 - Mainline platforms: Android and physical iPhone
 - iOS simulator should not be treated as a trustworthy target for runtime signoff
 
@@ -54,6 +54,7 @@ Important behavior:
 - local paths and imported files install via `flutter_gemma` file source
 - imported files are copied into app documents storage
 - installed source signatures are persisted so switching source forces reinstall
+- installed source signatures include the configured model type so model-family spikes force reinstall
 - the mainline app no longer hardcodes a legacy Hugging Face fallback or a `HUGGINGFACE_TOKEN` alias
 - Hugging Face-specific copy should only appear when the configured managed URL itself points to Hugging Face
 
@@ -63,6 +64,8 @@ Important behavior:
   Primary managed download URL
 - `GHOSTEYE_GEMMA_MODEL_PATH`
   Explicit local model file path override
+- `GHOSTEYE_GEMMA_MODEL_TYPE`
+  Optional runtime model-family selector for local tests; defaults to `gemma4`
 - `GHOSTEYE_GEMMA_TOKEN`
   Optional token for gated model downloads
 - Supported local/imported file extensions:
@@ -201,7 +204,7 @@ Important behavior:
 
 ## Current blockers
 
-- Production hosting for the Gemma 3n `.litertlm` or `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
+- Production hosting for the Gemma 4 E2B `.litertlm` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path
 - Production Android/iOS identifiers
@@ -210,7 +213,7 @@ Important behavior:
 
 ## Guardrails for future work
 
-- Keep mainline focused on Gemma 3n unless the Gemma 4 spike proves cross-platform multimodal parity.
+- Keep mainline focused on Gemma 4 E2B unless Gemma 4 E4B proves acceptable memory and latency on target devices.
 - Keep `README.md` public-facing. Use `plan.md` for checklist state and `roadmap.md` for future backlog.
 - Do not delete completed checklist items from `plan.md`; mark them as completed instead.
 - If you change source precedence, onboarding behavior, or runtime setup copy, update `README.md`, `plan.md`, and this file together.

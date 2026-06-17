@@ -1,18 +1,20 @@
 SHELL := /bin/zsh
 
-FLUTTER ?= flutter
-DART ?= dart
+FLUTTER ?= $(if $(shell command -v fvm 2>/dev/null),fvm flutter,flutter)
+DART ?= $(if $(shell command -v fvm 2>/dev/null),fvm dart,dart)
 
 CONFIG ?= config.json
 ANDROID_DEVICE ?= android
 IOS_DEVICE ?=
 DEVICE ?=
 MODEL_PATH ?=
+MODEL_TYPE ?=
 SOURCE_IMAGE ?= assets/branding/ghosteye-icon-source-ai.png
 
 CONFIG_ARGS := $(if $(wildcard $(CONFIG)),--dart-define-from-file=$(CONFIG),)
 DEVICE_ARGS := $(if $(DEVICE),-d $(DEVICE),)
 MODEL_PATH_ARGS := $(if $(MODEL_PATH),--dart-define=GHOSTEYE_GEMMA_MODEL_PATH="$(MODEL_PATH)",)
+MODEL_TYPE_ARGS := $(if $(MODEL_TYPE),--dart-define=GHOSTEYE_GEMMA_MODEL_TYPE="$(MODEL_TYPE)",)
 FORMAT_DIRS := lib test tool packages/ghosteye_frame_ffi/lib
 SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
@@ -44,11 +46,11 @@ help:
 	@printf "  make run              flutter run %s\n" "$(CONFIG_ARGS)"
 	@printf "  make run DEVICE=<id>  flutter run -d <id> %s\n" "$(CONFIG_ARGS)"
 	@printf "  make run-config       require and run with %s\n" "$(CONFIG)"
-	@printf "  make run-local-model MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-local-model MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make run-android      flutter run -d %s %s\n" "$(ANDROID_DEVICE)" "$(CONFIG_ARGS)"
-	@printf "  make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make run-ios IOS_DEVICE=<physical-device-id>\n"
-	@printf "  make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make logs DEVICE=<id> flutter logs for a connected device\n"
 	@printf "  make build-apk-debug  flutter build apk --debug\n"
 	@printf "  make build-ios-debug  flutter build ios --debug --no-codesign\n"
@@ -128,7 +130,7 @@ run-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run $(DEVICE_ARGS) $(MODEL_PATH_ARGS)
+	$(FLUTTER) run $(DEVICE_ARGS) $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 run-android:
 	$(FLUTTER) run -d $(ANDROID_DEVICE) $(CONFIG_ARGS)
@@ -138,7 +140,7 @@ run-android-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run -d $(ANDROID_DEVICE) $(MODEL_PATH_ARGS)
+	$(FLUTTER) run -d $(ANDROID_DEVICE) $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 run-ios:
 	@if [ -z "$(IOS_DEVICE)" ]; then \
@@ -156,7 +158,7 @@ run-ios-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run -d "$(IOS_DEVICE)" $(MODEL_PATH_ARGS)
+	$(FLUTTER) run -d "$(IOS_DEVICE)" $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 logs:
 	@if [ -z "$(DEVICE)" ]; then \

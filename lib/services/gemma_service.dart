@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter_gemma/core/domain/download_error.dart';
 import 'package:flutter_gemma/core/domain/download_exception.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../config/constants.dart';
 import '../models/cinematic_mode.dart';
@@ -14,18 +15,16 @@ import 'model_source_service.dart';
 typedef GemmaProgressCallback = void Function(int progress);
 typedef InferenceInputReadyCallback = void Function(Duration duration);
 typedef IsModelInstalledFn = Future<bool> Function(String modelId);
-typedef InstallModelFn = Future<void> Function({
-  required ModelSourceConfig source,
-  GemmaProgressCallback? onProgress,
-});
-typedef CreateModelFn = Future<InferenceModel> Function(
-  PreferredBackend backend,
-);
+typedef InstallModelFn =
+    Future<void> Function({
+      required ModelSourceConfig source,
+      GemmaProgressCallback? onProgress,
+    });
+typedef UninstallModelFn = Future<void> Function(String modelId);
+typedef CreateModelFn =
+    Future<InferenceModel> Function(PreferredBackend backend);
 
-enum RuntimeBackend {
-  gpu,
-  cpu,
-}
+enum RuntimeBackend { gpu, cpu }
 
 enum GemmaStartupFailureKind {
   modelSource,
@@ -152,29 +151,28 @@ GemmaStartupFailure classifyGemmaStartupFailure(
   if (error is DownloadException) {
     return switch (error.error) {
       UnauthorizedError() => GemmaStartupFailure(
-          kind: GemmaStartupFailureKind.missingToken,
-          message: _missingTokenMessage(source),
-          originalError: error,
-        ),
+        kind: GemmaStartupFailureKind.missingToken,
+        message: _missingTokenMessage(source),
+        originalError: error,
+      ),
       ForbiddenError() || NotFoundError() => GemmaStartupFailure(
-          kind: GemmaStartupFailureKind.modelAccess,
-          message: _modelAccessMessage(source),
-          originalError: error,
-        ),
+        kind: GemmaStartupFailureKind.modelAccess,
+        message: _modelAccessMessage(source),
+        originalError: error,
+      ),
       NetworkError(:final message) => GemmaStartupFailure(
-          kind: GemmaStartupFailureKind.network,
-          message: _networkFailureMessage(source, message),
-          originalError: error,
-        ),
+        kind: GemmaStartupFailureKind.network,
+        message: _networkFailureMessage(source, message),
+        originalError: error,
+      ),
       RateLimitedError() ||
       ServerError() ||
       CanceledError() ||
-      UnknownError() =>
-        GemmaStartupFailure(
-          kind: GemmaStartupFailureKind.network,
-          message: _networkFailureMessage(source, error.toString()),
-          originalError: error,
-        ),
+      UnknownError() => GemmaStartupFailure(
+        kind: GemmaStartupFailureKind.network,
+        message: _networkFailureMessage(source, error.toString()),
+        originalError: error,
+      ),
     };
   }
 
@@ -222,9 +220,10 @@ GemmaStartupFailure classifyGemmaStartupFailure(
       message.contains('session')) {
     return GemmaStartupFailure(
       kind: GemmaStartupFailureKind.modelLoad,
-      message: source?.isFile ?? false
-          ? _localModelFailureMessage(source)
-          : 'The model download finished, but Ghosteye could not open it.',
+      message:
+          source?.isFile ?? false
+              ? _localModelFailureMessage(source)
+              : 'The model download finished, but Ghosteye could not open it.',
       originalError: error,
     );
   }
@@ -247,39 +246,37 @@ InferenceFailure classifyInferenceFailure(
   if (error is GemmaStartupFailure) {
     return switch (error.kind) {
       GemmaStartupFailureKind.modelSource => InferenceFailure(
-          kind: InferenceFailureKind.modelSource,
-          message: error.message,
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.modelSource,
+        message: error.message,
+        originalError: error,
+      ),
       GemmaStartupFailureKind.missingToken ||
-      GemmaStartupFailureKind.modelAccess =>
-        InferenceFailure(
-          kind: InferenceFailureKind.modelAccess,
-          message: error.message,
-          originalError: error,
-        ),
+      GemmaStartupFailureKind.modelAccess => InferenceFailure(
+        kind: InferenceFailureKind.modelAccess,
+        message: error.message,
+        originalError: error,
+      ),
       GemmaStartupFailureKind.network => InferenceFailure(
-          kind: InferenceFailureKind.network,
-          message: error.message,
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.network,
+        message: error.message,
+        originalError: error,
+      ),
       GemmaStartupFailureKind.localModel => InferenceFailure(
-          kind: InferenceFailureKind.modelSource,
-          message: error.message,
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.modelSource,
+        message: error.message,
+        originalError: error,
+      ),
       GemmaStartupFailureKind.backendInitialization => InferenceFailure(
-          kind: InferenceFailureKind.backendInitialization,
-          message: error.message,
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.backendInitialization,
+        message: error.message,
+        originalError: error,
+      ),
       GemmaStartupFailureKind.modelLoad ||
-      GemmaStartupFailureKind.unknown =>
-        InferenceFailure(
-          kind: InferenceFailureKind.unknown,
-          message: error.message,
-          originalError: error,
-        ),
+      GemmaStartupFailureKind.unknown => InferenceFailure(
+        kind: InferenceFailureKind.unknown,
+        message: error.message,
+        originalError: error,
+      ),
     };
   }
 
@@ -296,27 +293,26 @@ InferenceFailure classifyInferenceFailure(
     return switch (error.error) {
       UnauthorizedError() ||
       ForbiddenError() ||
-      NotFoundError() =>
-        InferenceFailure(
-          kind: InferenceFailureKind.modelAccess,
-          message: _modelAccessMessage(source),
-          originalError: error,
-        ),
+      NotFoundError() => InferenceFailure(
+        kind: InferenceFailureKind.modelAccess,
+        message: _modelAccessMessage(source),
+        originalError: error,
+      ),
       NetworkError(:final message) => InferenceFailure(
-          kind: InferenceFailureKind.network,
-          message: _networkFailureMessage(source, message),
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.network,
+        message: _networkFailureMessage(source, message),
+        originalError: error,
+      ),
       CanceledError() => InferenceFailure(
-          kind: InferenceFailureKind.canceled,
-          message: 'Inference was canceled.',
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.canceled,
+        message: 'Inference was canceled.',
+        originalError: error,
+      ),
       RateLimitedError() || ServerError() || UnknownError() => InferenceFailure(
-          kind: InferenceFailureKind.network,
-          message: _networkFailureMessage(source, error.toString()),
-          originalError: error,
-        ),
+        kind: InferenceFailureKind.network,
+        message: _networkFailureMessage(source, error.toString()),
+        originalError: error,
+      ),
     };
   }
 
@@ -408,15 +404,18 @@ class GemmaService {
     ModelSourceService? modelSourceService,
     IsModelInstalledFn? isModelInstalled,
     InstallModelFn? installModel,
+    UninstallModelFn? uninstallModel,
     CreateModelFn? createModel,
-  })  : _modelSourceService = modelSourceService ?? ModelSourceService(),
-        _isModelInstalled = isModelInstalled ?? _defaultIsModelInstalled,
-        _installModel = installModel ?? _defaultInstallModel,
-        _createModel = createModel ?? _defaultCreateModel;
+  }) : _modelSourceService = modelSourceService ?? ModelSourceService(),
+       _isModelInstalled = isModelInstalled ?? _defaultIsModelInstalled,
+       _installModel = installModel ?? _defaultInstallModel,
+       _uninstallModel = uninstallModel ?? _defaultUninstallModel,
+       _createModel = createModel ?? _defaultCreateModel;
 
   final ModelSourceService _modelSourceService;
   final IsModelInstalledFn _isModelInstalled;
   final InstallModelFn _installModel;
+  final UninstallModelFn _uninstallModel;
   final CreateModelFn _createModel;
 
   InferenceModel? _model;
@@ -477,10 +476,7 @@ class GemmaService {
       _model ??= await _createModelWithFallback();
       return currentSnapshot!;
     } catch (error) {
-      throw classifyGemmaStartupFailure(
-        error,
-        source: _activeSource,
-      );
+      throw classifyGemmaStartupFailure(error, source: _activeSource);
     }
   }
 
@@ -513,8 +509,20 @@ class GemmaService {
   }
 
   Future<void> resetCachedInstall() async {
-    await _modelSourceService.clearInstalledSourceSignature();
+    ModelSourceConfig? source = _activeSource;
+    try {
+      source ??= await resolveModelSource();
+    } catch (_) {
+      // Reset should still clear local runtime/signature state even when the
+      // configured source is currently unavailable.
+    }
+
     await _resetRuntimeState(clearSource: false);
+    await _modelSourceService.clearInstalledSourceSignature();
+    if (source != null) {
+      await _uninstallModel(source.modelId);
+      await _deleteRuntimeCacheFiles(source.modelId);
+    }
   }
 
   Future<void> resetConversation() async {
@@ -561,10 +569,7 @@ class GemmaService {
 
       _completedExchanges += 1;
     } catch (error) {
-      throw classifyInferenceFailure(
-        error,
-        source: _activeSource,
-      );
+      throw classifyInferenceFailure(error, source: _activeSource);
     }
   }
 
@@ -572,9 +577,7 @@ class GemmaService {
     if (_chat != null && _activeMode == mode) {
       if (_shouldRecycleChat(_chat!)) {
         await _chat!.clearHistory(
-          replayHistory: <Message>[
-            Message.systemInfo(text: mode.systemPrompt),
-          ],
+          replayHistory: <Message>[Message.systemInfo(text: mode.systemPrompt)],
         );
         _completedExchanges = 0;
       }
@@ -592,15 +595,13 @@ class GemmaService {
     }
 
     _chat = await model.createChat(
-      modelType: ModelType.gemmaIt,
+      modelType: _modelTypeForSource(_activeSource),
       supportImage: true,
       tokenBuffer: 256,
       temperature: 0.9,
       topK: 40,
     );
-    await _chat!.addQueryChunk(
-      Message.systemInfo(text: mode.systemPrompt),
-    );
+    await _chat!.addQueryChunk(Message.systemInfo(text: mode.systemPrompt));
     return _chat!;
   }
 
@@ -673,14 +674,17 @@ class GemmaService {
     required ModelSourceConfig source,
     GemmaProgressCallback? onProgress,
   }) async {
-    final installer = FlutterGemma.installModel(modelType: ModelType.gemmaIt);
+    final installer = FlutterGemma.installModel(
+      modelType: _modelTypeForSource(source),
+      fileType: _modelFileTypeForSource(source),
+    );
     final configuredInstaller = switch (source.kind) {
-      ModelSourceKind.network when source.token == null =>
-        installer.fromNetwork(source.location),
+      ModelSourceKind.network when source.token == null => installer
+          .fromNetwork(source.location),
       ModelSourceKind.network => installer.fromNetwork(
-          source.location,
-          token: source.token!,
-        ),
+        source.location,
+        token: source.token!,
+      ),
       ModelSourceKind.file => installer.fromFile(source.location),
     };
 
@@ -689,13 +693,83 @@ class GemmaService {
     }).install();
   }
 
-  static Future<InferenceModel> _defaultCreateModel(
-    PreferredBackend backend,
-  ) {
+  static Future<void> _defaultUninstallModel(String modelId) async {
+    final modelManager = FlutterGemmaPlugin.instance.modelManager;
+    try {
+      await modelManager.clearModelCache();
+      await FlutterGemma.uninstallModel(modelId);
+    } catch (error) {
+      final message = error.toString().toLowerCase();
+      if (!message.contains('model not found')) {
+        rethrow;
+      }
+    } finally {
+      await modelManager.performCleanup();
+    }
+  }
+
+  static Future<void> _deleteRuntimeCacheFiles(String modelId) async {
+    try {
+      final supportDirectory = await getApplicationSupportDirectory();
+      if (!await supportDirectory.exists()) {
+        return;
+      }
+      await for (final entity in supportDirectory.list()) {
+        if (entity is! File) {
+          continue;
+        }
+        final fileName = entity.uri.pathSegments.last;
+        if (fileName.startsWith(modelId)) {
+          await entity.delete();
+        }
+      }
+    } catch (_) {
+      // Cache cleanup is best-effort recovery. The plugin uninstall already
+      // removed the model metadata and primary downloaded file.
+    }
+  }
+
+  static Future<InferenceModel> _defaultCreateModel(PreferredBackend backend) {
     return FlutterGemma.getActiveModel(
       maxTokens: AppConstants.maxTokens,
       preferredBackend: backend,
+      supportImage: true,
+      maxNumImages: 1,
     );
+  }
+
+  static ModelFileType _modelFileTypeForSource(ModelSourceConfig source) {
+    final modelId = source.modelId.toLowerCase();
+    if (modelId.endsWith('.litertlm')) {
+      return ModelFileType.litertlm;
+    }
+    if (modelId.endsWith('.bin') || modelId.endsWith('.tflite')) {
+      return ModelFileType.binary;
+    }
+    return ModelFileType.task;
+  }
+
+  static ModelType _modelTypeForSource(ModelSourceConfig? source) {
+    final normalized = (source?.modelTypeName ??
+            AppConstants.defaultModelTypeName)
+        .trim()
+        .toLowerCase()
+        .replaceAll('-', '')
+        .replaceAll('_', '');
+
+    return switch (normalized) {
+      'gemma' || 'gemmait' || 'gemma3' || 'gemma3n' => ModelType.gemmaIt,
+      'gemma4' || 'gemma4e2b' || 'gemma4e4b' => ModelType.gemma4,
+      'general' => ModelType.general,
+      'deepseek' => ModelType.deepSeek,
+      'qwen' => ModelType.qwen,
+      'qwen3' => ModelType.qwen3,
+      'llama' => ModelType.llama,
+      'hammer' => ModelType.hammer,
+      'functiongemma' => ModelType.functionGemma,
+      'phi' => ModelType.phi,
+      _ => ModelType.gemma4,
+    };
   }
 }
 

@@ -19,9 +19,7 @@ Widget _buildSheet({
 }) {
   final container = ProviderContainer(
     overrides: <Override>[
-      gemmaProvider.overrideWith(
-        () => _FixedGemmaNotifier(gemmaState),
-      ),
+      gemmaProvider.overrideWith(() => _FixedGemmaNotifier(gemmaState)),
       performancePresetProvider.overrideWith((ref) => initialPreset),
     ],
   );
@@ -68,7 +66,7 @@ void main() {
         kind: ModelSourceKind.network,
         origin: ModelSourceOrigin.envUrl,
         location: 'https://example.com/model.bin',
-        label: 'Gemma 3n E2B',
+        label: 'Gemma 4 E2B',
       ),
     );
 
@@ -76,7 +74,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('MANAGED'), findsOneWidget);
-    expect(find.text('Gemma 3n E2B'), findsOneWidget);
+    expect(find.text('Gemma 4 E2B'), findsOneWidget);
   });
 
   testWidgets('shows LOCAL badge for file source', (tester) async {
@@ -97,8 +95,9 @@ void main() {
     expect(find.text('LOCAL'), findsOneWidget);
   });
 
-  testWidgets('shows local file storage when file source is available',
-      (tester) async {
+  testWidgets('shows local file storage when file source is available', (
+    tester,
+  ) async {
     final directory = Directory.systemTemp.createTempSync(
       'ghosteye-model-center-test',
     );
@@ -128,8 +127,9 @@ void main() {
     expect(find.textContaining('Storage: 2.0 KB'), findsOneWidget);
   });
 
-  testWidgets('shows managed storage limitation for network source',
-      (tester) async {
+  testWidgets('shows managed storage limitation for network source', (
+    tester,
+  ) async {
     const state = GemmaState(
       phase: GemmaPhase.ready,
       activeBackend: RuntimeBackend.gpu,
@@ -137,7 +137,7 @@ void main() {
         kind: ModelSourceKind.network,
         origin: ModelSourceOrigin.envUrl,
         location: 'https://example.com/model.bin',
-        label: 'Gemma 3n E2B',
+        label: 'Gemma 4 E2B',
       ),
     );
 
@@ -162,8 +162,9 @@ void main() {
     expect(find.text('GPU'), findsOneWidget);
   });
 
-  testWidgets('shows CPU fallback note when usedFallback is true',
-      (tester) async {
+  testWidgets('shows CPU fallback note when usedFallback is true', (
+    tester,
+  ) async {
     const state = GemmaState(
       phase: GemmaPhase.ready,
       activeBackend: RuntimeBackend.cpu,
@@ -187,8 +188,9 @@ void main() {
   });
 
   testWidgets('tapping a preset updates description text', (tester) async {
-    await tester
-        .pumpWidget(_buildSheet(initialPreset: PerformancePreset.balanced));
+    await tester.pumpWidget(
+      _buildSheet(initialPreset: PerformancePreset.balanced),
+    );
     await tester.pump();
 
     expect(find.text(PerformancePreset.balanced.description), findsOneWidget);
@@ -197,10 +199,7 @@ void main() {
     await tester.pump();
 
     expect(find.text(PerformancePreset.cinematic.description), findsOneWidget);
-    expect(
-      find.text(PerformancePreset.balanced.description),
-      findsNothing,
-    );
+    expect(find.text(PerformancePreset.balanced.description), findsNothing);
   });
 
   testWidgets('shows privacy notice', (tester) async {
@@ -222,8 +221,9 @@ void main() {
     expect(called, isTrue);
   });
 
-  testWidgets('source controls call import and configured source callbacks',
-      (tester) async {
+  testWidgets('source controls call import and configured source callbacks', (
+    tester,
+  ) async {
     var importCalled = false;
     var configuredCalled = false;
     const state = GemmaState(

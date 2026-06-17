@@ -72,8 +72,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AsyncValue<GemmaState>>(gemmaStateViewProvider,
-        (previous, next) {
+    ref.listen<AsyncValue<GemmaState>>(gemmaStateViewProvider, (
+      previous,
+      next,
+    ) {
       final wasReady = previous?.valueOrNull?.isReady ?? false;
       final isReady = next.valueOrNull?.isReady ?? false;
       if (!wasReady && isReady && mounted && !_showPostInstallSummary) {
@@ -159,9 +161,10 @@ class _SetupScaffold extends StatelessWidget {
                         state: state,
                         onRetry: onRetry,
                         onImportLocalModel: onImportLocalModel,
-                        onUseManagedDownload: value?.usesImportedModel == true
-                            ? onUseManagedDownload
-                            : null,
+                        onUseManagedDownload:
+                            value?.usesImportedModel == true
+                                ? onUseManagedDownload
+                                : null,
                         onResetCachedInstall: onResetCachedInstall,
                       ),
                       const SizedBox(height: 18),
@@ -251,24 +254,27 @@ class _SetupStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return state.when(
-      data: (value) => value.hasError
-          ? _SetupError(
-              message: value.message ?? 'Unable to load model',
-              failureKind: value.failureKind,
-              source: value.source,
-              onRetry: onRetry,
-              onImportLocalModel: onImportLocalModel,
-              onUseManagedDownload: onUseManagedDownload,
-              onResetCachedInstall: onResetCachedInstall,
-            )
-          : _SetupProgress(state: value),
+      data:
+          (value) =>
+              value.hasError
+                  ? _SetupError(
+                    message: value.message ?? 'Unable to load model',
+                    failureKind: value.failureKind,
+                    source: value.source,
+                    onRetry: onRetry,
+                    onImportLocalModel: onImportLocalModel,
+                    onUseManagedDownload: onUseManagedDownload,
+                    onResetCachedInstall: onResetCachedInstall,
+                  )
+                  : _SetupProgress(state: value),
       loading: () => const _SetupProgress(state: GemmaState.idle()),
-      error: (error, stackTrace) => _SetupError(
-        message: error.toString(),
-        onRetry: onRetry,
-        onImportLocalModel: onImportLocalModel,
-        onResetCachedInstall: onResetCachedInstall,
-      ),
+      error:
+          (error, stackTrace) => _SetupError(
+            message: error.toString(),
+            onRetry: onRetry,
+            onImportLocalModel: onImportLocalModel,
+            onResetCachedInstall: onResetCachedInstall,
+          ),
     );
   }
 }
@@ -288,7 +294,8 @@ class _SetupProgress extends StatelessWidget {
 
     final label = switch (state.phase) {
       GemmaPhase.checking => 'Checking model availability',
-      GemmaPhase.downloading => 'Downloading Gemma 3 Nano (${state.progress}%)',
+      GemmaPhase.downloading =>
+        'Downloading ${AppConstants.modelDisplayName} (${state.progress}%)',
       GemmaPhase.ready => 'Model primed. Rolling to camera.',
       GemmaPhase.error => state.message ?? 'Unable to load model',
       GemmaPhase.idle => 'Preparing setup',
@@ -328,10 +335,7 @@ class _SetupProgress extends StatelessWidget {
           const SizedBox(height: 16),
           LinearProgressIndicator(value: progressValue),
           const SizedBox(height: 14),
-          Text(
-            detail,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(detail, style: Theme.of(context).textTheme.bodySmall),
         ],
       ),
     );
@@ -400,10 +404,7 @@ class _SetupErrorState extends State<_SetupError> {
             label: 'Model setup failed',
           ),
           const SizedBox(height: 12),
-          Text(
-            widget.message,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          Text(widget.message, style: Theme.of(context).textTheme.bodySmall),
           if (helpText != null) ...<Widget>[
             const SizedBox(height: 6),
             TextButton.icon(
@@ -565,9 +566,10 @@ class _PostInstallSummary extends StatelessWidget {
     final status = state.usedFallback ? AppStatus.degraded : AppStatus.ready;
     final backendLabel = state.activeBackend?.name.toUpperCase() ?? 'unknown';
     final sourceLabel = state.source?.label ?? 'configured source';
-    final sourceKind = state.source?.kind == ModelSourceKind.file
-        ? 'Local file'
-        : 'Managed download';
+    final sourceKind =
+        state.source?.kind == ModelSourceKind.file
+            ? 'Local file'
+            : 'Managed download';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -590,25 +592,29 @@ class _PostInstallSummary extends StatelessWidget {
                 child: Column(
                   children: <Widget>[
                     StatusRow(
-                      icon: state.source?.kind == ModelSourceKind.file
-                          ? Icons.sd_storage_outlined
-                          : Icons.cloud_download_outlined,
+                      icon:
+                          state.source?.kind == ModelSourceKind.file
+                              ? Icons.sd_storage_outlined
+                              : Icons.cloud_download_outlined,
                       iconColor: theme.colorScheme.primary,
                       title: sourceLabel,
                       detail: sourceKind,
                     ),
                     const _SectionDivider(),
                     StatusRow(
-                      icon: state.usedFallback
-                          ? Icons.warning_amber_outlined
-                          : Icons.memory_outlined,
-                      iconColor: state.usedFallback
-                          ? const Color(0xFFF2B95C)
-                          : theme.colorScheme.primary,
+                      icon:
+                          state.usedFallback
+                              ? Icons.warning_amber_outlined
+                              : Icons.memory_outlined,
+                      iconColor:
+                          state.usedFallback
+                              ? const Color(0xFFF2B95C)
+                              : theme.colorScheme.primary,
                       title: 'Runtime: $backendLabel',
-                      detail: state.usedFallback
-                          ? 'GPU unavailable — running on CPU. Inference may be slower.'
-                          : '${AppConstants.modelDisplayName} loaded and ready.',
+                      detail:
+                          state.usedFallback
+                              ? 'GPU unavailable — running on CPU. Inference may be slower.'
+                              : '${AppConstants.modelDisplayName} loaded and ready.',
                     ),
                   ],
                 ),
@@ -688,16 +694,18 @@ class _SourceSummary extends StatelessWidget {
         'Ghosteye will prepare the configured file path without a network download.',
       null => 'Add a managed URL in config.json or import a local model file.',
     };
-    final metadata = source == null
-        ? 'No active source'
-        : '${source!.kind.name.toUpperCase()} — ${source!.modelId}';
+    final metadata =
+        source == null
+            ? 'No active source'
+            : '${source!.kind.name.toUpperCase()} — ${source!.modelId}';
 
     return SectionBlock(
       title: 'Active source',
       child: StatusRow(
-        icon: source?.kind == ModelSourceKind.file
-            ? Icons.sd_storage_outlined
-            : Icons.cloud_download_outlined,
+        icon:
+            source?.kind == ModelSourceKind.file
+                ? Icons.sd_storage_outlined
+                : Icons.cloud_download_outlined,
         iconColor: theme.colorScheme.primary,
         title: title,
         detail: detail,
@@ -714,9 +722,10 @@ class _PreflightChecklist extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final networkDetail = source?.kind == ModelSourceKind.file
-        ? 'Local source selected. Network is only needed if you switch back to managed download.'
-        : 'Use Wi-Fi for the first model download. Camera frames still stay on-device.';
+    final networkDetail =
+        source?.kind == ModelSourceKind.file
+            ? 'Local source selected. Network is only needed if you switch back to managed download.'
+            : 'Use Wi-Fi for the first model download. Camera frames still stay on-device.';
 
     return SectionBlock(
       title: 'Before camera opens',
@@ -785,34 +794,37 @@ class _SetupFallbackActions extends StatelessWidget {
         runSpacing: 10,
         children: <Widget>[
           OutlinedButton.icon(
-            onPressed: isBusy
-                ? null
-                : () {
-                    AppHaptics.trigger(AppHapticPattern.action);
-                    onImportLocalModel();
-                  },
+            onPressed:
+                isBusy
+                    ? null
+                    : () {
+                      AppHaptics.trigger(AppHapticPattern.action);
+                      onImportLocalModel();
+                    },
             icon: const Icon(Icons.file_open_outlined),
             label: const Text('Import local model'),
           ),
           if (usesImportedModel)
             TextButton.icon(
-              onPressed: isBusy
-                  ? null
-                  : () {
-                      AppHaptics.trigger(AppHapticPattern.selection);
-                      onUseManagedDownload();
-                    },
+              onPressed:
+                  isBusy
+                      ? null
+                      : () {
+                        AppHaptics.trigger(AppHapticPattern.selection);
+                        onUseManagedDownload();
+                      },
               icon: const Icon(Icons.cloud_download_outlined),
               label: const Text('Use managed download'),
             ),
           if (onResetCachedInstall != null)
             TextButton.icon(
-              onPressed: isBusy
-                  ? null
-                  : () {
-                      AppHaptics.trigger(AppHapticPattern.emphasis);
-                      onResetCachedInstall!();
-                    },
+              onPressed:
+                  isBusy
+                      ? null
+                      : () {
+                        AppHaptics.trigger(AppHapticPattern.emphasis);
+                        onResetCachedInstall!();
+                      },
               icon: const Icon(Icons.delete_sweep_outlined),
               label: const Text('Reset cached install'),
             ),
@@ -823,11 +835,7 @@ class _SetupFallbackActions extends StatelessWidget {
 }
 
 class _StageLabel extends StatelessWidget {
-  const _StageLabel({
-    required this.icon,
-    required this.label,
-    this.iconColor,
-  });
+  const _StageLabel({required this.icon, required this.label, this.iconColor});
 
   final IconData icon;
   final String label;
@@ -844,10 +852,7 @@ class _StageLabel extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          child: Text(label, style: Theme.of(context).textTheme.titleMedium),
         ),
       ],
     );

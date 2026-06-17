@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ghosteye"
+    namespace = "com.boonyongyang.ghosteye"
     compileSdk = 36
     ndkVersion = "27.0.12077973"
 
@@ -20,8 +20,7 @@ android {
     }
 
     defaultConfig {
-        // Replace this example ID with your production reverse-DNS application ID before release.
-        applicationId = "com.example.ghosteye"
+        applicationId = "com.boonyongyang.ghosteye"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 26

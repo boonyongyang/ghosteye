@@ -31,10 +31,14 @@ class _FakeInferenceModel extends InferenceModel {
 
   @override
   Future<InferenceModelSession> createSession({
+    bool? enableAudioModality,
+    bool enableThinking = false,
     double temperature = .8,
     int randomSeed = 1,
+    String? systemInstruction,
     int topK = 1,
     double? topP,
+    List<Tool> tools = const [],
     String? loraPath,
     bool? enableVisionModality,
   }) {
@@ -54,15 +58,12 @@ Future<ModelSourceService> _createSourceService({
   String? configuredModelUrl,
   String? configuredToken,
 }) async {
-  SharedPreferences.setMockInitialValues(
-    <String, Object>{
-      if (importedPath != null)
-        ModelSourceService.importedModelPathKey: importedPath,
-      if (installedSourceSignature != null)
-        ModelSourceService.installedSourceSignatureKey:
-            installedSourceSignature,
-    },
-  );
+  SharedPreferences.setMockInitialValues(<String, Object>{
+    if (importedPath != null)
+      ModelSourceService.importedModelPathKey: importedPath,
+    if (installedSourceSignature != null)
+      ModelSourceService.installedSourceSignatureKey: installedSourceSignature,
+  });
   final preferences = await SharedPreferences.getInstance();
 
   return ModelSourceService(
@@ -91,64 +92,57 @@ void main() {
     messenger.setMockMethodCallHandler(pathProviderChannel, null);
   });
 
-  test('GemmaService falls back to CPU after GPU initialization failure',
-      () async {
-    final requestedBackends = <PreferredBackend>[];
-    final cpuModel = _FakeInferenceModel();
-    const source = ModelSourceConfig(
-      kind: ModelSourceKind.network,
-      origin: ModelSourceOrigin.envUrl,
-      location: 'https://cdn.example.com/gemma.task',
-      label: 'Managed download',
-    );
-    final sourceService = await _createSourceService(
-      configuredModelUrl: source.location,
-      installedSourceSignature: source.signature,
-    );
-    final service = GemmaService(
-      modelSourceService: sourceService,
-      isModelInstalled: (_) async => true,
-      createModel: (backend) async {
-        requestedBackends.add(backend);
-        if (backend == PreferredBackend.gpu) {
-          throw Exception('GPU delegate failed');
-        }
-        return cpuModel;
-      },
-    );
-    addTearDown(service.dispose);
+  test(
+    'GemmaService falls back to CPU after GPU initialization failure',
+    () async {
+      final requestedBackends = <PreferredBackend>[];
+      final cpuModel = _FakeInferenceModel();
+      const source = ModelSourceConfig(
+        kind: ModelSourceKind.network,
+        origin: ModelSourceOrigin.envUrl,
+        location: 'https://cdn.example.com/gemma.task',
+        label: 'Managed download',
+      );
+      final sourceService = await _createSourceService(
+        configuredModelUrl: source.location,
+        installedSourceSignature: source.signature,
+      );
+      final service = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => true,
+        createModel: (backend) async {
+          requestedBackends.add(backend);
+          if (backend == PreferredBackend.gpu) {
+            throw Exception('GPU delegate failed');
+          }
+          return cpuModel;
+        },
+      );
+      addTearDown(service.dispose);
 
-    final snapshot = await service.ensureReady();
+      final snapshot = await service.ensureReady();
 
-    expect(
-      requestedBackends,
-      <PreferredBackend>[PreferredBackend.gpu, PreferredBackend.cpu],
-    );
-    expect(snapshot.backend, RuntimeBackend.cpu);
-    expect(snapshot.usedFallback, isTrue);
-    expect(snapshot.source.origin, ModelSourceOrigin.envUrl);
-  });
+      expect(requestedBackends, <PreferredBackend>[
+        PreferredBackend.gpu,
+        PreferredBackend.cpu,
+      ]);
+      expect(snapshot.backend, RuntimeBackend.cpu);
+      expect(snapshot.usedFallback, isTrue);
+      expect(snapshot.source.origin, ModelSourceOrigin.envUrl);
+    },
+  );
 
   test('shouldRecycleConversation enforces exchange and history limits', () {
     expect(
-      shouldRecycleConversation(
-        completedExchanges: 8,
-        historyCharacters: 10,
-      ),
+      shouldRecycleConversation(completedExchanges: 8, historyCharacters: 10),
       isTrue,
     );
     expect(
-      shouldRecycleConversation(
-        completedExchanges: 1,
-        historyCharacters: 6000,
-      ),
+      shouldRecycleConversation(completedExchanges: 1, historyCharacters: 6000),
       isTrue,
     );
     expect(
-      shouldRecycleConversation(
-        completedExchanges: 1,
-        historyCharacters: 100,
-      ),
+      shouldRecycleConversation(completedExchanges: 1, historyCharacters: 100),
       isFalse,
     );
   });
@@ -178,26 +172,28 @@ void main() {
 
     expect(managedFailure.kind, GemmaStartupFailureKind.modelAccess);
     expect(
-        managedFailure.message.toLowerCase(), isNot(contains('hugging face')));
+      managedFailure.message.toLowerCase(),
+      isNot(contains('hugging face')),
+    );
     expect(localFailure.kind, GemmaStartupFailureKind.localModel);
     expect(localFailure.message.toLowerCase(), contains('imported model file'));
   });
 
-  test('Gemma startup failures classify missing model source configuration',
-      () {
-    final failure = classifyGemmaStartupFailure(
-      const NoModelSourceConfiguredException(),
-    );
+  test(
+    'Gemma startup failures classify missing model source configuration',
+    () {
+      final failure = classifyGemmaStartupFailure(
+        const NoModelSourceConfiguredException(),
+      );
 
-    expect(failure.kind, GemmaStartupFailureKind.modelSource);
-    expect(failure.message, contains('managed model download URL'));
-  });
+      expect(failure.kind, GemmaStartupFailureKind.modelSource);
+      expect(failure.message, contains('managed model download URL'));
+    },
+  );
 
   test('Inference failures classify timeout and backend issues', () {
     expect(
-      classifyInferenceFailure(
-        TimeoutException('generation timed out'),
-      ).kind,
+      classifyInferenceFailure(TimeoutException('generation timed out')).kind,
       InferenceFailureKind.timeout,
     );
     expect(
@@ -208,82 +204,117 @@ void main() {
     );
   });
 
-  test('GemmaService dispatches network installs with the resolved source',
-      () async {
-    final sourceService = await _createSourceService(
-      configuredModelUrl: 'https://cdn.example.com/gemma.task',
-      configuredToken: 'managed-token',
-    );
-    ModelSourceConfig? installedSource;
-    final service = GemmaService(
-      modelSourceService: sourceService,
-      isModelInstalled: (_) async => false,
-      installModel: ({
-        required source,
-        onProgress,
-      }) async {
-        installedSource = source;
-        onProgress?.call(100);
-      },
-      createModel: (_) async => _FakeInferenceModel(),
-    );
-    addTearDown(service.dispose);
+  test(
+    'GemmaService dispatches network installs with the resolved source',
+    () async {
+      final sourceService = await _createSourceService(
+        configuredModelUrl: 'https://cdn.example.com/gemma.task',
+        configuredToken: 'managed-token',
+      );
+      ModelSourceConfig? installedSource;
+      final service = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => false,
+        installModel: ({required source, onProgress}) async {
+          installedSource = source;
+          onProgress?.call(100);
+        },
+        createModel: (_) async => _FakeInferenceModel(),
+      );
+      addTearDown(service.dispose);
 
-    final snapshot = await service.ensureReady();
+      final snapshot = await service.ensureReady();
 
-    expect(installedSource, isNotNull);
-    expect(installedSource!.kind, ModelSourceKind.network);
-    expect(installedSource!.location, 'https://cdn.example.com/gemma.task');
-    expect(installedSource!.token, 'managed-token');
-    expect(snapshot.source.origin, ModelSourceOrigin.envUrl);
-  });
+      expect(installedSource, isNotNull);
+      expect(installedSource!.kind, ModelSourceKind.network);
+      expect(installedSource!.location, 'https://cdn.example.com/gemma.task');
+      expect(installedSource!.token, 'managed-token');
+      expect(snapshot.source.origin, ModelSourceOrigin.envUrl);
+    },
+  );
 
-  test('GemmaService dispatches file installs with the resolved source',
-      () async {
-    final sourceService = await _createSourceService(
-      configuredModelPath: '/tmp/gemma.task',
-    );
-    ModelSourceConfig? installedSource;
-    final service = GemmaService(
-      modelSourceService: sourceService,
-      isModelInstalled: (_) async => false,
-      installModel: ({
-        required source,
-        onProgress,
-      }) async {
-        installedSource = source;
-      },
-      createModel: (_) async => _FakeInferenceModel(),
-    );
-    addTearDown(service.dispose);
+  test(
+    'GemmaService dispatches file installs with the resolved source',
+    () async {
+      final sourceService = await _createSourceService(
+        configuredModelPath: '/tmp/gemma.task',
+      );
+      ModelSourceConfig? installedSource;
+      final service = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => false,
+        installModel: ({required source, onProgress}) async {
+          installedSource = source;
+        },
+        createModel: (_) async => _FakeInferenceModel(),
+      );
+      addTearDown(service.dispose);
 
-    final snapshot = await service.ensureReady();
+      final snapshot = await service.ensureReady();
 
-    expect(installedSource, isNotNull);
-    expect(installedSource!.kind, ModelSourceKind.file);
-    expect(installedSource!.location, '/tmp/gemma.task');
-    expect(snapshot.source.origin, ModelSourceOrigin.envPath);
-  });
+      expect(installedSource, isNotNull);
+      expect(installedSource!.kind, ModelSourceKind.file);
+      expect(installedSource!.location, '/tmp/gemma.task');
+      expect(snapshot.source.origin, ModelSourceOrigin.envPath);
+    },
+  );
 
-  test('GemmaService surfaces an explicit error when no model source is set',
-      () async {
-    final sourceService = await _createSourceService();
-    final service = GemmaService(
-      modelSourceService: sourceService,
-      isModelInstalled: (_) async => true,
-      createModel: (_) async => _FakeInferenceModel(),
-    );
-    addTearDown(service.dispose);
+  test(
+    'GemmaService resetCachedInstall clears metadata and uninstalls source',
+    () async {
+      const source = ModelSourceConfig(
+        kind: ModelSourceKind.network,
+        origin: ModelSourceOrigin.envUrl,
+        location: 'https://cdn.example.com/gemma-4-E2B-it.litertlm',
+        label: 'Managed download',
+      );
+      final sourceService = await _createSourceService(
+        configuredModelUrl: source.location,
+        installedSourceSignature: source.signature,
+      );
+      String? uninstalledModelId;
+      final service = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => true,
+        uninstallModel: (modelId) async {
+          uninstalledModelId = modelId;
+        },
+        createModel: (_) async => _FakeInferenceModel(),
+      );
+      addTearDown(service.dispose);
 
-    await expectLater(
-      service.ensureReady(),
-      throwsA(
-        isA<GemmaStartupFailure>().having(
-          (failure) => failure.kind,
-          'kind',
-          GemmaStartupFailureKind.modelSource,
+      await service.resetCachedInstall();
+
+      final preferences = await SharedPreferences.getInstance();
+      expect(
+        preferences.getString(ModelSourceService.installedSourceSignatureKey),
+        isNull,
+      );
+      expect(uninstalledModelId, 'gemma-4-E2B-it.litertlm');
+    },
+  );
+
+  test(
+    'GemmaService surfaces an explicit error when no model source is set',
+    () async {
+      final sourceService = await _createSourceService();
+      final service = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => true,
+        createModel: (_) async => _FakeInferenceModel(),
+      );
+      addTearDown(service.dispose);
+
+      await expectLater(
+        service.ensureReady(),
+        throwsA(
+          isA<GemmaStartupFailure>().having(
+            (failure) => failure.kind,
+            'kind',
+            GemmaStartupFailureKind.modelSource,
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 }
