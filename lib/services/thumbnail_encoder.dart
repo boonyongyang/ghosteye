@@ -26,7 +26,14 @@ class ThumbnailEncoder {
       return null;
     }
 
-    final decoded = img.decodeJpg(jpegBytes);
+    // decodeJpg returns null for some inputs and throws ImageException for
+    // others (e.g. a missing Start-Of-Image marker); treat both as "no image".
+    final img.Image? decoded;
+    try {
+      decoded = img.decodeJpg(jpegBytes);
+    } catch (_) {
+      return null;
+    }
     if (decoded == null) {
       return null;
     }
