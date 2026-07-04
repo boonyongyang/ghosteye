@@ -137,6 +137,7 @@ class _FakeScriptExportService extends ScriptExportService {
     required List<ScriptEntry> entries,
     required String title,
     DateTime? capturedAt,
+    String notes = '',
   }) async {
     sharedFormat = format;
     sharedTitle = title;
@@ -148,6 +149,7 @@ class _FakeScriptExportService extends ScriptExportService {
     required List<ScriptEntry> entries,
     required String title,
     DateTime? capturedAt,
+    String notes = '',
   }) async {
     copiedFormat = format;
     copiedTitle = title;
