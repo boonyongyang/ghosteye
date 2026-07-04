@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -60,14 +60,17 @@ Acceptance criteria:
 
 ### 3. Frame thumbnails
 
-- [ ] Attach a representative frame thumbnail to each screenplay beat or saved take
-- [ ] Keep thumbnail generation lightweight enough for on-device use
+- [x] Attach a representative frame thumbnail to each saved take
+- [x] Keep thumbnail generation lightweight enough for on-device use
 
 Why it matters:
 - The screenplay becomes easier to scan, remember, and compare later.
 
 Acceptance criteria:
-- Saved takes show a visual reference for the captured scene.
+- Saved takes show a visual reference for the captured scene. Thumbnails are
+  derived once per take from the already-preprocessed frame JPEG (160px, q55),
+  stored inline as base64 so a take stays self-contained, and captured on the
+  take's first frame so the card art stays stable.
 
 ## Priority 2: Product controls and diagnostics
 
@@ -123,9 +126,8 @@ Rule:
 ## Suggested build order
 
 1. Release readiness
-2. Frame thumbnails
-3. Setup observability
-4. Gemma 4 spike
+2. Setup observability
+3. Gemma 4 spike
 
 ## Notes for future agents
 

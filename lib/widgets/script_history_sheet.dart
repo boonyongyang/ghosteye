@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -274,62 +277,73 @@ class _TakeCard extends StatelessWidget {
           onOpen();
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 14),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  if (mode != null) ...<Widget>[
-                    _ModeBadge(mode: mode),
-                    const SizedBox(width: 8),
+              if (session.hasThumbnail) ...<Widget>[
+                _TakeThumbnail(base64Jpeg: session.thumbnail!),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        if (mode != null) ...<Widget>[
+                          _ModeBadge(mode: mode),
+                          const SizedBox(width: 8),
+                        ],
+                        const Spacer(),
+                        _IconAction(
+                          icon: session.isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: session.isFavorite
+                              ? const Color(0xFFFDD663)
+                              : Colors.white38,
+                          tooltip: session.isFavorite
+                              ? 'Remove from favorites'
+                              : 'Add to favorites',
+                          onTap: onToggleFavorite,
+                        ),
+                        _IconAction(
+                          icon: Icons.ios_share_outlined,
+                          tooltip: 'Export take',
+                          onTap: () {
+                            AppHaptics.trigger(AppHapticPattern.selection);
+                            onExport();
+                          },
+                        ),
+                        _IconAction(
+                          icon: Icons.delete_outline,
+                          tooltip: 'Delete take',
+                          onTap: onDelete,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        session.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        '${_formatTimestamp(session.updatedAt.toLocal())} · ${session.lineCount} lines',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
                   ],
-                  const Spacer(),
-                  _IconAction(
-                    icon: session.isFavorite
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: session.isFavorite
-                        ? const Color(0xFFFDD663)
-                        : Colors.white38,
-                    tooltip: session.isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites',
-                    onTap: onToggleFavorite,
-                  ),
-                  _IconAction(
-                    icon: Icons.ios_share_outlined,
-                    tooltip: 'Export take',
-                    onTap: () {
-                      AppHaptics.trigger(AppHapticPattern.selection);
-                      onExport();
-                    },
-                  ),
-                  _IconAction(
-                    icon: Icons.delete_outline,
-                    tooltip: 'Delete take',
-                    onTap: onDelete,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Text(
-                  session.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Text(
-                  '${_formatTimestamp(session.updatedAt.toLocal())} · ${session.lineCount} lines',
-                  style: theme.textTheme.bodySmall,
                 ),
               ),
             ],
@@ -337,6 +351,52 @@ class _TakeCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _TakeThumbnail extends StatelessWidget {
+  const _TakeThumbnail({required this.base64Jpeg});
+
+  final String base64Jpeg;
+
+  static const double _width = 54;
+  static const double _height = 72;
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _decode(base64Jpeg);
+    if (bytes == null) {
+      return const SizedBox(width: _width, height: _height);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.memory(
+        bytes,
+        width: _width,
+        height: _height,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => Container(
+          width: _width,
+          height: _height,
+          color: Colors.white10,
+          child: const Icon(
+            Icons.movie_outlined,
+            size: 18,
+            color: Colors.white24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Uint8List? _decode(String value) {
+    try {
+      return base64Decode(value);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

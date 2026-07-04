@@ -4,11 +4,11 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
+- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, and frame thumbnails, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
 - Verification status: `make verify passing on 2026-05-27 after public GitHub prep`
 - Deployment readiness: `needs production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
-- Next product phase: `release readiness and frame thumbnails before broader release polish`
+- Next product phase: `release readiness and setup observability before broader release polish`
 
 ## Current phase readout
 
@@ -123,7 +123,7 @@ Acceptance criteria:
 - [x] Promote history into a take library with better saved-take cards.
 - [x] Add take naming or auto-generated titles from the first useful screenplay line.
 - [x] Add favorite/pin support for strong takes.
-- [ ] Add optional thumbnails from representative captured frames if performance allows.
+- [x] Add optional thumbnails from representative captured frames, generated once per take from the already-preprocessed frame JPEG.
 - [x] Add search/filter by mode, date, and title once there is enough metadata.
 - [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
 - [ ] Consider a lightweight "shot notes" field that stays local and exports with the take.
@@ -221,6 +221,7 @@ Acceptance criteria:
 - [x] Add a one-time director tips sheet plus replayable `Tips` action
 - [x] Replace loose director action chips with a bottom command dock and dominant capture control
 - [x] Add teleprompter display controls for text size, line spacing, and reveal pace in the Model Center sheet
+- [x] Attach a representative frame thumbnail to each saved take, generated once per take from the preprocessed frame JPEG and stored inline as base64
 - [x] Add system haptic feedback to onboarding, buttons, selections, and key action controls
 - [x] Persist recent screenplay takes locally as timestamped sessions
 - [x] Add a lightweight history sheet to reopen saved takes in paused review mode
@@ -337,7 +338,7 @@ Acceptance criteria:
 ## Near-term feature backlog
 
 - [x] Verify and land the current export/share workflow for active and saved takes
-- [ ] Pair each saved take with a captured frame thumbnail when performance permits
+- [x] Pair each saved take with a captured frame thumbnail (inline base64, generated once per take)
 - [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [x] Add pace and responsiveness controls for frame sampling and inference cadence
 - [x] Add teleprompter display controls for text size, density, and reveal pace

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -93,6 +95,7 @@ class _FixedHistoryController
     required DateTime createdAt,
     required List<ScriptEntry> entries,
     CinematicMode? mode,
+    Uint8List? thumbnailSource,
   }) async {}
 }
 

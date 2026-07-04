@@ -9,6 +9,7 @@ class ScriptSession {
     required this.entries,
     this.mode,
     this.isFavorite = false,
+    this.thumbnail,
   });
 
   final String id;
@@ -17,6 +18,12 @@ class ScriptSession {
   final List<ScriptEntry> entries;
   final CinematicMode? mode;
   final bool isFavorite;
+
+  /// Base64-encoded JPEG of a representative frame from the take, or null if
+  /// none was captured. Stored inline so a session stays self-contained.
+  final String? thumbnail;
+
+  bool get hasThumbnail => thumbnail != null && thumbnail!.isNotEmpty;
 
   String get title {
     for (final entry in entries) {
@@ -46,6 +53,7 @@ class ScriptSession {
 
   ScriptSession copyWith({
     bool? isFavorite,
+    String? thumbnail,
   }) {
     return ScriptSession(
       id: id,
@@ -54,6 +62,7 @@ class ScriptSession {
       entries: entries,
       mode: mode,
       isFavorite: isFavorite ?? this.isFavorite,
+      thumbnail: thumbnail ?? this.thumbnail,
     );
   }
 
@@ -65,6 +74,7 @@ class ScriptSession {
       'entries': entries.map((entry) => entry.toJson()).toList(growable: false),
       'mode': mode?.name,
       'isFavorite': isFavorite,
+      if (thumbnail != null) 'thumbnail': thumbnail,
     };
   }
 
@@ -98,6 +108,7 @@ class ScriptSession {
       entries: entriesJson,
       mode: mode,
       isFavorite: json['isFavorite'] as bool? ?? false,
+      thumbnail: json['thumbnail'] as String?,
     );
   }
 
@@ -113,6 +124,7 @@ class ScriptSession {
         other.updatedAt == updatedAt &&
         other.mode == mode &&
         other.isFavorite == isFavorite &&
+        other.thumbnail == thumbnail &&
         _listEquals(other.entries, entries);
   }
 
@@ -124,6 +136,7 @@ class ScriptSession {
       updatedAt,
       mode,
       isFavorite,
+      thumbnail,
       Object.hashAll(entries),
     );
   }
