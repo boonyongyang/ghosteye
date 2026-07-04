@@ -87,6 +87,8 @@ void main() {
     expect(state!.phase, GemmaPhase.error);
     expect(state.failureKind, GemmaStartupFailureKind.localModel);
     expect(state.message, contains('.task'));
+    expect(state.diagnosticDetail, isNotNull);
+    expect(state.diagnosticDetail, isNotEmpty);
   });
 
   test('GemmaNotifier surfaces missing model source configuration', () async {

@@ -221,6 +221,10 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
         return;
       }
 
+      // Keep the latest preprocessed frame so a completed take can persist a
+      // representative thumbnail without re-touching the camera.
+      scriptController.rememberFrameForThumbnail(preprocessedFrame.imageBytes);
+
       final sampledAt = frame.sampledAt;
       var firstTokenRecorded = false;
       final tokenStream = ref.read(gemmaServiceProvider).generateScriptTokens(

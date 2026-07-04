@@ -42,17 +42,19 @@ class ScriptExportService {
     required List<ScriptEntry> entries,
     required String title,
     DateTime? capturedAt,
+    String notes = '',
   }) {
     final cleanedEntries = entries
         .where((entry) => entry.text.trim().isNotEmpty)
         .toList(growable: false);
     final exportTitle = title.trim().isEmpty ? 'Ghosteye Take' : title.trim();
+    final trimmedNotes = notes.trim();
     final subject = '$exportTitle (${_formatName(format)})';
     final text = switch (format) {
       ScriptExportFormat.fountain =>
-        _buildFountain(cleanedEntries, exportTitle, capturedAt),
+        _buildFountain(cleanedEntries, exportTitle, capturedAt, trimmedNotes),
       ScriptExportFormat.plainText =>
-        _buildPlainText(cleanedEntries, exportTitle, capturedAt),
+        _buildPlainText(cleanedEntries, exportTitle, capturedAt, trimmedNotes),
     };
 
     return ScriptExportDocument(
@@ -67,12 +69,14 @@ class ScriptExportService {
     required List<ScriptEntry> entries,
     required String title,
     DateTime? capturedAt,
+    String notes = '',
   }) async {
     final document = buildDocument(
       format: format,
       entries: entries,
       title: title,
       capturedAt: capturedAt,
+      notes: notes,
     );
     await _shareText(
       document.text,
@@ -86,12 +90,14 @@ class ScriptExportService {
     required List<ScriptEntry> entries,
     required String title,
     DateTime? capturedAt,
+    String notes = '',
   }) async {
     final document = buildDocument(
       format: format,
       entries: entries,
       title: title,
       capturedAt: capturedAt,
+      notes: notes,
     );
     await _setClipboard(document.text);
   }
@@ -100,6 +106,7 @@ class ScriptExportService {
     List<ScriptEntry> entries,
     String title,
     DateTime? capturedAt,
+    String notes,
   ) {
     final buffer = StringBuffer()
       ..writeln('Title: $title')
@@ -113,25 +120,33 @@ class ScriptExportService {
 
     if (entries.isEmpty) {
       buffer.writeln('/* No screenplay lines captured yet. */');
-      return buffer.toString().trimRight();
+    } else {
+      for (var index = 0; index < entries.length; index++) {
+        final entry = entries[index];
+        buffer.writeln(entry.text);
+
+        final nextType =
+            index + 1 < entries.length ? entries[index + 1].type : null;
+        final shouldInsertBlankLine = switch (entry.type) {
+          ScriptEntryType.slugline || ScriptEntryType.action => true,
+          ScriptEntryType.dialogue => nextType != ScriptEntryType.dialogue &&
+              nextType != ScriptEntryType.parenthetical,
+          ScriptEntryType.character || ScriptEntryType.parenthetical => false,
+        };
+
+        if (shouldInsertBlankLine) {
+          buffer.writeln();
+        }
+      }
     }
 
-    for (var index = 0; index < entries.length; index++) {
-      final entry = entries[index];
-      buffer.writeln(entry.text);
-
-      final nextType =
-          index + 1 < entries.length ? entries[index + 1].type : null;
-      final shouldInsertBlankLine = switch (entry.type) {
-        ScriptEntryType.slugline || ScriptEntryType.action => true,
-        ScriptEntryType.dialogue => nextType != ScriptEntryType.dialogue &&
-            nextType != ScriptEntryType.parenthetical,
-        ScriptEntryType.character || ScriptEntryType.parenthetical => false,
-      };
-
-      if (shouldInsertBlankLine) {
-        buffer.writeln();
-      }
+    if (notes.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('/*')
+        ..writeln('Notes:')
+        ..writeln(notes)
+        ..writeln('*/');
     }
 
     return buffer.toString().trimRight();
@@ -141,6 +156,7 @@ class ScriptExportService {
     List<ScriptEntry> entries,
     String title,
     DateTime? capturedAt,
+    String notes,
   ) {
     final buffer = StringBuffer()..writeln(title);
     if (capturedAt != null) {
@@ -152,19 +168,25 @@ class ScriptExportService {
 
     if (entries.isEmpty) {
       buffer.writeln('No screenplay lines captured yet.');
-      return buffer.toString().trimRight();
+    } else {
+      for (final entry in entries) {
+        buffer.writeln(
+          switch (entry.type) {
+            ScriptEntryType.slugline => 'Scene: ${entry.text}',
+            ScriptEntryType.action => entry.text,
+            ScriptEntryType.character => 'Character: ${entry.text}',
+            ScriptEntryType.dialogue => entry.text,
+            ScriptEntryType.parenthetical => entry.text,
+          },
+        );
+      }
     }
 
-    for (final entry in entries) {
-      buffer.writeln(
-        switch (entry.type) {
-          ScriptEntryType.slugline => 'Scene: ${entry.text}',
-          ScriptEntryType.action => entry.text,
-          ScriptEntryType.character => 'Character: ${entry.text}',
-          ScriptEntryType.dialogue => entry.text,
-          ScriptEntryType.parenthetical => entry.text,
-        },
-      );
+    if (notes.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('Notes:')
+        ..writeln(notes);
     }
 
     return buffer.toString().trimRight();

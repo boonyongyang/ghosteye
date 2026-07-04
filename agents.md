@@ -4,7 +4,7 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
+- Project status: `Gemma 3n setup workspace with copyable failure diagnostics, setup-handoff onboarding, director command dock, branding pass, take library with frame thumbnails and shot notes, Model Center storage/source controls, performance presets, teleprompter display controls, debug diagnostics, and export/share completed`
 - Confidence status: `make verify passing on 2026-05-27 after public GitHub prep`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`

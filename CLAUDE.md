@@ -60,6 +60,8 @@ Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` 
 
 Source signatures are persisted so switching source forces reinstall. Managed URLs use `flutter_gemma` network install; local files use file install with copy into app storage. `GemmaService` tracks a `GemmaRuntimeSnapshot` (backend=GPU/CPU, source, fallback flag) after successful init. Hugging Face-specific copy should only appear when the active source is actually Hugging Face.
 
+Setup failures are classified by `classifyGemmaStartupFailure` into a `GemmaStartupFailureKind` + friendly message, and `GemmaState.diagnosticDetail` retains the raw underlying error. `SplashScreen`'s setup-failure view surfaces both a per-kind support hint and a copyable technical block (failure kind, source, raw error) behind a "Show details" expander so support/QA can diagnose without native logs.
+
 ### Inference pipeline
 
 `inferenceProvider` (`lib/providers/inference_provider.dart`) is a `StreamProvider.autoDispose` that:
@@ -80,7 +82,9 @@ The backend defaults to `ffi` on supported platforms (Android, iOS, macOS); `Fra
 
 `ScriptController` (`lib/providers/script_provider.dart`) accumulates streamed tokens into a `liveResponse`, then on `finishResponse` classifies each line into Fountain screenplay types (`slugline`, `character`, `parenthetical`, `dialogue`, `action`) and appends parsed `ScriptEntry` objects. It auto-syncs completed sessions to `ScriptHistoryService` via `_syncHistory`.
 
-`ScriptHistoryService` / `scriptHistoryProvider` persist up to `AppConstants.maxSavedScriptSessions` (12) recent takes as JSON in `shared_preferences`.
+`ScriptHistoryService` / `scriptHistoryProvider` persist up to `AppConstants.maxSavedScriptSessions` (12) recent takes as JSON in `shared_preferences`. Each take also carries an optional inline base64 JPEG **thumbnail**: `inferenceProvider` hands the latest preprocessed frame to `ScriptController.rememberFrameForThumbnail`, and `syncSession` encodes it once per take via `ThumbnailEncoder` (`lib/services/thumbnail_encoder.dart`, 160px/q55) and reuses it on later syncs so the card art stays stable. Takes also carry a user **`notes`** string (edited from the take library via `scriptHistoryProvider.setNotes`) that `ScriptExportService` appends to Fountain (boneyard) and plain-text exports. Both thumbnail and notes travel inside the session JSON, so delete/clear need no extra file lifecycle.
+
+`ScriptScrollView` (`lib/widgets/script_scroll_view.dart`) renders the teleprompter and watches `teleprompterSettingsProvider` (`lib/providers/teleprompter_settings_provider.dart`) — an in-memory `NotifierProvider<TeleprompterSettingsController, TeleprompterSettings>`. The three enum-based settings (text size → composed `TextScaler`, density → inter-line gap, pace → typewriter `charDelay`) default to the original hardcoded presentation and are edited via the `TELEPROMPTER` section of the Model Center sheet (`TeleprompterControls`).
 
 ### Pipeline metrics
 

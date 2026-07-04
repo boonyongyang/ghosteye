@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/script_provider.dart';
 import '../providers/session_controls_provider.dart';
+import '../providers/teleprompter_settings_provider.dart';
 import 'script_line_widget.dart';
 import 'typewriter_text.dart';
 
@@ -48,17 +49,18 @@ class _ScriptScrollViewState extends ConsumerState<ScriptScrollView> {
 
     final scriptState = ref.watch(scriptProvider);
     final captureEnabled = ref.watch(captureEnabledProvider);
+    final teleprompter = ref.watch(teleprompterSettingsProvider);
     final hasLiveResponse = scriptState.liveResponse.isNotEmpty;
     final itemCount =
         scriptState.entries.length + (hasLiveResponse ? 1 : 0) + 1;
 
-    return ListView.builder(
+    final list = ListView.builder(
       controller: _scrollController,
       itemCount: itemCount,
       itemBuilder: (context, index) {
         if (index < scriptState.entries.length) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: EdgeInsets.only(bottom: teleprompter.density.lineGap),
             child: ScriptLineWidget(entry: scriptState.entries[index]),
           );
         }
@@ -66,7 +68,10 @@ class _ScriptScrollViewState extends ConsumerState<ScriptScrollView> {
         if (hasLiveResponse && index == scriptState.entries.length) {
           return Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 16),
-            child: TypewriterText(targetText: scriptState.liveResponse),
+            child: TypewriterText(
+              targetText: scriptState.liveResponse,
+              charDelay: teleprompter.pace.charDelay,
+            ),
           );
         }
 
@@ -100,6 +105,18 @@ class _ScriptScrollViewState extends ConsumerState<ScriptScrollView> {
 
         return const SizedBox(height: 40);
       },
+    );
+
+    // Compose the teleprompter scale with the viewer's system text scale so
+    // accessibility settings are respected rather than overridden.
+    final media = MediaQuery.of(context);
+    final systemScale = media.textScaler.scale(1.0);
+    return MediaQuery(
+      data: media.copyWith(
+        textScaler:
+            TextScaler.linear(systemScale * teleprompter.textSize.scale),
+      ),
+      child: list,
     );
   }
 }

@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, and performance presets implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -60,14 +60,17 @@ Acceptance criteria:
 
 ### 3. Frame thumbnails
 
-- [ ] Attach a representative frame thumbnail to each screenplay beat or saved take
-- [ ] Keep thumbnail generation lightweight enough for on-device use
+- [x] Attach a representative frame thumbnail to each saved take
+- [x] Keep thumbnail generation lightweight enough for on-device use
 
 Why it matters:
 - The screenplay becomes easier to scan, remember, and compare later.
 
 Acceptance criteria:
-- Saved takes show a visual reference for the captured scene.
+- Saved takes show a visual reference for the captured scene. Thumbnails are
+  derived once per take from the already-preprocessed frame JPEG (160px, q55),
+  stored inline as base64 so a take stays self-contained, and captured on the
+  take's first frame so the card art stays stable.
 
 ## Priority 2: Product controls and diagnostics
 
@@ -93,11 +96,23 @@ Acceptance criteria:
 
 ### 6. Setup observability
 
-- [ ] Improve error surfaces for downloads, imports, and backend fallback
-- [ ] Add a compact debug detail view for setup failures
+- [x] Improve error surfaces for downloads, imports, and backend fallback
+- [x] Add a compact debug detail view for setup failures
 
 Acceptance criteria:
-- Support and QA can diagnose setup problems without diving into native logs first.
+- Support and QA can diagnose setup problems without diving into native logs
+  first. `GemmaState.diagnosticDetail` carries the raw underlying error, and the
+  setup failure screen surfaces a copyable technical block (failure kind, active
+  source, raw error) behind the "Show details" expander.
+
+### 7. Teleprompter display controls
+
+- [x] Add text-size control (compact/standard/large scale)
+- [x] Add line-spacing/scroll-density control
+- [x] Add reveal-pace control for the typewriter cadence
+
+Acceptance criteria:
+- A user can adjust how the screenplay reads without changing model behavior; controls live in the Model Center `TELEPROMPTER` section and default to the original presentation.
 
 ## Priority 3: Research and branching work
 
@@ -114,10 +129,7 @@ Rule:
 ## Suggested build order
 
 1. Release readiness
-2. Frame thumbnails
-3. Teleprompter controls
-4. Setup observability
-5. Gemma 4 spike
+2. Gemma 4 spike
 
 ## Notes for future agents
 

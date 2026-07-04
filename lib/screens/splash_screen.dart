@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -256,6 +257,7 @@ class _SetupStage extends StatelessWidget {
               message: value.message ?? 'Unable to load model',
               failureKind: value.failureKind,
               source: value.source,
+              diagnosticDetail: value.diagnosticDetail,
               onRetry: onRetry,
               onImportLocalModel: onImportLocalModel,
               onUseManagedDownload: onUseManagedDownload,
@@ -353,6 +355,7 @@ class _SetupError extends StatefulWidget {
     required this.message,
     this.failureKind,
     this.source,
+    this.diagnosticDetail,
     required this.onRetry,
     required this.onImportLocalModel,
     this.onUseManagedDownload,
@@ -362,6 +365,7 @@ class _SetupError extends StatefulWidget {
   final String message;
   final GemmaStartupFailureKind? failureKind;
   final ModelSourceConfig? source;
+  final String? diagnosticDetail;
   final VoidCallback onRetry;
   final Future<void> Function() onImportLocalModel;
   final Future<void> Function()? onUseManagedDownload;
@@ -388,6 +392,8 @@ class _SetupErrorState extends State<_SetupError> {
       rawMessage: widget.message,
       source: widget.source,
     );
+    final technicalDetail = _buildTechnicalDetail();
+    final hasDetail = helpText != null || technicalDetail != null;
 
     return StatusPanel(
       statusColor: status.color(context),
@@ -404,7 +410,7 @@ class _SetupErrorState extends State<_SetupError> {
             widget.message,
             style: Theme.of(context).textTheme.bodySmall,
           ),
-          if (helpText != null) ...<Widget>[
+          if (hasDetail) ...<Widget>[
             const SizedBox(height: 6),
             TextButton.icon(
               onPressed: () => setState(() => _showDetail = !_showDetail),
@@ -420,8 +426,31 @@ class _SetupErrorState extends State<_SetupError> {
               label: Text(_showDetail ? 'Hide details' : 'Show details'),
             ),
             if (_showDetail) ...<Widget>[
-              const SizedBox(height: 4),
-              DiagnosticBlock(text: helpText),
+              if (helpText != null) ...<Widget>[
+                const SizedBox(height: 4),
+                DiagnosticBlock(text: helpText),
+              ],
+              if (technicalDetail != null) ...<Widget>[
+                const SizedBox(height: 8),
+                DiagnosticBlock(
+                  icon: Icons.bug_report_outlined,
+                  text: technicalDetail,
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () =>
+                        _copyDiagnostics(context, technicalDetail),
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.copy_all_outlined, size: 16),
+                    label: const Text('Copy diagnostics'),
+                  ),
+                ),
+              ],
             ],
           ],
           const SizedBox(height: 18),
@@ -543,6 +572,42 @@ class _SetupErrorState extends State<_SetupError> {
     }
 
     return null;
+  }
+
+  /// Structured, support-facing detail (failure kind, source, raw error) so QA
+  /// can diagnose a setup failure without pulling native logs.
+  String? _buildTechnicalDetail() {
+    final lines = <String>[];
+
+    final kind = widget.failureKind;
+    if (kind != null) {
+      lines.add('Failure: ${kind.name}');
+    }
+
+    final source = widget.source;
+    if (source != null) {
+      final kindLabel =
+          source.kind == ModelSourceKind.file ? 'local file' : 'managed';
+      lines.add('Source: ${source.label} ($kindLabel)');
+    }
+
+    final detail = widget.diagnosticDetail?.trim();
+    if (detail != null && detail.isNotEmpty) {
+      lines.add('Detail: $detail');
+    }
+
+    return lines.isEmpty ? null : lines.join('\n');
+  }
+
+  Future<void> _copyDiagnostics(BuildContext context, String text) async {
+    AppHaptics.trigger(AppHapticPattern.selection);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+      const SnackBar(content: Text('Diagnostics copied')),
+    );
   }
 }
 

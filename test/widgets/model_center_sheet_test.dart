@@ -216,6 +216,9 @@ void main() {
     await tester.pumpWidget(_buildSheet(onReset: () => called = true));
     await tester.pump();
 
+    // The sheet scrolls; ensure the bottom action is on-screen before tapping.
+    await tester.ensureVisible(find.text('Reset cached install'));
+    await tester.pump();
     await tester.tap(find.text('Reset cached install'));
     await tester.pump();
 
