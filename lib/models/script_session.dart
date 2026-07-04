@@ -10,6 +10,7 @@ class ScriptSession {
     this.mode,
     this.isFavorite = false,
     this.thumbnail,
+    this.notes = '',
   });
 
   final String id;
@@ -23,7 +24,12 @@ class ScriptSession {
   /// none was captured. Stored inline so a session stays self-contained.
   final String? thumbnail;
 
+  /// Optional user shot notes. Stays on-device and is included in exports.
+  final String notes;
+
   bool get hasThumbnail => thumbnail != null && thumbnail!.isNotEmpty;
+
+  bool get hasNotes => notes.trim().isNotEmpty;
 
   String get title {
     for (final entry in entries) {
@@ -54,6 +60,7 @@ class ScriptSession {
   ScriptSession copyWith({
     bool? isFavorite,
     String? thumbnail,
+    String? notes,
   }) {
     return ScriptSession(
       id: id,
@@ -63,6 +70,7 @@ class ScriptSession {
       mode: mode,
       isFavorite: isFavorite ?? this.isFavorite,
       thumbnail: thumbnail ?? this.thumbnail,
+      notes: notes ?? this.notes,
     );
   }
 
@@ -75,6 +83,7 @@ class ScriptSession {
       'mode': mode?.name,
       'isFavorite': isFavorite,
       if (thumbnail != null) 'thumbnail': thumbnail,
+      if (notes.isNotEmpty) 'notes': notes,
     };
   }
 
@@ -109,6 +118,7 @@ class ScriptSession {
       mode: mode,
       isFavorite: json['isFavorite'] as bool? ?? false,
       thumbnail: json['thumbnail'] as String?,
+      notes: json['notes'] as String? ?? '',
     );
   }
 
@@ -125,6 +135,7 @@ class ScriptSession {
         other.mode == mode &&
         other.isFavorite == isFavorite &&
         other.thumbnail == thumbnail &&
+        other.notes == notes &&
         _listEquals(other.entries, entries);
   }
 
@@ -137,6 +148,7 @@ class ScriptSession {
       mode,
       isFavorite,
       thumbnail,
+      notes,
       Object.hashAll(entries),
     );
   }

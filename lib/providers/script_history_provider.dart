@@ -88,6 +88,25 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
     state = AsyncData(sessions);
   }
 
+  Future<void> setNotes(String sessionId, String notes) async {
+    final current = state.valueOrNull ?? <ScriptSession>[];
+    ScriptSession? target;
+    for (final s in current) {
+      if (s.id == sessionId) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null || target.notes == notes) {
+      return;
+    }
+
+    final sessions = await ref
+        .read(scriptHistoryServiceProvider)
+        .upsertSession(target.copyWith(notes: notes));
+    state = AsyncData(sessions);
+  }
+
   Future<void> deleteSession(String sessionId) async {
     final sessions =
         await ref.read(scriptHistoryServiceProvider).deleteSession(sessionId);

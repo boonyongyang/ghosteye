@@ -12,11 +12,13 @@ class ScriptExportSheet extends ConsumerWidget {
     required this.title,
     required this.entries,
     this.capturedAt,
+    this.notes = '',
   });
 
   final String title;
   final List<ScriptEntry> entries;
   final DateTime? capturedAt;
+  final String notes;
 
   bool get hasEntries => entries.isNotEmpty;
 
@@ -113,6 +115,7 @@ class ScriptExportSheet extends ConsumerWidget {
           entries: entries,
           title: title,
           capturedAt: capturedAt,
+          notes: notes,
         );
     if (context.mounted) {
       Navigator.of(context).pop();
@@ -131,6 +134,7 @@ class ScriptExportSheet extends ConsumerWidget {
           entries: entries,
           title: title,
           capturedAt: capturedAt,
+          notes: notes,
         );
     if (!context.mounted) {
       return;

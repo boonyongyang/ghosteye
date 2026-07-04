@@ -15,7 +15,7 @@ Ghosteye is a Flutter camera app that turns the live scene into scrolling screen
 - Guided model setup workspace with managed-download and local-model install flows
 - Live camera preview with screenplay-style streaming output
 - One-handed director command dock for capture, history, export, clear, and tips
-- Replayable director tips, local session history with per-take frame thumbnails, and export/share for active or saved takes
+- Replayable director tips, local session history with per-take frame thumbnails and shot notes, and export/share for active or saved takes
 - Model Center for active source, local storage, reset, source switching, privacy status, and pacing presets
 - Teleprompter display controls for text size, line spacing, and reveal pace
 - Copyable technical diagnostics on setup failures for faster support triage

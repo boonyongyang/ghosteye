@@ -116,4 +116,38 @@ void main() {
     expect(session.isFavorite, isTrue);
     expect(session.thumbnail, equals('thumb-1'));
   });
+
+  test('setNotes updates a take and preserves its thumbnail', () async {
+    final container = await _readyContainer(_CountingEncoder());
+    final notifier = container.read(scriptHistoryProvider.notifier);
+
+    await notifier.syncSession(
+      sessionId: 's1',
+      createdAt: DateTime.utc(2026, 5, 1),
+      entries: _entries,
+      thumbnailSource: _source,
+    );
+    await notifier.setNotes('s1', 'Push in on the door');
+
+    final session = container.read(scriptHistoryProvider).valueOrNull!.single;
+    expect(session.notes, equals('Push in on the door'));
+    expect(session.thumbnail, equals('thumb-1'));
+  });
+
+  test('setNotes is a no-op for an unknown session id', () async {
+    final container = await _readyContainer(_CountingEncoder());
+    final notifier = container.read(scriptHistoryProvider.notifier);
+
+    await notifier.syncSession(
+      sessionId: 's1',
+      createdAt: DateTime.utc(2026, 5, 1),
+      entries: _entries,
+    );
+    await notifier.setNotes('missing', 'ignored');
+
+    expect(
+      container.read(scriptHistoryProvider).valueOrNull!.single.notes,
+      isEmpty,
+    );
+  });
 }

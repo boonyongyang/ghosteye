@@ -4,7 +4,7 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, and frame thumbnails, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
+- Mainline branch status: `Gemma 3n setup workspace with copyable failure diagnostics, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, frame thumbnails, and shot notes, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
 - Verification status: `make verify passing on 2026-05-27 after public GitHub prep`
 - Deployment readiness: `needs production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
@@ -126,7 +126,7 @@ Acceptance criteria:
 - [x] Add optional thumbnails from representative captured frames, generated once per take from the already-preprocessed frame JPEG.
 - [x] Add search/filter by mode, date, and title once there is enough metadata.
 - [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
-- [ ] Consider a lightweight "shot notes" field that stays local and exports with the take.
+- [x] Add a lightweight "shot notes" field per take that stays local and is appended to Fountain/plain-text exports.
 - [ ] Consider custom cinematic presets after the default three modes feel stable.
 
 Acceptance criteria:
@@ -222,6 +222,8 @@ Acceptance criteria:
 - [x] Replace loose director action chips with a bottom command dock and dominant capture control
 - [x] Add teleprompter display controls for text size, line spacing, and reveal pace in the Model Center sheet
 - [x] Attach a representative frame thumbnail to each saved take, generated once per take from the preprocessed frame JPEG and stored inline as base64
+- [x] Add per-take shot notes editable from the take library and appended to Fountain/plain-text exports
+- [x] Surface copyable technical diagnostics on setup failures for support triage
 - [x] Add system haptic feedback to onboarding, buttons, selections, and key action controls
 - [x] Persist recent screenplay takes locally as timestamped sessions
 - [x] Add a lightweight history sheet to reopen saved takes in paused review mode

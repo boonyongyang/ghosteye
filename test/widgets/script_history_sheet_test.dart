@@ -97,6 +97,14 @@ class _FixedHistoryController
     CinematicMode? mode,
     Uint8List? thumbnailSource,
   }) async {}
+
+  @override
+  Future<void> setNotes(String sessionId, String notes) async {
+    final updated = state.value!.map((s) {
+      return s.id == sessionId ? s.copyWith(notes: notes) : s;
+    }).toList();
+    state = AsyncData(updated);
+  }
 }
 
 void main() {
@@ -207,5 +215,27 @@ void main() {
     await tester.pump();
 
     expect(find.textContaining('Ghosteye will save'), findsOneWidget);
+  });
+
+  testWidgets('editing a shot note saves it and shows it on the card',
+      (tester) async {
+    final sessions = <ScriptSession>[
+      _makeSession(id: 'a', slugline: 'INT. ROOFTOP - NIGHT'),
+    ];
+
+    await tester.pumpWidget(_buildSheet(sessions: sessions));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Add note'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shot notes'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextField), 'Reshoot wider next take');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Shot notes'), findsNothing);
+    expect(find.text('Reshoot wider next take'), findsOneWidget);
   });
 }

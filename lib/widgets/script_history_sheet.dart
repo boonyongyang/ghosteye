@@ -141,6 +141,7 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
                           session: session,
                           onOpen: () => widget.onSelectSession(session),
                           onExport: () => widget.onExportSession(session),
+                          onEditNotes: () => _editNotes(session),
                           onToggleFavorite: () {
                             AppHaptics.trigger(AppHapticPattern.selection);
                             ref
@@ -173,6 +174,51 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
         ),
       ),
     );
+  }
+
+  Future<void> _editNotes(ScriptSession session) async {
+    AppHaptics.trigger(AppHapticPattern.selection);
+    final controller = TextEditingController(text: session.notes);
+    try {
+      final result = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF171C25),
+            title: const Text('Shot notes'),
+            content: TextField(
+              controller: controller,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 5,
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                hintText: 'Framing, direction, follow-ups…',
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: () =>
+                    Navigator.of(dialogContext).pop(controller.text),
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (result != null) {
+        await ref
+            .read(scriptHistoryProvider.notifier)
+            .setNotes(session.id, result.trim());
+      }
+    } finally {
+      controller.dispose();
+    }
   }
 }
 
@@ -252,6 +298,7 @@ class _TakeCard extends StatelessWidget {
     required this.session,
     required this.onOpen,
     required this.onExport,
+    required this.onEditNotes,
     required this.onToggleFavorite,
     required this.onDelete,
   });
@@ -259,6 +306,7 @@ class _TakeCard extends StatelessWidget {
   final ScriptSession session;
   final Future<void> Function() onOpen;
   final Future<void> Function() onExport;
+  final VoidCallback onEditNotes;
   final VoidCallback onToggleFavorite;
   final VoidCallback onDelete;
 
@@ -296,6 +344,16 @@ class _TakeCard extends StatelessWidget {
                           const SizedBox(width: 8),
                         ],
                         const Spacer(),
+                        _IconAction(
+                          icon: session.hasNotes
+                              ? Icons.sticky_note_2
+                              : Icons.note_add_outlined,
+                          color: session.hasNotes
+                              ? const Color(0xFF67D7EE)
+                              : Colors.white38,
+                          tooltip: session.hasNotes ? 'Edit note' : 'Add note',
+                          onTap: onEditNotes,
+                        ),
                         _IconAction(
                           icon: session.isFavorite
                               ? Icons.star_rounded
@@ -343,6 +401,37 @@ class _TakeCard extends StatelessWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                     ),
+                    if (session.hasNotes) ...<Widget>[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const Padding(
+                              padding: EdgeInsets.only(top: 1),
+                              child: Icon(
+                                Icons.sticky_note_2_outlined,
+                                size: 13,
+                                color: Colors.white38,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                session.notes.trim(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white54,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
