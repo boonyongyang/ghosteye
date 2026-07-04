@@ -4,11 +4,11 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
+- Mainline branch status: `Gemma 3n setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
 - Verification status: `make verify passing on 2026-05-27 after public GitHub prep`
 - Deployment readiness: `needs production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `not started in mainline; separate spike still pending`
-- Next product phase: `release readiness, frame thumbnails, and teleprompter controls before broader release polish`
+- Next product phase: `release readiness and frame thumbnails before broader release polish`
 
 ## Current phase readout
 
@@ -107,7 +107,7 @@ Acceptance criteria:
 - [x] Make capture state the dominant control: pause/resume should be visually unmistakable.
 - [x] Move secondary actions into predictable surfaces: history/library, export/share, tips, diagnostics/settings.
 - [x] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
-- [ ] Add teleprompter controls for text size, scroll density, and output pace if they can be kept simple.
+- [x] Add teleprompter controls for text size, scroll density, and output pace via the Model Center `TELEPROMPTER` section.
 - [x] Add a review mode distinction when reopening a saved take so users know capture is paused.
 - [x] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
 - [x] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
@@ -183,7 +183,7 @@ Acceptance criteria:
 - [ ] Setup preflight checks for network, storage, battery, and privacy
 - [ ] Model center with active source, backend, cache reset, and re-download
 - [ ] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete
-- [ ] Teleprompter display controls for size, density, and pace
+- [x] Teleprompter display controls for size, density, and pace
 - [ ] Performance presets that tune frame sampling and model cadence
 - [ ] Optional custom cinematic modes after the default modes are polished
 - [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable
@@ -220,6 +220,7 @@ Acceptance criteria:
 - [x] Add persisted onboarding state with legacy-install auto-bypass
 - [x] Add a one-time director tips sheet plus replayable `Tips` action
 - [x] Replace loose director action chips with a bottom command dock and dominant capture control
+- [x] Add teleprompter display controls for text size, line spacing, and reveal pace in the Model Center sheet
 - [x] Add system haptic feedback to onboarding, buttons, selections, and key action controls
 - [x] Persist recent screenplay takes locally as timestamped sessions
 - [x] Add a lightweight history sheet to reopen saved takes in paused review mode
@@ -339,7 +340,7 @@ Acceptance criteria:
 - [ ] Pair each saved take with a captured frame thumbnail when performance permits
 - [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [x] Add pace and responsiveness controls for frame sampling and inference cadence
-- [ ] Add teleprompter display controls for text size, density, and review mode
+- [x] Add teleprompter display controls for text size, density, and reveal pace
 - [ ] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
 
 ## Notes for whoever picks this up next

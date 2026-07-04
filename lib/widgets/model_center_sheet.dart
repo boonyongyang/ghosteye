@@ -10,6 +10,7 @@ import '../providers/gemma_provider.dart';
 import '../providers/session_controls_provider.dart';
 import '../services/app_haptics.dart';
 import '../services/gemma_service.dart';
+import 'teleprompter_controls.dart';
 
 class ModelCenterSheet extends ConsumerWidget {
   const ModelCenterSheet({
@@ -96,6 +97,10 @@ class ModelCenterSheet extends ConsumerWidget {
                         fontStyle: FontStyle.italic,
                       ),
                 ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'TELEPROMPTER'),
+                const SizedBox(height: 10),
+                const TeleprompterControls(),
                 const SizedBox(height: 20),
                 const _SectionLabel(label: 'PRIVACY'),
                 const SizedBox(height: 8),

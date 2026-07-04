@@ -82,6 +82,8 @@ The backend defaults to `ffi` on supported platforms (Android, iOS, macOS); `Fra
 
 `ScriptHistoryService` / `scriptHistoryProvider` persist up to `AppConstants.maxSavedScriptSessions` (12) recent takes as JSON in `shared_preferences`.
 
+`ScriptScrollView` (`lib/widgets/script_scroll_view.dart`) renders the teleprompter and watches `teleprompterSettingsProvider` (`lib/providers/teleprompter_settings_provider.dart`) — an in-memory `NotifierProvider<TeleprompterSettingsController, TeleprompterSettings>`. The three enum-based settings (text size → composed `TextScaler`, density → inter-line gap, pace → typewriter `charDelay`) default to the original hardcoded presentation and are edited via the `TELEPROMPTER` section of the Model Center sheet (`TeleprompterControls`).
+
 ### Pipeline metrics
 
 `InferencePipelineMetricsNotifier` (`lib/providers/inference_pipeline_metrics_provider.dart`) records per-stage durations (frame copy, preprocessing, model input, first token, full response) in a sliding window. Metrics recording is gated behind `AppConstants.enableFramePipelineMetrics` (only `true` in debug builds).

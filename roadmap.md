@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, and performance presets implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -99,6 +99,15 @@ Acceptance criteria:
 Acceptance criteria:
 - Support and QA can diagnose setup problems without diving into native logs first.
 
+### 7. Teleprompter display controls
+
+- [x] Add text-size control (compact/standard/large scale)
+- [x] Add line-spacing/scroll-density control
+- [x] Add reveal-pace control for the typewriter cadence
+
+Acceptance criteria:
+- A user can adjust how the screenplay reads without changing model behavior; controls live in the Model Center `TELEPROMPTER` section and default to the original presentation.
+
 ## Priority 3: Research and branching work
 
 ### Gemma 4 spike
@@ -115,9 +124,8 @@ Rule:
 
 1. Release readiness
 2. Frame thumbnails
-3. Teleprompter controls
-4. Setup observability
-5. Gemma 4 spike
+3. Setup observability
+4. Gemma 4 spike
 
 ## Notes for future agents
 
