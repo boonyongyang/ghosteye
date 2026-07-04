@@ -178,47 +178,71 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
 
   Future<void> _editNotes(ScriptSession session) async {
     AppHaptics.trigger(AppHapticPattern.selection);
-    final controller = TextEditingController(text: session.notes);
-    try {
-      final result = await showDialog<String>(
-        context: context,
-        builder: (dialogContext) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFF171C25),
-            title: const Text('Shot notes'),
-            content: TextField(
-              controller: controller,
-              autofocus: true,
-              minLines: 2,
-              maxLines: 5,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                hintText: 'Framing, direction, follow-ups…',
-              ),
-            ),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(dialogContext).pop(),
-                child: const Text('Cancel'),
-              ),
-              FilledButton(
-                onPressed: () =>
-                    Navigator.of(dialogContext).pop(controller.text),
-                child: const Text('Save'),
-              ),
-            ],
-          );
-        },
-      );
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _NotesDialog(initialNotes: session.notes),
+    );
 
-      if (result != null) {
-        await ref
-            .read(scriptHistoryProvider.notifier)
-            .setNotes(session.id, result.trim());
-      }
-    } finally {
-      controller.dispose();
+    if (result != null) {
+      await ref
+          .read(scriptHistoryProvider.notifier)
+          .setNotes(session.id, result.trim());
     }
+  }
+}
+
+/// Owns its own [TextEditingController] so the controller lives exactly as long
+/// as the dialog route (avoiding use-after-dispose during the pop animation).
+class _NotesDialog extends StatefulWidget {
+  const _NotesDialog({required this.initialNotes});
+
+  final String initialNotes;
+
+  @override
+  State<_NotesDialog> createState() => _NotesDialogState();
+}
+
+class _NotesDialogState extends State<_NotesDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialNotes);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF171C25),
+      title: const Text('Shot notes'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        minLines: 2,
+        maxLines: 5,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          hintText: 'Framing, direction, follow-ups…',
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 

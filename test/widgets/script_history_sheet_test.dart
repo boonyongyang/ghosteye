@@ -235,7 +235,9 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
+    // Dialog closed and the card now reflects the saved note.
     expect(find.text('Shot notes'), findsNothing);
+    expect(find.byTooltip('Edit note'), findsOneWidget);
     expect(find.text('Reshoot wider next take'), findsOneWidget);
   });
 }
