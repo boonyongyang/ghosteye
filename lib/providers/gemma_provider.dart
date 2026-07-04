@@ -21,6 +21,7 @@ class GemmaState {
     this.activeBackend,
     this.usedFallback = false,
     this.failureKind,
+    this.diagnosticDetail,
   });
 
   const GemmaState.idle() : this(phase: GemmaPhase.idle);
@@ -32,6 +33,10 @@ class GemmaState {
   final RuntimeBackend? activeBackend;
   final bool usedFallback;
   final GemmaStartupFailureKind? failureKind;
+
+  /// Raw underlying error text for a failed setup, surfaced behind a details
+  /// expander so support/QA can diagnose without native logs. Null on success.
+  final String? diagnosticDetail;
 
   bool get isReady => phase == GemmaPhase.ready;
   bool get hasError => phase == GemmaPhase.error;
@@ -45,10 +50,12 @@ class GemmaState {
     RuntimeBackend? activeBackend,
     bool? usedFallback,
     GemmaStartupFailureKind? failureKind,
+    String? diagnosticDetail,
     bool clearMessage = false,
     bool clearSource = false,
     bool clearActiveBackend = false,
     bool clearFailureKind = false,
+    bool clearDiagnosticDetail = false,
   }) {
     return GemmaState(
       phase: phase ?? this.phase,
@@ -59,6 +66,9 @@ class GemmaState {
           clearActiveBackend ? null : activeBackend ?? this.activeBackend,
       usedFallback: usedFallback ?? this.usedFallback,
       failureKind: clearFailureKind ? null : failureKind ?? this.failureKind,
+      diagnosticDetail: clearDiagnosticDetail
+          ? null
+          : diagnosticDetail ?? this.diagnosticDetail,
     );
   }
 }
@@ -131,9 +141,18 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           failureKind: failure.kind,
           activeBackend: service.currentSnapshot?.backend,
           usedFallback: service.currentSnapshot?.usedFallback ?? false,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
         ),
       );
     }
+  }
+
+  static String? _diagnosticDetailFor(
+    GemmaStartupFailure failure,
+    Object error,
+  ) {
+    final detail = (failure.originalError ?? error).toString().trim();
+    return detail.isEmpty ? null : detail;
   }
 
   Future<void> importLocalModel() async {
@@ -162,6 +181,7 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
           clearActiveBackend: true,
         ),
       );
@@ -186,6 +206,7 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           usedFallback:
               ref.read(gemmaServiceProvider).currentSnapshot?.usedFallback ??
                   false,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
         ),
       );
     }

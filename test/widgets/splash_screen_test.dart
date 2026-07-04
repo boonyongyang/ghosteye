@@ -178,6 +178,40 @@ void main() {
     expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
+  testWidgets('SplashScreen exposes copyable technical diagnostics on expand',
+      (tester) async {
+    final notifier = _FakeGemmaNotifier(
+      const GemmaState(
+        phase: GemmaPhase.error,
+        message: 'Model could not be opened',
+        failureKind: GemmaStartupFailureKind.modelLoad,
+        diagnosticDetail: 'Exception: SOI marker missing at frobnicate()',
+        source: ModelSourceConfig(
+          kind: ModelSourceKind.network,
+          origin: ModelSourceOrigin.envUrl,
+          location: 'https://cdn.example.com/gemma.task',
+          label: 'Managed download',
+        ),
+      ),
+    );
+
+    await _pumpSplashScreen(tester, notifier);
+
+    // Technical details stay hidden until the section is expanded.
+    expect(find.textContaining('Exception: SOI marker missing'), findsNothing);
+    expect(find.text('Copy diagnostics'), findsNothing);
+
+    await tester.tap(find.text('Show details'));
+    await tester.pump();
+
+    expect(find.textContaining('Failure: modelLoad'), findsOneWidget);
+    expect(
+      find.textContaining('Exception: SOI marker missing'),
+      findsOneWidget,
+    );
+    expect(find.text('Copy diagnostics'), findsOneWidget);
+  });
+
   testWidgets(
       'SplashScreen offers reset cached install for model load failure',
       (tester) async {

@@ -143,7 +143,7 @@ Acceptance criteria:
 - [x] Add cache reset and re-download controls with confirmation.
 - [x] Add source-switch controls that respect the existing precedence rules.
 - [x] Add a privacy/status screen that states when network is used and when frames stay on-device.
-- [ ] Add support diagnostics copy for common setup failures.
+- [x] Add support diagnostics copy for common setup failures (technical detail block with failure kind, source, and raw error behind the setup "Show details" expander, plus a copy-to-clipboard action).
 - [x] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
 
 Acceptance criteria:

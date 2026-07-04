@@ -96,11 +96,14 @@ Acceptance criteria:
 
 ### 6. Setup observability
 
-- [ ] Improve error surfaces for downloads, imports, and backend fallback
-- [ ] Add a compact debug detail view for setup failures
+- [x] Improve error surfaces for downloads, imports, and backend fallback
+- [x] Add a compact debug detail view for setup failures
 
 Acceptance criteria:
-- Support and QA can diagnose setup problems without diving into native logs first.
+- Support and QA can diagnose setup problems without diving into native logs
+  first. `GemmaState.diagnosticDetail` carries the raw underlying error, and the
+  setup failure screen surfaces a copyable technical block (failure kind, active
+  source, raw error) behind the "Show details" expander.
 
 ### 7. Teleprompter display controls
 
@@ -126,8 +129,7 @@ Rule:
 ## Suggested build order
 
 1. Release readiness
-2. Setup observability
-3. Gemma 4 spike
+2. Gemma 4 spike
 
 ## Notes for future agents
 

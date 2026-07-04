@@ -60,6 +60,8 @@ Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` 
 
 Source signatures are persisted so switching source forces reinstall. Managed URLs use `flutter_gemma` network install; local files use file install with copy into app storage. `GemmaService` tracks a `GemmaRuntimeSnapshot` (backend=GPU/CPU, source, fallback flag) after successful init. Hugging Face-specific copy should only appear when the active source is actually Hugging Face.
 
+Setup failures are classified by `classifyGemmaStartupFailure` into a `GemmaStartupFailureKind` + friendly message, and `GemmaState.diagnosticDetail` retains the raw underlying error. `SplashScreen`'s setup-failure view surfaces both a per-kind support hint and a copyable technical block (failure kind, source, raw error) behind a "Show details" expander so support/QA can diagnose without native logs.
+
 ### Inference pipeline
 
 `inferenceProvider` (`lib/providers/inference_provider.dart`) is a `StreamProvider.autoDispose` that:
