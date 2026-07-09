@@ -98,32 +98,42 @@ void main() {
   String? ffiLibraryPath;
 
   setUpAll(() {
-    if (!Platform.isMacOS) {
+    // Compile the native library at test time so the FFI backend is exercised
+    // on both local macOS and the Linux CI runner. Other platforms fall back to
+    // the Dart backend, and FFI-specific tests guard on a null library path.
+    if (!Platform.isMacOS && !Platform.isLinux) {
       return;
     }
 
-    final dylib = File(
-      '${Directory.systemTemp.path}/ghosteye_frame_ffi_test.dylib',
+    final libraryFile = File(
+      '${Directory.systemTemp.path}/ghosteye_frame_ffi_test'
+      '${Platform.isMacOS ? '.dylib' : '.so'}',
     );
-    final result = Process.runSync(
-      'cc',
-      <String>[
-        '-dynamiclib',
-        '-O2',
-        '-std=c11',
-        '-o',
-        dylib.path,
-        'packages/ghosteye_frame_ffi/src/ghosteye_frame_ffi.c',
-      ],
-    );
+    const source = 'packages/ghosteye_frame_ffi/src/ghosteye_frame_ffi.c';
+    final compilerArgs = Platform.isMacOS
+        ? <String>['-dynamiclib', '-O2', '-std=c11', '-o', libraryFile.path, source]
+        // Linux: position-independent shared object, linked against libm for
+        // the math helpers (lround/floor) the converter uses.
+        : <String>[
+            '-shared',
+            '-fPIC',
+            '-O2',
+            '-std=c11',
+            '-o',
+            libraryFile.path,
+            source,
+            '-lm',
+          ];
+
+    final result = Process.runSync('cc', compilerArgs);
 
     if (result.exitCode != 0) {
       throw StateError(
-        'Failed to compile ghosteye_frame_ffi test dylib: ${result.stderr}',
+        'Failed to compile ghosteye_frame_ffi test library: ${result.stderr}',
       );
     }
 
-    ffiLibraryPath = dylib.path;
+    ffiLibraryPath = libraryFile.path;
   });
 
   test('FramePreprocessor converts BGRA frames with the Dart backend',

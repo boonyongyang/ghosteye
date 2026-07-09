@@ -106,7 +106,7 @@ flutter run --dart-define=GHOSTEYE_FRAME_JPEG_QUALITY=75
 - For `AsyncNotifierProvider` overrides, pass a factory returning a concrete subclass of the notifier (e.g., `cameraProvider.overrideWith(_StubNotifier.new)`).
 - For service providers, use `overrideWithValue(mockService)`. Always `addTearDown(container.dispose)`.
 - `SharedPreferences.setMockInitialValues({})` in setUp for persistence tests.
-- **Frame preprocessor tests** (`test/services/frame_preprocessor_test.dart`) compile the native C library on macOS at test time using `cc -dynamiclib` in `setUpAll`. Tests that need the native dylib guard with `if (ffiLibraryPath == null) return;` — silently skipped on non-macOS.
+- **Frame preprocessor tests** (`test/services/frame_preprocessor_test.dart`) compile the native C library at test time in `setUpAll` — `cc -dynamiclib` on macOS and `cc -shared -fPIC … -lm` on Linux — so the FFI backend runs on both local macOS and the Linux CI runner. Tests that need the native library guard with `if (ffiLibraryPath == null) return;`, which only fires on other platforms.
 - Widget tests scope finders with `find.descendant(of: find.byType(TargetWidget), matching: ...)` to avoid ambiguity with Material scaffold-level widgets.
 
 ## Key conventions
