@@ -18,7 +18,7 @@ MODEL_PATH_ARGS := $(if $(MODEL_PATH),--dart-define=GHOSTEYE_GEMMA_MODEL_PATH="$
 FORMAT_DIRS := lib test tool packages/ghosteye_frame_ffi/lib
 SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
-.PHONY: help bootstrap doctor devices emulators analyze test verify format fix \
+.PHONY: help bootstrap doctor devices emulators analyze test verify benchmark format fix \
 	clean pub-outdated config-copy config-check config-example run run-config \
 	run-local-model run-android run-android-local-model run-ios \
 	run-ios-local-model logs build-apk-debug build-ios-debug build-web-debug \
@@ -38,6 +38,7 @@ help:
 	@printf "  make analyze          flutter analyze\n"
 	@printf "  make test             flutter test\n"
 	@printf "  make verify           flutter analyze && flutter test\n"
+	@printf "  make benchmark        run the host Dart-vs-FFI preprocessing benchmark\n"
 	@printf "  make format           dart format %s\n" "$(FORMAT_DIRS)"
 	@printf "  make fix              dart fix --apply\n"
 	@printf "  make clean            flutter clean and remove local build outputs\n"
@@ -83,6 +84,9 @@ test:
 verify:
 	$(FLUTTER) analyze
 	$(FLUTTER) test
+
+benchmark:
+	$(FLUTTER) test benchmark/preprocessing_benchmark.dart
 
 format:
 	$(DART) format $(FORMAT_DIRS)

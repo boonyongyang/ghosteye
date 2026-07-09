@@ -13,6 +13,7 @@ make bootstrap          # flutter pub get
 make verify             # flutter analyze && flutter test (run before committing)
 make analyze            # flutter analyze only
 make test               # flutter test only
+make benchmark          # host Dart-vs-FFI preprocessing benchmark (not in the CI suite)
 make format             # dart format lib test tool packages/ghosteye_frame_ffi/lib
 make fix                # dart fix --apply
 make run-android        # flutter run -d android --dart-define-from-file=config.json

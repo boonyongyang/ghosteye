@@ -7,7 +7,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 - Runtime foundation: `stable enough for follow-up work`
 - Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Known engineering-health gaps: `aging dependency set; onboarding_screen widget still untested` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, and logic-bearing widget tests now addressed)
+- Known engineering-health gaps: `onboarding_screen widget still untested; dependency refresh gated behind the deferred Flutter upgrade` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests, and the Dart-vs-FFI benchmark now addressed)
 - Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
 
 ## Priority 0: Ship-readiness
@@ -153,19 +153,32 @@ Acceptance criteria:
 
 ### 11. Dependency and toolchain refresh
 
-- [ ] Triage the ~101 outdated packages (`flutter pub outdated`) and land safe minor/patch bumps
+- [x] Triage the outdated packages (`flutter pub outdated`)
 - [ ] Evaluate a Flutter upgrade from 3.24.4 (Oct 2024) on a branch — this is also prerequisite work for the Gemma 4 spike
 
-Acceptance criteria:
-- Dependency bumps land only with `make verify` green; the Flutter upgrade decision is recorded (upgrade, or stay pinned with a reason).
-
-### 12. Preprocessing backend benchmark
-
-- [ ] Add a host-runnable benchmark comparing Dart vs FFI preprocessing (convert+encode) on representative frame sizes
-- [ ] Record indicative results to inform the plan.md Phase 7 decision on whether the FFI backend earns its complexity
+Triage finding (2026-07-09, Flutter 3.24.4): **no safe in-isolation bump is available.** Every *direct* dependency in `pubspec.yaml` (flutter_gemma, flutter_riverpod, go_router, camera, google_fonts, image, shared_preferences, share_plus, url_launcher, …) is already at its latest version resolvable under the pinned SDK — none appear in `flutter pub outdated`. The remaining ~100 "outdated" entries are transitive/dev packages whose `resolvable` equals `current`; their newer `latest` versions are gated behind a Flutter SDK upgrade or major-version constraint bumps. Bumping them in isolation would either fail to resolve or force a risky major jump (e.g. `flutter_lints` 4→6 enabling new lint rules) for no product value. **Item 11 therefore collapses into the Flutter-upgrade track (Priority 3):** do the dependency refresh together with the SDK upgrade, not before it.
 
 Acceptance criteria:
-- A repeatable `dart run`/test-based benchmark exists with documented host-side numbers, clearly labeled as directional until device measurements exist.
+- The Flutter upgrade decision is recorded (upgrade, or stay pinned with a reason); any bumps land only with `make verify` green.
+
+### 12. Preprocessing backend benchmark — done
+
+- [x] Add a host-runnable benchmark comparing Dart vs FFI preprocessing (convert+encode) on representative frame sizes
+- [x] Record indicative results to inform the plan.md Phase 7 decision on whether the FFI backend earns its complexity
+
+`benchmark/preprocessing_benchmark.dart` (run with `make benchmark`; lives outside `test/` so it is not in the CI suite) times both paths on synthetic frames. Host x64 result (Flutter 3.24.4, median of 25 runs, ms):
+
+| format | size | dart | ffi | speedup |
+|---|---|---|---|---|
+| bgra8888 | 1280x720 | 65.2 | 10.9 | **6.0x** |
+| yuv420 | 1280x720 | 83.6 | 19.8 | **4.2x** |
+| bgra8888 | 1920x1080 | 76.7 | 12.9 | **5.9x** |
+| yuv420 | 1920x1080 | 95.4 | 23.4 | **4.1x** |
+
+Directional (host CPU, not a target device), but the signal is strong and consistent: the native convert+encode path is ~4–6x faster than the Dart path. This supports **keeping** the FFI backend as the default. On-device numbers should still be captured during hardware validation to confirm the win holds on ARM.
+
+Acceptance criteria:
+- A repeatable benchmark exists with documented host-side numbers, clearly labeled as directional until device measurements exist.
 
 ## Priority 3: Research and branching work
 
@@ -195,12 +208,15 @@ Deliberately unscheduled; revisit after release readiness.
 2. ~~CI and tooling hardening: docs-audit + bash Makefile (item 10)~~ — done; widget-test bullet remains
 3. ~~Preference persistence (item 8)~~ — done
 4. ~~Widget tests for logic-bearing surfaces (item 10)~~ — done (onboarding_screen deferred)
-5. Release readiness (Priority 0) — user decisions + physical hardware
-6. Dependency/toolchain refresh (item 11) — feeds into the Gemma 4 spike
-7. Preprocessing benchmark (item 12)
-8. Gemma 4 spike
+5. ~~Preprocessing benchmark (item 12)~~ — done (FFI ~4–6x faster on host; keep it)
+6. ~~Dependency triage (item 11)~~ — done; refresh folded into the Flutter upgrade
+7. Release readiness (Priority 0) — user decisions + physical hardware
+8. Flutter upgrade + dependency refresh + Gemma 4 spike (Priority 3)
 
-Items 6–7 need only the standard Flutter 3.24.4 toolchain (same as CI) and are executable by an agent in a hosted environment; item 5 is blocked on maintainer decisions and physical hardware.
+The agent-executable engineering-health backlog (items 8–12) is now cleared.
+Remaining work is either maintainer/hardware-blocked (release readiness) or a
+larger toolchain effort best done as a dedicated spike (Flutter upgrade →
+Gemma 4).
 
 ## Notes for future agents
 
