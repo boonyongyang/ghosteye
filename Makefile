@@ -1,4 +1,6 @@
-SHELL := /bin/zsh
+# bash is available by default on macOS and Ubuntu CI; recipes stay POSIX-sh
+# compatible so no extra shell needs to be installed.
+SHELL := /bin/bash
 
 FLUTTER ?= flutter
 DART ?= dart
