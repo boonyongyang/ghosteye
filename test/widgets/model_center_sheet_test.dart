@@ -22,7 +22,9 @@ Widget _buildSheet({
       gemmaProvider.overrideWith(
         () => _FixedGemmaNotifier(gemmaState),
       ),
-      performancePresetProvider.overrideWith((ref) => initialPreset),
+      performancePresetProvider.overrideWith(
+        () => _FixedPresetController(initialPreset),
+      ),
     ],
   );
 
@@ -50,6 +52,14 @@ class _FixedGemmaNotifier extends AsyncNotifier<GemmaState>
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FixedPresetController extends PerformancePresetController {
+  _FixedPresetController(this._initial);
+  final PerformancePreset _initial;
+
+  @override
+  PerformancePreset build() => _initial;
 }
 
 void main() {

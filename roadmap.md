@@ -7,7 +7,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 - Runtime foundation: `stable enough for follow-up work`
 - Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Known engineering-health gaps: `in-memory-only user preferences, some widget surfaces untested, aging dependency set` (FFI-in-CI, bash Makefile, and CI docs-audit now addressed)
+- Known engineering-health gaps: `some widget surfaces untested, aging dependency set` (FFI-in-CI, bash Makefile, CI docs-audit, and preference persistence now addressed)
 - Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
 
 ## Priority 0: Ship-readiness
@@ -115,16 +115,16 @@ Acceptance criteria:
 Acceptance criteria:
 - A user can adjust how the screenplay reads without changing model behavior; controls live in the Model Center `TELEPROMPTER` section and default to the original presentation.
 
-### 8. Preference persistence
+### 8. Preference persistence — done
 
-- [ ] Persist the selected performance preset across app restarts
-- [ ] Persist teleprompter display settings (text size, spacing, pace) across app restarts
+- [x] Persist the selected performance preset across app restarts
+- [x] Persist teleprompter display settings (text size, spacing, pace) across app restarts
 
 Why it matters:
-- `performancePresetProvider` and `teleprompterSettingsProvider` are in-memory only today, so every relaunch silently discards the user's chosen preset and display tuning — the controls feel broken to a returning user.
+- `performancePresetProvider` and `teleprompterSettingsProvider` were in-memory only, so every relaunch silently discarded the user's chosen preset and display tuning — the controls felt broken to a returning user.
 
 Acceptance criteria:
-- Choosing a preset or teleprompter setting, killing the app, and relaunching restores the same choice. Storage follows the existing `shared_preferences` pattern (`ghosteye.*` keys) with defaults unchanged for fresh installs.
+- Choosing a preset or teleprompter setting, killing the app, and relaunching restores the same choice. Both providers hydrate synchronously from a preloaded `SharedPreferences` (`ghosteye.performance_preset`, `ghosteye.teleprompter_*`, storing enum `.name`), fall back to unchanged defaults for fresh installs and unknown values, and persist on every setter.
 
 ## Priority 2.5: Engineering health
 
@@ -192,14 +192,14 @@ Deliberately unscheduled; revisit after release readiness.
 
 1. ~~Exercise FFI native library in CI (item 9)~~ — done
 2. ~~CI and tooling hardening: docs-audit + bash Makefile (item 10)~~ — done; widget-test bullet remains
-3. Preference persistence (item 8) — small, user-visible, agent-executable
+3. ~~Preference persistence (item 8)~~ — done
 4. Remaining widget tests (item 10)
 5. Release readiness (Priority 0) — user decisions + physical hardware
 6. Dependency/toolchain refresh (item 11) — feeds into the Gemma 4 spike
 7. Preprocessing benchmark (item 12)
 8. Gemma 4 spike
 
-Items 3–4 and 6–7 need only the standard Flutter 3.24.4 toolchain (same as CI) and are executable by an agent in a hosted environment; item 5 is blocked on maintainer decisions and physical hardware.
+Items 4 and 6–7 need only the standard Flutter 3.24.4 toolchain (same as CI) and are executable by an agent in a hosted environment; item 5 is blocked on maintainer decisions and physical hardware.
 
 ## Notes for future agents
 

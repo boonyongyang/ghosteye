@@ -85,7 +85,7 @@ class ModelCenterSheet extends ConsumerWidget {
                   selected: preset,
                   onSelect: (next) {
                     AppHaptics.trigger(AppHapticPattern.selection);
-                    ref.read(performancePresetProvider.notifier).state = next;
+                    ref.read(performancePresetProvider.notifier).setPreset(next);
                     ref.read(cameraProvider.notifier).applyPreset(next);
                   },
                 ),

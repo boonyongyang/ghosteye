@@ -175,7 +175,7 @@ Acceptance criteria:
 2. Polish director mode, review, empty, paused, degraded, and permission states. (done)
 3. Promote history/export into a take library workflow. (done)
 4. Add settings/model diagnostics and performance presets. (done)
-5. Persist user preferences (performance preset, teleprompter settings) across restarts — see `roadmap.md` item 8.
+5. Persist user preferences (performance preset, teleprompter settings) across restarts — done; see `roadmap.md` item 8.
 6. Close engineering-health gaps: FFI tests on Linux CI (done), docs-audit in CI (done), bash-compatible Makefile (done); remaining widget tests and dependency refresh — see `roadmap.md` Priority 2.5.
 7. Run hardware validation and release-readiness cleanup.
 

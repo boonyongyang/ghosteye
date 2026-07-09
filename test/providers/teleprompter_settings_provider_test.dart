@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ghosteye/models/teleprompter_settings.dart';
+import 'package:ghosteye/providers/preferences_provider.dart';
 import 'package:ghosteye/providers/teleprompter_settings_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('teleprompterSettingsProvider', () {
@@ -92,6 +94,76 @@ void main() {
       expect(
         container2.read(teleprompterSettingsProvider).textSize,
         TeleprompterTextSize.standard,
+      );
+    });
+  });
+
+  group('teleprompterSettingsProvider persistence', () {
+    setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+
+    ProviderContainer containerWith(SharedPreferences prefs) {
+      final container = ProviderContainer(
+        overrides: <Override>[
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    test('hydrates persisted settings from shared preferences', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'ghosteye.teleprompter_text_size': 'large',
+        'ghosteye.teleprompter_density': 'roomy',
+        'ghosteye.teleprompter_pace': 'brisk',
+      });
+      final prefs = await SharedPreferences.getInstance();
+
+      final settings = containerWith(prefs).read(teleprompterSettingsProvider);
+      expect(settings.textSize, TeleprompterTextSize.large);
+      expect(settings.density, TeleprompterDensity.roomy);
+      expect(settings.pace, TeleprompterPace.brisk);
+    });
+
+    test('falls back to defaults for unknown persisted values', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'ghosteye.teleprompter_text_size': 'gigantic',
+      });
+      final prefs = await SharedPreferences.getInstance();
+
+      expect(
+        containerWith(prefs).read(teleprompterSettingsProvider).textSize,
+        TeleprompterTextSize.standard,
+      );
+    });
+
+    test('setters persist and a fresh container rehydrates them', () async {
+      final prefs = await SharedPreferences.getInstance();
+      final container = containerWith(prefs);
+
+      container
+          .read(teleprompterSettingsProvider.notifier)
+          .setTextSize(TeleprompterTextSize.compact);
+      container
+          .read(teleprompterSettingsProvider.notifier)
+          .setPace(TeleprompterPace.calm);
+
+      expect(prefs.getString('ghosteye.teleprompter_text_size'), 'compact');
+      expect(prefs.getString('ghosteye.teleprompter_pace'), 'calm');
+
+      final rehydrated =
+          containerWith(prefs).read(teleprompterSettingsProvider);
+      expect(rehydrated.textSize, TeleprompterTextSize.compact);
+      expect(rehydrated.pace, TeleprompterPace.calm);
+    });
+
+    test('no preferences instance keeps in-memory defaults', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(teleprompterSettingsProvider),
+        const TeleprompterSettings(),
       );
     });
   });
