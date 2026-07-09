@@ -171,11 +171,13 @@ Acceptance criteria:
 
 ## Suggested updated build order
 
-1. Finish recoverable setup actions and diagnostic details, especially reset cached install and explicit source switching.
-2. Polish director mode, review, empty, paused, degraded, and permission states.
-3. Promote history/export into a take library workflow.
-4. Add settings/model diagnostics and performance presets.
-5. Run hardware validation and release-readiness cleanup.
+1. Finish recoverable setup actions and diagnostic details, especially reset cached install and explicit source switching. (done)
+2. Polish director mode, review, empty, paused, degraded, and permission states. (done)
+3. Promote history/export into a take library workflow. (done)
+4. Add settings/model diagnostics and performance presets. (done)
+5. Persist user preferences (performance preset, teleprompter settings) across restarts — see `roadmap.md` item 8.
+6. Close engineering-health gaps: FFI tests on Linux CI, docs-audit in CI, bash-compatible Makefile — see `roadmap.md` Priority 2.5.
+7. Run hardware validation and release-readiness cleanup.
 
 ## Feature candidates to consider
 

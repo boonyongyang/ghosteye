@@ -208,6 +208,16 @@ Important behavior:
 - Support/privacy URLs, screenshots, and store metadata
 - A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
 
+## Known engineering-health gaps (agent-executable)
+
+Tracked with acceptance criteria in `roadmap.md` Priority 2.5:
+
+- The FFI native C library — now the default preprocessing path — is only compiled/tested when the suite runs on macOS; Ubuntu CI silently skips it. Extend the test compile step to Linux (`cc -shared -fPIC`).
+- `performancePresetProvider` and `teleprompterSettingsProvider` are in-memory only; user choices reset on every relaunch. Persist them via `shared_preferences`.
+- `make docs-audit` is not run in CI, so the no-absolute-links doc rule is unenforced.
+- The `Makefile` pins `SHELL := /bin/zsh`, forcing CI to apt-get install zsh and breaking `make` in zsh-less environments.
+- ~101 dependencies have newer versions; Flutter is pinned to 3.24.4 (Oct 2024). A triaged refresh is prerequisite work for the Gemma 4 spike.
+
 ## Guardrails for future work
 
 - Keep mainline focused on Gemma 3n unless the Gemma 4 spike proves cross-platform multimodal parity.

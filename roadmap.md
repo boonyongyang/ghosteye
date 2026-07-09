@@ -7,7 +7,8 @@ This file turns the current backlog into an execution order. Use it when choosin
 - Runtime foundation: `stable enough for follow-up work`
 - Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Recommended next phase: `release readiness first, creator workflow second`
+- Known engineering-health gaps: `FFI native code untested in CI, in-memory-only user preferences, zsh-locked Makefile, docs-audit not CI-enforced, aging dependency set`
+- Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
 
 ## Priority 0: Ship-readiness
 
@@ -114,6 +115,57 @@ Acceptance criteria:
 Acceptance criteria:
 - A user can adjust how the screenplay reads without changing model behavior; controls live in the Model Center `TELEPROMPTER` section and default to the original presentation.
 
+### 8. Preference persistence
+
+- [ ] Persist the selected performance preset across app restarts
+- [ ] Persist teleprompter display settings (text size, spacing, pace) across app restarts
+
+Why it matters:
+- `performancePresetProvider` and `teleprompterSettingsProvider` are in-memory only today, so every relaunch silently discards the user's chosen preset and display tuning — the controls feel broken to a returning user.
+
+Acceptance criteria:
+- Choosing a preset or teleprompter setting, killing the app, and relaunching restores the same choice. Storage follows the existing `shared_preferences` pattern (`ghosteye.*` keys) with defaults unchanged for fresh installs.
+
+## Priority 2.5: Engineering health
+
+Infrastructure and test-durability work surfaced by the CI failure post-mortem and coverage audit. None of it changes product behavior; all of it reduces the chance a regression ships.
+
+### 9. Exercise the FFI native library in CI
+
+- [ ] Extend the frame-preprocessor test compile step to Linux (`cc -shared -fPIC`) so the C library builds and runs on the Ubuntu CI runner
+- [ ] Keep the macOS `-dynamiclib` path working for local development
+
+Why it matters:
+- The native C code — including the combined convert+JPEG encoder that is now the **default** production path — is currently guarded by `Platform.isMacOS` and has never been compiled or executed by CI. A C-level regression would ship undetected.
+
+Acceptance criteria:
+- CI logs show the FFI-backend tests running (not silently skipped) on the Linux runner.
+
+### 10. CI and tooling hardening
+
+- [ ] Run `make docs-audit` in the verify workflow so the no-absolute-links rule is enforced, not just documented
+- [ ] Make the `Makefile` bash-compatible (drop `SHELL := /bin/zsh`) so CI no longer needs the apt-get zsh install step and `make verify` works in any POSIX environment
+- [ ] Add widget tests for currently untested surfaces that carry logic: `script_scroll_view` (teleprompter settings consumption), `script_export_sheet`, `inference_indicator`, `director_tips_sheet`, `onboarding_screen`
+
+Acceptance criteria:
+- A doc with an absolute local path fails CI; `make verify` runs without zsh; the listed widgets have at least smoke + behavior coverage.
+
+### 11. Dependency and toolchain refresh
+
+- [ ] Triage the ~101 outdated packages (`flutter pub outdated`) and land safe minor/patch bumps
+- [ ] Evaluate a Flutter upgrade from 3.24.4 (Oct 2024) on a branch — this is also prerequisite work for the Gemma 4 spike
+
+Acceptance criteria:
+- Dependency bumps land only with `make verify` green; the Flutter upgrade decision is recorded (upgrade, or stay pinned with a reason).
+
+### 12. Preprocessing backend benchmark
+
+- [ ] Add a host-runnable benchmark comparing Dart vs FFI preprocessing (convert+encode) on representative frame sizes
+- [ ] Record indicative results to inform the plan.md Phase 7 decision on whether the FFI backend earns its complexity
+
+Acceptance criteria:
+- A repeatable `dart run`/test-based benchmark exists with documented host-side numbers, clearly labeled as directional until device measurements exist.
+
 ## Priority 3: Research and branching work
 
 ### Gemma 4 spike
@@ -126,10 +178,27 @@ Acceptance criteria:
 Rule:
 - Do not mix this spike into the mainline Gemma 3n branch until it proves cross-platform multimodal parity.
 
+## Priority 4: Future candidates (post-release)
+
+Deliberately unscheduled; revisit after release readiness.
+
+- [ ] Take-library text search by title (filter tabs exist; free-text search does not)
+- [ ] Custom cinematic presets beyond the default three modes
+- [ ] Accessibility pass: semantics labels, contrast audit, large-type layout check
+- [ ] Localization scaffolding (`flutter_localizations`/`intl`) — all UI copy is hardcoded English today
+- [ ] Shareable export cards or thumbnail-embedded exports
+
 ## Suggested build order
 
-1. Release readiness
-2. Gemma 4 spike
+1. Preference persistence (item 8) — small, user-visible, agent-executable
+2. Exercise FFI native library in CI (item 9) — closes the riskiest test gap
+3. CI and tooling hardening (item 10)
+4. Release readiness (Priority 0) — user decisions + physical hardware
+5. Dependency/toolchain refresh (item 11) — feeds into the Gemma 4 spike
+6. Preprocessing benchmark (item 12)
+7. Gemma 4 spike
+
+Items 1–3 and 5–6 need only the standard Flutter 3.24.4 toolchain (same as CI) and are executable by an agent in a hosted environment; item 4 is blocked on maintainer decisions and physical hardware.
 
 ## Notes for future agents
 
