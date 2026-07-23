@@ -16,7 +16,7 @@ class DiagnosticBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.28),
+        color: Colors.black.withValues(alpha: 0.28),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white10),
       ),

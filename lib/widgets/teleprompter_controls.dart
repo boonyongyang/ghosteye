@@ -93,8 +93,8 @@ class _SegmentRow<T> extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? Colors.white.withOpacity(0.1)
-                          : Colors.white.withOpacity(0.04),
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isActive ? Colors.white38 : Colors.white12,

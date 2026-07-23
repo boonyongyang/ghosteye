@@ -22,7 +22,7 @@ class GlassSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = backgroundColor ?? Colors.black.withOpacity(0.18);
+    final bg = backgroundColor ?? Colors.black.withValues(alpha: 0.18);
     final border = borderColor ?? Colors.white12;
 
     Widget content =

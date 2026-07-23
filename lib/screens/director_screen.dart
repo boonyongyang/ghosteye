@@ -379,7 +379,7 @@ class _DirectorActions extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.38),
+            color: Colors.black.withValues(alpha: 0.38),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.white12),
           ),
@@ -502,7 +502,7 @@ class _CaptureToggleButton extends StatelessWidget {
                     Text(
                       detail,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black.withOpacity(0.72),
+                        color: Colors.black.withValues(alpha: 0.72),
                       ),
                     ),
                   ],
@@ -534,7 +534,7 @@ class _DockAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withOpacity(0.08),
+      color: Colors.white.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -580,10 +580,10 @@ class _ReviewModeBanner extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFFF2B95C).withOpacity(0.12),
+            color: const Color(0xFFF2B95C).withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
-              color: const Color(0xFFF2B95C).withOpacity(0.3),
+              color: const Color(0xFFF2B95C).withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -619,7 +619,7 @@ class _DebugBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Colors.white24),
       ),

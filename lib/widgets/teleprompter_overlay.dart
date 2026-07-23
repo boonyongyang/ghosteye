@@ -18,9 +18,9 @@ class TeleprompterOverlay extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: <Color>[
-              Colors.black.withOpacity(0),
-              Colors.black.withOpacity(0.64),
-              Colors.black.withOpacity(0.88),
+              Colors.black.withValues(alpha: 0),
+              Colors.black.withValues(alpha: 0.64),
+              Colors.black.withValues(alpha: 0.88),
             ],
           ),
         ),

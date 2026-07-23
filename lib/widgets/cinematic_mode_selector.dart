@@ -48,7 +48,7 @@ class CinematicModeSelector extends ConsumerWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .primary
-                                .withOpacity(0.28),
+                                .withValues(alpha: 0.28),
                             blurRadius: 24,
                             spreadRadius: 1,
                           ),

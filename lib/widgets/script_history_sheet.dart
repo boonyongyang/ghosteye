@@ -282,11 +282,11 @@ class _FilterBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   color: isActive
-                      ? (modeColor ?? Colors.white).withOpacity(0.15)
-                      : Colors.white.withOpacity(0.05),
+                      ? (modeColor ?? Colors.white).withValues(alpha: 0.15)
+                      : Colors.white.withValues(alpha: 0.05),
                   border: Border.all(
                     color: isActive
-                        ? (modeColor ?? Colors.white).withOpacity(0.5)
+                        ? (modeColor ?? Colors.white).withValues(alpha: 0.5)
                         : Colors.white12,
                   ),
                 ),
@@ -524,9 +524,9 @@ class _ModeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withOpacity(0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         mode.displayName,

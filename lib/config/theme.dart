@@ -74,7 +74,7 @@ class AppTheme {
       chipTheme: base.chipTheme.copyWith(
         backgroundColor: panelStrong,
         selectedColor: accent,
-        disabledColor: panelStrong.withOpacity(0.6),
+        disabledColor: panelStrong.withValues(alpha: 0.6),
         labelStyle: textTheme.bodySmall,
         secondaryLabelStyle: textTheme.bodySmall?.copyWith(color: Colors.black),
         side: BorderSide.none,

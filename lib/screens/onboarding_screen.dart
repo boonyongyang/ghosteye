@@ -210,7 +210,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             Text(
                               page.motifLabel,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: page.secondaryAccent.withOpacity(0.85),
+                                color: page.secondaryAccent.withValues(alpha: 0.85),
                                 letterSpacing: 1.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -299,7 +299,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                       angle: rotation,
                       child: _LightOrb(
                         size: constraints.maxWidth * 0.72,
-                        color: page.accent.withOpacity(0.24),
+                        color: page.accent.withValues(alpha: 0.24),
                       ),
                     ),
                   ),
@@ -310,7 +310,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                       angle: -0.24 - rotation * 0.6,
                       child: _LightBar(
                         width: constraints.maxWidth * 0.86,
-                        color: page.secondaryAccent.withOpacity(0.12),
+                        color: page.secondaryAccent.withValues(alpha: 0.12),
                       ),
                     ),
                   ),
@@ -321,7 +321,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                       angle: 0.18 + rotation * 0.4,
                       child: _ShutterRings(
                         size: constraints.maxWidth * 0.56,
-                        color: page.secondaryAccent.withOpacity(0.24),
+                        color: page.secondaryAccent.withValues(alpha: 0.24),
                       ),
                     ),
                   ),
@@ -337,9 +337,9 @@ class _OnboardingPosterPage extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: <Color>[
-                              Colors.black.withOpacity(0),
-                              Colors.black.withOpacity(0.32),
-                              Colors.black.withOpacity(0.76),
+                              Colors.black.withValues(alpha: 0),
+                              Colors.black.withValues(alpha: 0.32),
+                              Colors.black.withValues(alpha: 0.76),
                             ],
                           ),
                         ),
@@ -364,7 +364,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                                 vertical: 9,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.26),
+                                color: Colors.black.withValues(alpha: 0.26),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
                                   color: Colors.white12,
@@ -403,7 +403,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                               child: Text(
                                 page.body,
                                 style: theme.textTheme.bodyLarge?.copyWith(
-                                  color: Colors.white.withOpacity(0.88),
+                                  color: Colors.white.withValues(alpha: 0.88),
                                 ),
                               ),
                             ),
@@ -573,7 +573,7 @@ class _OnboardingDetailRow extends StatelessWidget {
             color: color,
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: color.withOpacity(0.4),
+                color: color.withValues(alpha: 0.4),
                 blurRadius: 12,
                 spreadRadius: 1,
               ),
@@ -585,7 +585,7 @@ class _OnboardingDetailRow extends StatelessWidget {
           child: Text(
             detail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.86),
+                  color: Colors.white.withValues(alpha: 0.86),
                 ),
           ),
         ),
@@ -607,7 +607,7 @@ class _SetupHandoffPreview extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.22),
+        color: Colors.black.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white12),
       ),
@@ -660,7 +660,7 @@ class _SetupHandoffRow extends StatelessWidget {
               Text(
                 item.detail,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.78),
+                  color: Colors.white.withValues(alpha: 0.78),
                 ),
               ),
             ],
@@ -684,7 +684,7 @@ class _GlassPillButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassPill(
       blur: 18,
-      backgroundColor: Colors.black.withOpacity(0.16),
+      backgroundColor: Colors.black.withValues(alpha: 0.16),
       padding: EdgeInsets.zero,
       child: TextButton(
         onPressed: onPressed,
@@ -714,7 +714,7 @@ class _LightOrb extends StatelessWidget {
           gradient: RadialGradient(
             colors: <Color>[
               color,
-              color.withOpacity(0),
+              color.withValues(alpha: 0),
             ],
           ),
         ),
@@ -741,14 +741,14 @@ class _LightBar extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: <Color>[
-              color.withOpacity(0),
+              color.withValues(alpha: 0),
               color,
-              color.withOpacity(0),
+              color.withValues(alpha: 0),
             ],
           ),
           boxShadow: <BoxShadow>[
             BoxShadow(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               blurRadius: 18,
               spreadRadius: 4,
             ),
@@ -787,7 +787,7 @@ class _ShutterRings extends StatelessWidget {
               height: size * 0.7,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color.withOpacity(0.7), width: 1),
+                border: Border.all(color: color.withValues(alpha: 0.7), width: 1),
               ),
             ),
             Container(
@@ -795,7 +795,7 @@ class _ShutterRings extends StatelessWidget {
               height: size * 0.4,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: color.withOpacity(0.5), width: 0.9),
+                border: Border.all(color: color.withValues(alpha: 0.5), width: 0.9),
               ),
             ),
           ],

@@ -84,9 +84,9 @@ class DebugMetricsSheet extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.15),
+                      color: Colors.green.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: Colors.green.withOpacity(0.4)),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       'DEBUG',

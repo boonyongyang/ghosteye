@@ -159,9 +159,9 @@ class _ModelRow extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: kindColor.withOpacity(0.12),
+            color: kindColor.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: kindColor.withOpacity(0.35)),
+            border: Border.all(color: kindColor.withValues(alpha: 0.35)),
           ),
           child: Text(
             kindLabel,
@@ -411,8 +411,8 @@ class _PresetPicker extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.04),
+                      ? Colors.white.withValues(alpha: 0.1)
+                      : Colors.white.withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isActive ? Colors.white38 : Colors.white12,

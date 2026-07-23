@@ -93,7 +93,7 @@ class _InferenceIndicatorState extends State<InferenceIndicator>
               color: color,
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: color.withOpacity(0.35),
+                  color: color.withValues(alpha: 0.35),
                   blurRadius: 14,
                   spreadRadius: 2,
                 ),

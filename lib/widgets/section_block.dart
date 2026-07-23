@@ -25,7 +25,7 @@ class SectionBlock extends StatelessWidget {
               child: Text(
                 title,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.primary.withOpacity(0.88),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.88),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -36,7 +36,7 @@ class SectionBlock extends StatelessWidget {
         const SizedBox(height: 10),
         DecoratedBox(
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.24),
+            color: Colors.black.withValues(alpha: 0.24),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.white10),
           ),
