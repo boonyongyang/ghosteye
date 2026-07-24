@@ -127,6 +127,11 @@ void main() {
       onboardingStatus: const OnboardingStatus.initial(),
     );
 
+    // Settle the onboarding route-entry transition before tapping — otherwise
+    // the top-bar Skip pill can still be sliding in off the right edge. Safe
+    // here because we are still on onboarding (no infinite setup spinner yet).
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Skip'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
