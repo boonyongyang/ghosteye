@@ -7,7 +7,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 - Runtime foundation: `stable enough for follow-up work`
 - Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Known engineering-health gaps: `onboarding_screen widget still untested; dependency refresh gated behind the Flutter upgrade, which is now spiked and host-green but awaiting on-device validation` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests, and the Dart-vs-FFI benchmark now addressed)
+- Known engineering-health gaps: `dependency refresh gated behind the Flutter upgrade, which is now spiked and host-green but awaiting on-device validation` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests including onboarding_screen, and the Dart-vs-FFI benchmark now addressed)
 - Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
 
 ## Priority 0: Ship-readiness
@@ -146,10 +146,10 @@ Acceptance criteria:
 - [x] Run `make docs-audit` in the verify workflow so the no-absolute-links rule is enforced, not just documented
 - [x] Make the `Makefile` bash-compatible (drop `SHELL := /bin/zsh`) so CI no longer needs the apt-get zsh install step and `make verify` works in any POSIX environment
 - [x] Add widget tests for `script_scroll_view` (empty/paused states + entry rendering), `script_export_sheet` (format/notes delegation + disabled-when-empty), `inference_indicator` (status/degraded/paused label mapping), and `director_tips_sheet`
-- [ ] `onboarding_screen` widget coverage — deferred: its four-step paging is large (~840 lines) and its routing outcomes are already covered by `app_router_test`; revisit if the flow changes
+- [x] `onboarding_screen` widget coverage — the deferral said "revisit if the flow changes"; the Flutter upgrade spike supplied a stronger reason. `onboarding_screen.dart` carries **20 of the 49 `withOpacity` call sites**, making it the densest single file in the upgrade diff, while its only coverage was four router-level tests in `app_router_test` — one of which was the spike's sole failure. Now covered by `test/widgets/onboarding_screen_test.dart`, which targets the logic (paging state, the Back affordance appearing only after page 0, the last-page `Start setup` swap, and the `_submitting` double-submit guard) rather than the decorative widget tree.
 
 Acceptance criteria:
-- A doc with an absolute local path fails CI (docs-audit step added); `make verify` runs under `/bin/bash` (zsh install step removed); the four logic-bearing widgets above have behavior coverage.
+- A doc with an absolute local path fails CI (docs-audit step added); `make verify` runs under `/bin/bash` (zsh install step removed); the four logic-bearing widgets above have behavior coverage, as does `onboarding_screen`.
 
 ### 11. Dependency and toolchain refresh
 
