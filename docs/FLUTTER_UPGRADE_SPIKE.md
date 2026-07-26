@@ -8,11 +8,16 @@ guardrail — **not** for mainline merge until on-device parity is proven.
 
 ## Recommendation: GO (conditional on device validation)
 
-The upgrade is mechanically viable and small in code terms. The core risk —
-`flutter_gemma` compatibility — is clear. One dependency bump plus one
+The upgrade is mechanically viable, and the code change is wide but shallow. The
+core risk — `flutter_gemma` compatibility — is clear. Three changes (a mechanical
+49-call-site color-API migration, one dependency bump, the CI version) plus one
 test-only fix get the **full host suite green (281/281)** on 3.44.7. The only
 thing this environment cannot prove is on-device Gemma inference on ARM, which
 still needs a physical device.
+
+**All three changes are mutually atomic** — none of them can land on 3.24.4
+(see each section below). This is a single-PR upgrade or nothing. The only
+separable piece is the test fix, which is verified green on both SDKs.
 
 Target: **Flutter 3.44.7 / Dart 3.12.2** (latest stable at spike time; ~20 minor
 versions and ~1.5 years ahead of the 3.24.4 pin).
@@ -22,14 +27,30 @@ versions and ~1.5 years ahead of the 3.24.4 pin).
 | Gate | Result |
 |---|---|
 | `pub get` resolves | ✅ `flutter_gemma 0.11.8` still resolves; the `background_downloader` override holds; 36 transitive deps bump; the removed `macros`/`_macros` SDK packages drop |
-| `flutter analyze` | ✅ **clean, no code migration needed** — the lib is already `withValues`-based (0 `withOpacity`), so the usual 3.24→3.44 color-API deprecation is already done |
+| `flutter analyze` | ✅ **clean — after** the `withOpacity` → `withValues` migration (49 call sites / 13 files). Without it, analyze reports the deprecated color API throughout `lib/` |
 | Compilation | ✅ after one dependency bump (see below) |
 | `flutter test` | ✅ **281 / 281** — after one test-only timing fix (see below) |
 | On-device runtime (ARM + real Gemma model) | ❓ **not validated** — out of scope for a hosted x64 environment; the real remaining risk |
 
 ## Required changes
 
-### 1. Bump `google_fonts` (mandatory, and it makes the change atomic)
+### 1. Migrate `withOpacity` → `withValues` (49 call sites, 13 files)
+
+`Color.withOpacity(x)` has been deprecated since Flutter 3.27 and must become
+`withValues(alpha: x)`. Mainline (3.24.4) uses `withOpacity` in **49 places
+across 13 files** in `lib/` — `onboarding_screen.dart` (20) and
+`director_screen.dart` (6) are the densest.
+
+The migration is purely mechanical (a 49-insertion / 49-deletion diff, done here
+in commit `131fbd1`) and carries no behavior change — `withValues(alpha:)` is
+the direct replacement, and it avoids the precision loss `withOpacity` had.
+
+**This is also atomic with the Flutter bump, in the opposite direction from
+`google_fonts`:** `withValues` does **not exist** in the 3.24.4 SDK, so the
+migrated code cannot compile on mainline. It must land *with* the upgrade — it
+cannot be staged ahead of it as a warm-up PR.
+
+### 2. Bump `google_fonts` (mandatory, and it makes the change atomic)
 
 `google_fonts 6.3.0` (what `^6.2.1` resolves to) **fails to compile on Dart
 3.12**: its `const` map keyed by `FontWeight` breaks because `FontWeight` is no
@@ -48,10 +69,11 @@ So, because ghosteye depends on google_fonts ^8.2.0, version solving failed.
 * Try using the Flutter SDK version: 3.44.8.
 ```
 
-So the Flutter bump, the `google_fonts` bump, and the CI `flutter-version`
-(`.github/workflows/verify.yml`) must all land **together**, in one change.
+So the Flutter bump, the `google_fonts` bump, the color-API migration, and the
+CI `flutter-version` (`.github/workflows/verify.yml`) must all land
+**together**, in one change.
 
-### 2. CI Flutter version
+### 3. CI Flutter version
 
 `.github/workflows/verify.yml`: `flutter-version: "3.24.4" → "3.44.7"`.
 (Done on this branch — so this branch's CI cannot be evaluated against the old
@@ -84,10 +106,20 @@ await tester.pumpAndSettle(); // onboarding has no infinite animation here
 await tester.tap(find.text('Skip'));
 ```
 
-This is safe on both toolchains: on 3.24.4 the transition is already settled, so
-`pumpAndSettle()` is a no-op; and it does **not** risk hanging, because the only
-infinite animation (the setup progress spinner) lives one route later, which
-this test never reaches. No production code changed.
+It does **not** risk hanging, because the only infinite animation (the setup
+progress spinner) lives one route later, which this test never reaches. No
+production code changed.
+
+**Verified on both toolchains.** This was checked empirically, not assumed: the
+patch was applied to a clean `origin/main` worktree and run on the mainline
+3.24.4 SDK — `app_router_test` passes 4/4 there as well (on 3.24.4 the
+transition has already settled by the time the test taps, so `pumpAndSettle()`
+is effectively a no-op).
+
+That makes this fix the **one piece of the upgrade that is *not* atomic** — it
+is test-only, uses no new API, and is green on both SDKs, so it can be landed on
+mainline *ahead* of the upgrade as a small de-risking PR if the team wants to
+shrink the eventual upgrade diff.
 
 ## What was NOT tested here
 
@@ -99,9 +131,10 @@ this test never reaches. No production code changed.
 
 ## Suggested path if the team proceeds
 
-1. Land Flutter 3.44.7 + `google_fonts ^8.2.0` + CI version bump + the
-   `app_router_test` settle fix as one PR (all four already staged on this
-   branch; host suite is 281/281).
+1. Land it as one PR — Flutter 3.44.7 + the `withOpacity`→`withValues`
+   migration + `google_fonts ^8.2.0` + CI version bump + the `app_router_test`
+   settle fix. All five are already staged on this branch and the host suite is
+   281/281, so this branch *is* the upgrade PR content.
 2. Validate on-device Gemma inference on a physical Android device and iPhone.
 3. Then fold in the wider dependency refresh (roadmap item 11), which this
    unblocks.
