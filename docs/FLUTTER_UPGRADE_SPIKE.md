@@ -16,7 +16,7 @@ toolchain.
 The upgrade is mechanically viable, and the code change is wide but shallow. The
 core risk — `flutter_gemma` compatibility — is clear. Three changes (a mechanical
 49-call-site color-API migration, one dependency bump, the CI version) plus one
-test-only fix get the **full host suite green (281/281)** on 3.44.7. The only
+test-only fix get the **full host suite green (286/286)** on 3.44.7. The only
 thing this environment cannot prove is on-device Gemma inference on ARM, which
 still needs a physical device.
 
@@ -34,7 +34,7 @@ versions and ~1.5 years ahead of the 3.24.4 pin).
 | `pub get` resolves | ✅ `flutter_gemma 0.11.8` still resolves; the `background_downloader` override holds; 36 transitive deps bump; the removed `macros`/`_macros` SDK packages drop |
 | `flutter analyze` | ✅ **clean — after** the `withOpacity` → `withValues` migration (49 call sites / 13 files). Without it, analyze reports the deprecated color API throughout `lib/` |
 | Compilation | ✅ after one dependency bump (see below) |
-| `flutter test` | ✅ **281 / 281** — after one test-only timing fix (see below) |
+| `flutter test` | ✅ **286 / 286** — after one test-only timing fix (see below) |
 | On-device runtime (ARM + real Gemma model) | ❓ **not validated** — out of scope for a hosted x64 environment; the real remaining risk |
 
 ## Required changes
@@ -44,7 +44,11 @@ versions and ~1.5 years ahead of the 3.24.4 pin).
 `Color.withOpacity(x)` has been deprecated since Flutter 3.27 and must become
 `withValues(alpha: x)`. Mainline (3.24.4) uses `withOpacity` in **49 places
 across 13 files** in `lib/` — `onboarding_screen.dart` (20) and
-`director_screen.dart` (6) are the densest.
+`director_screen.dart` (6) are the densest. Because `onboarding_screen.dart` is
+both the densest file in this diff and was the least covered, it has since been
+given dedicated widget coverage
+(`test/widgets/onboarding_screen_test.dart`, green on **both** 3.24.4 and
+3.44.7) so the migration has a behavioral safety net.
 
 The migration is purely mechanical (a 49-insertion / 49-deletion diff, done here
 in commit `131fbd1`) and carries no behavior change — `withValues(alpha:)` is
@@ -139,7 +143,7 @@ shrink the eventual upgrade diff.
 1. Land it as one PR — Flutter 3.44.7 + the `withOpacity`→`withValues`
    migration + `google_fonts ^8.2.0` + CI version bump + the `app_router_test`
    settle fix. All five are already staged on `flutter-upgrade-spike` and the
-   host suite is 281/281 there, so that branch *is* the upgrade PR content.
+   host suite is 286/286 there, so that branch *is* the upgrade PR content.
 2. Validate on-device Gemma inference on a physical Android device and iPhone.
 3. Then fold in the wider dependency refresh (roadmap item 11), which this
    unblocks.
