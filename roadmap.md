@@ -7,7 +7,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 - Runtime foundation: `stable enough for follow-up work`
 - Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Known engineering-health gaps: `onboarding_screen widget still untested; dependency refresh gated behind the deferred Flutter upgrade` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests, and the Dart-vs-FFI benchmark now addressed)
+- Known engineering-health gaps: `onboarding_screen widget still untested; dependency refresh gated behind the Flutter upgrade, which is now spiked and host-green but awaiting on-device validation` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests, and the Dart-vs-FFI benchmark now addressed)
 - Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
 
 ## Priority 0: Ship-readiness
@@ -154,9 +154,20 @@ Acceptance criteria:
 ### 11. Dependency and toolchain refresh
 
 - [x] Triage the outdated packages (`flutter pub outdated`)
-- [ ] Evaluate a Flutter upgrade from 3.24.4 (Oct 2024) on a branch — this is also prerequisite work for the Gemma 4 spike
+- [x] Evaluate a Flutter upgrade from 3.24.4 (Oct 2024) on a branch — this is also prerequisite work for the Gemma 4 spike
+- [ ] Decide whether to take the upgrade (needs on-device validation — see below)
 
 Triage finding (2026-07-09, Flutter 3.24.4): **no safe in-isolation bump is available.** Every *direct* dependency in `pubspec.yaml` (flutter_gemma, flutter_riverpod, go_router, camera, google_fonts, image, shared_preferences, share_plus, url_launcher, …) is already at its latest version resolvable under the pinned SDK — none appear in `flutter pub outdated`. The remaining ~100 "outdated" entries are transitive/dev packages whose `resolvable` equals `current`; their newer `latest` versions are gated behind a Flutter SDK upgrade or major-version constraint bumps. Bumping them in isolation would either fail to resolve or force a risky major jump (e.g. `flutter_lints` 4→6 enabling new lint rules) for no product value. **Item 11 therefore collapses into the Flutter-upgrade track (Priority 3):** do the dependency refresh together with the SDK upgrade, not before it.
+
+Upgrade spike finding (2026-07-26, target Flutter 3.44.7 / Dart 3.12.2): **host-side GO, pending device validation.** Evaluated on the isolated `flutter-upgrade-spike` branch; full report in [docs/FLUTTER_UPGRADE_SPIKE.md](docs/FLUTTER_UPGRADE_SPIKE.md) (the report is kept on mainline as the decision record; the upgrade code stays on the spike branch). The decisive risk — `flutter_gemma` compatibility — clears: `flutter_gemma 0.11.8` still resolves, the `background_downloader` override holds, `flutter analyze` is clean, and the suite is **281/281**. The cost is three changes that are **mutually atomic** (none can land on 3.24.4, so it is a single PR or nothing):
+
+1. `withOpacity` → `withValues` across **49 call sites / 13 files** — mechanical, no behavior change, but `withValues` does not exist in the 3.24.4 SDK.
+2. `google_fonts ^6.2.1 → ^8.2.0` — 6.3.0 fails to *compile* on Dart 3.12 (a `const` map keyed by `FontWeight`, which the analyzer misses and the compiler front-end catches); 8.x requires Dart `^3.10.0` so it cannot resolve on 3.24.4.
+3. CI `flutter-version` in `.github/workflows/verify.yml`.
+
+One widget test (`app_router_test` → onboarding `Skip`) also needed a `pumpAndSettle()` before the tap — the tap was landing mid route-entry transition, not a hit-test regression and not a production bug. That fix is test-only and verified green on **both** SDKs, so it is the one separable piece and could land on mainline ahead of the upgrade.
+
+**Not validated, and it is the gate:** on-device Gemma 3n inference on ARM (Android/iPhone) under 3.44.7, plus a native `build apk`/`build ios`. A hosted x64 environment cannot prove these. Do not merge the upgrade until hardware validation passes.
 
 Acceptance criteria:
 - The Flutter upgrade decision is recorded (upgrade, or stay pinned with a reason); any bumps land only with `make verify` green.
@@ -188,6 +199,8 @@ Acceptance criteria:
 - [ ] Upgrade Flutter and `flutter_gemma` on that branch
 - [ ] Verify install behavior, Android viability, iOS multimodal viability, and startup cost
 - [ ] Record a go/no-go recommendation
+
+The Flutter half of step 2 is already de-risked by the upgrade spike above (`flutter-upgrade-spike`, Flutter 3.44.7 host-green) — branch from it rather than repeating that work, and treat the `flutter_gemma` major bump as the actual unknown.
 
 Rule:
 - Do not mix this spike into the mainline Gemma 3n branch until it proves cross-platform multimodal parity.
