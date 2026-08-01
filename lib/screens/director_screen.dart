@@ -315,6 +315,7 @@ Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
               title: 'Saved take',
               entries: session.entries,
               capturedAt: session.updatedAt,
+              notes: session.notes,
             );
           },
         ),
@@ -328,6 +329,7 @@ Future<void> _showExportSheet(
   required String title,
   required List<ScriptEntry> entries,
   DateTime? capturedAt,
+  String notes = '',
 }) async {
   await showModalBottomSheet<void>(
     context: context,
@@ -340,6 +342,7 @@ Future<void> _showExportSheet(
           title: title,
           entries: entries,
           capturedAt: capturedAt,
+          notes: notes,
         ),
       );
     },

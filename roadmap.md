@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails and shot notes, copyable setup diagnostics, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -60,14 +60,22 @@ Acceptance criteria:
 
 ### 3. Frame thumbnails
 
-- [ ] Attach a representative frame thumbnail to each screenplay beat or saved take
-- [ ] Keep thumbnail generation lightweight enough for on-device use
+- [x] Attach a representative frame thumbnail to each saved take
+- [x] Keep thumbnail generation lightweight enough for on-device use
 
 Why it matters:
 - The screenplay becomes easier to scan, remember, and compare later.
 
 Acceptance criteria:
-- Saved takes show a visual reference for the captured scene.
+- Saved takes show a visual reference for the captured scene. Thumbnails are derived once per take from the already-preprocessed frame JPEG and stored with the take.
+
+### 3.5 Shot notes
+
+- [x] Add a lightweight local shot-notes field to each take
+- [x] Include shot notes in Fountain and plain-text exports
+
+Acceptance criteria:
+- Notes stay local, remain attached to the take, and are included only when the user exports the take.
 
 ## Priority 2: Product controls and diagnostics
 
@@ -94,11 +102,11 @@ Acceptance criteria:
 
 ### 6. Setup observability
 
-- [ ] Improve error surfaces for downloads, imports, and backend fallback
-- [ ] Add a compact debug detail view for setup failures
+- [x] Improve error surfaces for downloads, imports, and backend fallback
+- [x] Add a compact, copyable debug detail view for setup failures
 
 Acceptance criteria:
-- Support and QA can diagnose setup problems without diving into native logs first.
+- Support and QA can diagnose setup problems without diving into native logs first; failure kind, active source, and raw error are available behind the setup details expander.
 
 ## Priority 3: Research and branching work
 
@@ -114,11 +122,9 @@ Rule:
 
 ## Suggested build order
 
-1. Release readiness
-2. Frame thumbnails
-3. Frame thumbnails and shot notes
-4. Setup observability
-5. Gemma 4 E4B follow-up
+1. Release readiness and physical-device validation
+2. Creator workflow polish after thumbnails and shot notes
+3. Gemma 4 E4B follow-up only after E2B is proven on target hardware
 
 ## Notes for future agents
 

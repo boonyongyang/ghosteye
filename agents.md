@@ -4,8 +4,8 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
-- Confidence status: `make verify passing on 2026-07-06 after Android release-signing cleanup`
+- Project status: `Gemma 4 E2B setup workspace, copyable setup diagnostics, setup-handoff onboarding, director command dock, take library with frame thumbnails and shot notes, Model Center source/storage controls, persisted performance and teleprompter settings, runtime recovery hardening, debug diagnostics, and export/share completed`
+- Confidence status: `make verify and Android/iOS no-code-sign builds passing on 2026-08-01 after release hardening`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 E2B is now mainline; Gemma 4 E4B remains a higher-memory follow-up`
 
@@ -220,6 +220,16 @@ Important behavior:
 - Release builds still need a real production keystore, signing team/profile, and store metadata
 - Support/privacy URLs, screenshots, and store metadata
 - A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
+
+## Engineering-health status
+
+The previously identified engineering-health gaps are addressed in this branch:
+
+- FFI preprocessing is exercised in CI on Linux and macOS.
+- Performance and teleprompter preferences hydrate from `SharedPreferences`.
+- Docs and whitespace audits run in CI.
+- The Makefile uses a POSIX shell and includes explicit release guards.
+- `flutter_gemma` is locked to the compatible `0.16.5` patch line; the Flutter 3.38.9 baseline is intentionally not bulk-upgraded with the newer 1.x package line.
 
 ## Guardrails for future work
 

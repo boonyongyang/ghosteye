@@ -13,6 +13,7 @@ make bootstrap          # flutter pub get
 make verify             # flutter analyze && flutter test (run before committing)
 make analyze            # flutter analyze only
 make test               # flutter test only
+make benchmark          # host Dart-vs-FFI preprocessing benchmark (not in the CI suite)
 make format             # dart format lib test tool packages/ghosteye_frame_ffi/lib
 make fix                # dart fix --apply
 make run-android        # flutter run -d android --dart-define-from-file=config.json
@@ -60,6 +61,8 @@ Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` 
 
 Source signatures are persisted so switching source forces reinstall. Managed URLs use `flutter_gemma` network install; local files use file install with copy into app storage. `GemmaService` tracks a `GemmaRuntimeSnapshot` (backend=GPU/CPU, source, fallback flag) after successful init. Hugging Face-specific copy should only appear when the active source is actually Hugging Face.
 
+Setup failures are classified by `classifyGemmaStartupFailure` into a `GemmaStartupFailureKind` + friendly message, and `GemmaState.diagnosticDetail` retains the raw underlying error. `SplashScreen`'s setup-failure view surfaces both a per-kind support hint and a copyable technical block (failure kind, source, raw error) behind a "Show details" expander so support/QA can diagnose without native logs.
+
 ### Inference pipeline
 
 `inferenceProvider` (`lib/providers/inference_provider.dart`) is a `StreamProvider.autoDispose` that:
@@ -80,7 +83,11 @@ The backend defaults to `ffi` on supported platforms (Android, iOS, macOS); `Fra
 
 `ScriptController` (`lib/providers/script_provider.dart`) accumulates streamed tokens into a `liveResponse`, then on `finishResponse` classifies each line into Fountain screenplay types (`slugline`, `character`, `parenthetical`, `dialogue`, `action`) and appends parsed `ScriptEntry` objects. It auto-syncs completed sessions to `ScriptHistoryService` via `_syncHistory`.
 
-`ScriptHistoryService` / `scriptHistoryProvider` persist up to `AppConstants.maxSavedScriptSessions` (12) recent takes as JSON in `shared_preferences`.
+`ScriptHistoryService` / `scriptHistoryProvider` persist up to `AppConstants.maxSavedScriptSessions` (12) recent takes as JSON in `shared_preferences`. Each take also carries an optional inline base64 JPEG **thumbnail**: `inferenceProvider` hands the latest preprocessed frame to `ScriptController.rememberFrameForThumbnail`, and `syncSession` encodes it once per take via `ThumbnailEncoder` (`lib/services/thumbnail_encoder.dart`, 160px/q55) and reuses it on later syncs so the card art stays stable. Takes also carry a user **`notes`** string (edited from the take library via `scriptHistoryProvider.setNotes`) that `ScriptExportService` appends to Fountain (boneyard) and plain-text exports. Both thumbnail and notes travel inside the session JSON, so delete/clear need no extra file lifecycle.
+
+`ScriptScrollView` (`lib/widgets/script_scroll_view.dart`) renders the teleprompter and watches `teleprompterSettingsProvider` (`lib/providers/teleprompter_settings_provider.dart`) — a `NotifierProvider<TeleprompterSettingsController, TeleprompterSettings>`. The three enum-based settings (text size → composed `TextScaler`, density → inter-line gap, pace → typewriter `charDelay`) default to the original hardcoded presentation and are edited via the `TELEPROMPTER` section of the Model Center sheet (`TeleprompterControls`).
+
+`teleprompterSettingsProvider` and `performancePresetProvider` **persist** to `shared_preferences` (`ghosteye.teleprompter_*`, `ghosteye.performance_preset`, storing enum `.name`). They hydrate synchronously from `sharedPreferencesProvider` (`lib/providers/preferences_provider.dart`), which `main()` overrides with a `SharedPreferences` instance preloaded before `runApp`. The provider defaults to `null` (in-memory defaults, no persistence) so unit/widget tests need no override unless they exercise persistence.
 
 ### Pipeline metrics
 
@@ -102,7 +109,7 @@ flutter run --dart-define=GHOSTEYE_FRAME_JPEG_QUALITY=75
 - For `AsyncNotifierProvider` overrides, pass a factory returning a concrete subclass of the notifier (e.g., `cameraProvider.overrideWith(_StubNotifier.new)`).
 - For service providers, use `overrideWithValue(mockService)`. Always `addTearDown(container.dispose)`.
 - `SharedPreferences.setMockInitialValues({})` in setUp for persistence tests.
-- **Frame preprocessor tests** (`test/services/frame_preprocessor_test.dart`) compile the native C library on macOS at test time using `cc -dynamiclib` in `setUpAll`. Tests that need the native dylib guard with `if (ffiLibraryPath == null) return;` — silently skipped on non-macOS.
+- **Frame preprocessor tests** (`test/services/frame_preprocessor_test.dart`) compile the native C library at test time in `setUpAll` — `cc -dynamiclib` on macOS and `cc -shared -fPIC … -lm` on Linux — so the FFI backend runs on both local macOS and the Linux CI runner. Tests that need the native library guard with `if (ffiLibraryPath == null) return;`, which only fires on other platforms.
 - Widget tests scope finders with `find.descendant(of: find.byType(TargetWidget), matching: ...)` to avoid ambiguity with Material scaffold-level widgets.
 
 ## Key conventions

@@ -4,7 +4,7 @@ Ghosteye is a Flutter camera app that turns the live scene into scrolling screen
 
 ## Status
 
-- Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history, active/saved-take export, Model Center storage/source controls, and performance presets.
+- Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history with frame thumbnails and shot notes, active/saved-take export, Model Center storage/source controls, performance presets, and persisted teleprompter controls.
 - The mainline runtime targets Gemma 4 E2B on Android and physical iPhone hardware.
 - Production hosting, real-device validation, release signing, and store assets are still in progress.
 - Gemma 4 E4B remains a higher-memory follow-up after E2B physical-device validation.
@@ -15,9 +15,10 @@ Ghosteye is a Flutter camera app that turns the live scene into scrolling screen
 - Guided model setup workspace with managed-download and local-model install flows
 - Live camera preview with screenplay-style streaming output
 - One-handed director command dock for capture, history, export, clear, and tips
-- Replayable director tips, local session history, and export/share for active or saved takes
+- Replayable director tips, local session history with per-take frame thumbnails and shot notes, and export/share for active or saved takes
 - Model Center for active source, local storage, reset, source switching, privacy status, and pacing presets
 - Persisted teleprompter controls for text size, line spacing, and streamed reveal pace
+- Copyable technical diagnostics on setup failures for faster support triage
 - GPU-first startup with visible CPU fallback status
 - Local-first runtime with no server-side frame processing
 

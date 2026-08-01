@@ -10,6 +10,9 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   FlutterGemma.initialize();
+
+  // Preload shared preferences so settings providers can hydrate persisted
+  // values synchronously in their build() rather than flashing defaults.
   final preferences = await SharedPreferences.getInstance();
 
   runApp(

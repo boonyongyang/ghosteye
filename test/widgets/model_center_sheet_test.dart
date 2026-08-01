@@ -21,7 +21,7 @@ Widget _buildSheet({
     overrides: <Override>[
       gemmaProvider.overrideWith(() => _FixedGemmaNotifier(gemmaState)),
       performancePresetProvider.overrideWith(
-        () => _FixedPerformancePresetNotifier(initialPreset),
+        () => _FixedPresetController(initialPreset),
       ),
     ],
   );
@@ -52,9 +52,8 @@ class _FixedGemmaNotifier extends AsyncNotifier<GemmaState>
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-class _FixedPerformancePresetNotifier extends PerformancePresetController {
-  _FixedPerformancePresetNotifier(this._initial);
-
+class _FixedPresetController extends PerformancePresetController {
+  _FixedPresetController(this._initial);
   final PerformancePreset _initial;
 
   @override
@@ -226,10 +225,8 @@ void main() {
     await tester.pumpWidget(_buildSheet(onReset: () => called = true));
     await tester.pump();
 
-    await tester.drag(
-      find.byType(SingleChildScrollView),
-      const Offset(0, -500),
-    );
+    // The sheet scrolls; ensure the bottom action is on-screen before tapping.
+    await tester.ensureVisible(find.text('Reset cached install'));
     await tester.pump();
     await tester.tap(find.text('Reset cached install'));
     await tester.pump();

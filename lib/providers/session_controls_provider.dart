@@ -13,17 +13,20 @@ final reviewModeProvider = StateProvider<bool>((ref) {
 
 final performancePresetProvider =
     NotifierProvider<PerformancePresetController, PerformancePreset>(
-      PerformancePresetController.new,
-    );
+  PerformancePresetController.new,
+);
 
 class PerformancePresetController extends Notifier<PerformancePreset> {
   static const _key = 'ghosteye.performance_preset';
 
   @override
   PerformancePreset build() {
-    final preferences = ref.read(sharedPreferencesProvider);
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (prefs == null) {
+      return PerformancePreset.balanced;
+    }
     return readPersistedEnum(
-      preferences?.getString(_key),
+      prefs.getString(_key),
       PerformancePreset.values,
       PerformancePreset.balanced,
     );

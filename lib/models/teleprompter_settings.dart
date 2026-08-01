@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+/// Display size of the teleprompter screenplay text. Values are text-scale
+/// multipliers applied on top of the theme typography.
 enum TeleprompterTextSize {
   compact('COMPACT', 0.9),
   standard('STANDARD', 1.0),
@@ -11,6 +13,8 @@ enum TeleprompterTextSize {
   final double scale;
 }
 
+/// Vertical breathing room between screenplay lines. `lineGap` is the padding,
+/// in logical pixels, inserted below each line in the teleprompter.
 enum TeleprompterDensity {
   tight('TIGHT', 4),
   cozy('COZY', 10),
@@ -22,6 +26,8 @@ enum TeleprompterDensity {
   final double lineGap;
 }
 
+/// Cadence of the typewriter reveal for streamed tokens. `charDelay` is the
+/// minimum delay between revealing successive characters.
 enum TeleprompterPace {
   calm('CALM', Duration(milliseconds: 55)),
   natural('NATURAL', Duration(milliseconds: 35)),
@@ -33,6 +39,8 @@ enum TeleprompterPace {
   final Duration charDelay;
 }
 
+/// User-adjustable teleprompter display preferences. Defaults preserve the
+/// original hardcoded behaviour (1.0 scale, 10px line gap, 35ms char delay).
 @immutable
 class TeleprompterSettings {
   const TeleprompterSettings({

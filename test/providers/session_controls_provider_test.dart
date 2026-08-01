@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ghosteye/models/performance_preset.dart';
+import 'package:ghosteye/providers/preferences_provider.dart';
 import 'package:ghosteye/providers/session_controls_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('captureEnabledProvider starts enabled', () {
@@ -51,5 +54,60 @@ void main() {
     container.read(captureEnabledProvider.notifier).state = false;
 
     expect(container.read(captureEnabledProvider), isFalse);
+  });
+
+  group('performancePresetProvider', () {
+    setUp(() => SharedPreferences.setMockInitialValues(<String, Object>{}));
+
+    test('defaults to balanced without a preferences instance', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(performancePresetProvider),
+        PerformancePreset.balanced,
+      );
+    });
+
+    test('hydrates a persisted preset', () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'ghosteye.performance_preset': 'fast',
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: <Override>[
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(
+        container.read(performancePresetProvider),
+        PerformancePreset.fast,
+      );
+    });
+
+    test('setPreset persists and a fresh container rehydrates it', () async {
+      final prefs = await SharedPreferences.getInstance();
+      ProviderContainer makeContainer() {
+        final container = ProviderContainer(
+          overrides: <Override>[
+            sharedPreferencesProvider.overrideWithValue(prefs),
+          ],
+        );
+        addTearDown(container.dispose);
+        return container;
+      }
+
+      makeContainer()
+          .read(performancePresetProvider.notifier)
+          .setPreset(PerformancePreset.cinematic);
+
+      expect(prefs.getString('ghosteye.performance_preset'), 'cinematic');
+      expect(
+        makeContainer().read(performancePresetProvider),
+        PerformancePreset.cinematic,
+      );
+    });
   });
 }

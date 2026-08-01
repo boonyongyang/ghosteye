@@ -10,6 +10,8 @@ ScriptSession _session({
   List<ScriptEntry> entries = const <ScriptEntry>[],
   CinematicMode? mode,
   bool isFavorite = false,
+  String? thumbnail,
+  String notes = '',
 }) {
   final timestamp = DateTime.utc(2026, 5, 1);
   return ScriptSession(
@@ -19,6 +21,8 @@ ScriptSession _session({
     entries: entries,
     mode: mode,
     isFavorite: isFavorite,
+    thumbnail: thumbnail,
+    notes: notes,
   );
 }
 
@@ -253,6 +257,108 @@ void main() {
       expect(pinned.id, original.id);
       expect(pinned.mode, original.mode);
       expect(pinned.entries, original.entries);
+    });
+  });
+
+  group('ScriptSession thumbnail', () {
+    test('hasThumbnail reflects presence of a non-empty value', () {
+      expect(_session().hasThumbnail, isFalse);
+      expect(_session(thumbnail: '').hasThumbnail, isFalse);
+      expect(_session(thumbnail: 'abc123').hasThumbnail, isTrue);
+    });
+
+    test('round-trips the thumbnail through JSON', () {
+      final original = _session(
+        thumbnail: 'QUJD',
+        entries: <ScriptEntry>[
+          const ScriptEntry(type: ScriptEntryType.action, text: 'A shot.'),
+        ],
+      );
+
+      final restored = ScriptSession.fromJson(original.toJson());
+
+      expect(restored.thumbnail, equals('QUJD'));
+      expect(restored, equals(original));
+    });
+
+    test('omits the thumbnail key when there is no thumbnail', () {
+      expect(_session().toJson().containsKey('thumbnail'), isFalse);
+    });
+
+    test('legacy JSON without a thumbnail decodes to null', () {
+      final json = <String, Object?>{
+        'id': 'legacy',
+        'createdAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+        'updatedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+        'entries': <Object?>[],
+      };
+
+      expect(ScriptSession.fromJson(json).thumbnail, isNull);
+    });
+
+    test('copyWith preserves the thumbnail across a favorite toggle', () {
+      final original = _session(thumbnail: 'QUJD');
+
+      final pinned = original.copyWith(isFavorite: true);
+
+      expect(pinned.isFavorite, isTrue);
+      expect(pinned.thumbnail, equals('QUJD'));
+    });
+
+    test('sessions differing only by thumbnail are not equal', () {
+      expect(
+        _session(thumbnail: 'AAAA'),
+        isNot(equals(_session(thumbnail: 'BBBB'))),
+      );
+    });
+  });
+
+  group('ScriptSession notes', () {
+    test('defaults to empty and hasNotes reflects trimmed content', () {
+      expect(_session().notes, isEmpty);
+      expect(_session().hasNotes, isFalse);
+      expect(_session(notes: '   ').hasNotes, isFalse);
+      expect(_session(notes: 'Push in on the door').hasNotes, isTrue);
+    });
+
+    test('round-trips notes through JSON', () {
+      final original = _session(notes: 'Reshoot wider next take');
+      final restored = ScriptSession.fromJson(original.toJson());
+
+      expect(restored.notes, equals('Reshoot wider next take'));
+      expect(restored, equals(original));
+    });
+
+    test('omits the notes key when empty', () {
+      expect(_session().toJson().containsKey('notes'), isFalse);
+      expect(_session(notes: 'x').toJson()['notes'], equals('x'));
+    });
+
+    test('legacy JSON without notes decodes to empty string', () {
+      final json = <String, Object?>{
+        'id': 'legacy',
+        'createdAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+        'updatedAt': DateTime.utc(2026, 1, 1).toIso8601String(),
+        'entries': <Object?>[],
+      };
+
+      expect(ScriptSession.fromJson(json).notes, isEmpty);
+    });
+
+    test('copyWith updates notes while preserving other fields', () {
+      final original = _session(thumbnail: 'QUJD', isFavorite: true);
+      final annotated = original.copyWith(notes: 'Cutaway to clock');
+
+      expect(annotated.notes, equals('Cutaway to clock'));
+      expect(annotated.thumbnail, equals('QUJD'));
+      expect(annotated.isFavorite, isTrue);
+    });
+
+    test('sessions differing only by notes are not equal', () {
+      expect(
+        _session(notes: 'take 1'),
+        isNot(equals(_session(notes: 'take 2'))),
+      );
     });
   });
 

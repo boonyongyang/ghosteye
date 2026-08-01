@@ -1,12 +1,19 @@
+import 'dart:typed_data';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/cinematic_mode.dart';
 import '../models/script_entry.dart';
 import '../models/script_session.dart';
 import '../services/script_history_service.dart';
+import '../services/thumbnail_encoder.dart';
 
 final scriptHistoryServiceProvider = Provider<ScriptHistoryService>((ref) {
   return ScriptHistoryService();
+});
+
+final thumbnailEncoderProvider = Provider<ThumbnailEncoder>((ref) {
+  return const ThumbnailEncoder();
 });
 
 final scriptHistoryProvider =
@@ -25,17 +32,27 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
     required DateTime createdAt,
     required List<ScriptEntry> entries,
     CinematicMode? mode,
+    Uint8List? thumbnailSource,
   }) async {
     if (entries.isEmpty) {
       return;
     }
 
     bool existingFavorite = false;
+    String? thumbnail;
     for (final s in (state.valueOrNull ?? <ScriptSession>[])) {
       if (s.id == sessionId) {
         existingFavorite = s.isFavorite;
+        thumbnail = s.thumbnail;
         break;
       }
+    }
+
+    // Capture a thumbnail once per session and keep the first one generated so
+    // the card art stays stable as later frames extend the same take.
+    if (thumbnail == null && thumbnailSource != null) {
+      thumbnail =
+          ref.read(thumbnailEncoderProvider).encodeFromJpeg(thumbnailSource);
     }
 
     final session = ScriptSession(
@@ -45,6 +62,7 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
       entries: List<ScriptEntry>.unmodifiable(entries),
       mode: mode,
       isFavorite: existingFavorite,
+      thumbnail: thumbnail,
     );
 
     final sessions = await ref.read(scriptHistoryServiceProvider).upsertSession(
@@ -67,6 +85,25 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
     final updated = target.copyWith(isFavorite: !target.isFavorite);
     final sessions =
         await ref.read(scriptHistoryServiceProvider).upsertSession(updated);
+    state = AsyncData(sessions);
+  }
+
+  Future<void> setNotes(String sessionId, String notes) async {
+    final current = state.valueOrNull ?? <ScriptSession>[];
+    ScriptSession? target;
+    for (final s in current) {
+      if (s.id == sessionId) {
+        target = s;
+        break;
+      }
+    }
+    if (target == null || target.notes == notes) {
+      return;
+    }
+
+    final sessions = await ref
+        .read(scriptHistoryServiceProvider)
+        .upsertSession(target.copyWith(notes: notes));
     state = AsyncData(sessions);
   }
 

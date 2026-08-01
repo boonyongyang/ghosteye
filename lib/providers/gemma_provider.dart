@@ -4,7 +4,13 @@ import '../config/constants.dart';
 import '../models/model_source.dart';
 import '../services/gemma_service.dart';
 
-enum GemmaPhase { idle, checking, downloading, ready, error }
+enum GemmaPhase {
+  idle,
+  checking,
+  downloading,
+  ready,
+  error,
+}
 
 class GemmaState {
   const GemmaState({
@@ -15,6 +21,7 @@ class GemmaState {
     this.activeBackend,
     this.usedFallback = false,
     this.failureKind,
+    this.diagnosticDetail,
   });
 
   const GemmaState.idle() : this(phase: GemmaPhase.idle);
@@ -26,6 +33,10 @@ class GemmaState {
   final RuntimeBackend? activeBackend;
   final bool usedFallback;
   final GemmaStartupFailureKind? failureKind;
+
+  /// Raw underlying error text for a failed setup, surfaced behind a details
+  /// expander so support/QA can diagnose without native logs. Null on success.
+  final String? diagnosticDetail;
 
   bool get isReady => phase == GemmaPhase.ready;
   bool get hasError => phase == GemmaPhase.error;
@@ -39,10 +50,12 @@ class GemmaState {
     RuntimeBackend? activeBackend,
     bool? usedFallback,
     GemmaStartupFailureKind? failureKind,
+    String? diagnosticDetail,
     bool clearMessage = false,
     bool clearSource = false,
     bool clearActiveBackend = false,
     bool clearFailureKind = false,
+    bool clearDiagnosticDetail = false,
   }) {
     return GemmaState(
       phase: phase ?? this.phase,
@@ -53,6 +66,9 @@ class GemmaState {
           clearActiveBackend ? null : activeBackend ?? this.activeBackend,
       usedFallback: usedFallback ?? this.usedFallback,
       failureKind: clearFailureKind ? null : failureKind ?? this.failureKind,
+      diagnosticDetail: clearDiagnosticDetail
+          ? null
+          : diagnosticDetail ?? this.diagnosticDetail,
     );
   }
 }
@@ -63,9 +79,8 @@ final gemmaServiceProvider = Provider<GemmaService>((ref) {
   return service;
 });
 
-final gemmaProvider = AsyncNotifierProvider<GemmaNotifier, GemmaState>(
-  GemmaNotifier.new,
-);
+final gemmaProvider =
+    AsyncNotifierProvider<GemmaNotifier, GemmaState>(GemmaNotifier.new);
 
 final gemmaStateViewProvider = Provider<AsyncValue<GemmaState>>((ref) {
   return ref.watch(gemmaProvider);
@@ -83,7 +98,12 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
 
     try {
       source = await service.resolveModelSource();
-      state = AsyncData(GemmaState(phase: GemmaPhase.checking, source: source));
+      state = AsyncData(
+        GemmaState(
+          phase: GemmaPhase.checking,
+          source: source,
+        ),
+      );
 
       final snapshot = await service.ensureReady(
         onProgress: (progress) {
@@ -103,10 +123,9 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
         GemmaState(
           phase: GemmaPhase.ready,
           progress: 100,
-          message:
-              snapshot.usedFallback
-                  ? '${AppConstants.modelDisplayName} ready on CPU fallback'
-                  : '${AppConstants.modelDisplayName} ready on ${snapshot.backend.name.toUpperCase()}',
+          message: snapshot.usedFallback
+              ? '${AppConstants.modelDisplayName} ready on CPU fallback'
+              : '${AppConstants.modelDisplayName} ready on ${snapshot.backend.name.toUpperCase()}',
           source: snapshot.source,
           activeBackend: snapshot.backend,
           usedFallback: snapshot.usedFallback,
@@ -122,9 +141,18 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           failureKind: failure.kind,
           activeBackend: service.currentSnapshot?.backend,
           usedFallback: service.currentSnapshot?.usedFallback ?? false,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
         ),
       );
     }
+  }
+
+  static String? _diagnosticDetailFor(
+    GemmaStartupFailure failure,
+    Object error,
+  ) {
+    final detail = (failure.originalError ?? error).toString().trim();
+    return detail.isEmpty ? null : detail;
   }
 
   Future<void> importLocalModel() async {
@@ -153,6 +181,7 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
           clearActiveBackend: true,
         ),
       );
@@ -176,7 +205,8 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
               ref.read(gemmaServiceProvider).currentSnapshot?.backend,
           usedFallback:
               ref.read(gemmaServiceProvider).currentSnapshot?.usedFallback ??
-              false,
+                  false,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
         ),
       );
     }
@@ -195,6 +225,7 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           message: 'Cached install reset.',
           clearActiveBackend: true,
           clearFailureKind: true,
+          clearDiagnosticDetail: true,
         ),
       );
     } catch (error) {
@@ -207,6 +238,7 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
+          diagnosticDetail: _diagnosticDetailFor(failure, error),
           clearActiveBackend: true,
         ),
       );

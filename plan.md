@@ -4,11 +4,11 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
+- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, frame thumbnails, and shot notes, copyable setup diagnostics, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
 - Verification status: `make verify passing on 2026-08-01 after release-hardening changes`
 - Deployment readiness: `needs local release credentials, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `E2B runtime is mainline; E4B remains a higher-memory follow-up after physical-device validation`
-- Next product phase: `release readiness, frame thumbnails/shot notes, and physical-device validation before broader release polish`
+- Next product phase: `release readiness and physical-device validation before broader release polish`
 
 ## Current phase readout
 
@@ -123,10 +123,10 @@ Acceptance criteria:
 - [x] Promote history into a take library with better saved-take cards.
 - [x] Add take naming or auto-generated titles from the first useful screenplay line.
 - [x] Add favorite/pin support for strong takes.
-- [ ] Add optional thumbnails from representative captured frames if performance allows.
+- [x] Add optional thumbnails from representative captured frames, generated once per take from the already-preprocessed frame JPEG.
 - [x] Add search/filter by mode, date, and title once there is enough metadata.
 - [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
-- [ ] Consider a lightweight "shot notes" field that stays local and exports with the take.
+- [x] Add a lightweight "shot notes" field that stays local and exports with the take.
 - [ ] Consider custom cinematic presets after the default three modes feel stable.
 
 Acceptance criteria:
@@ -143,7 +143,7 @@ Acceptance criteria:
 - [x] Add cache reset and re-download controls with confirmation.
 - [x] Add source-switch controls that respect the existing precedence rules.
 - [x] Add a privacy/status screen that states when network is used and when frames stay on-device.
-- [ ] Add support diagnostics copy for common setup failures.
+- [x] Add support diagnostics copy for common setup failures, including a copyable technical detail block behind the setup failure expander.
 - [x] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
 
 Acceptance criteria:
@@ -182,11 +182,11 @@ Acceptance criteria:
 - [x] Model setup wizard with managed/local source selection
 - [x] Setup preflight checks for network, storage, battery, and privacy
 - [x] Model center with active source, backend, cache reset, and re-download
-- [ ] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete (thumbnails remain backlog)
+- [x] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete
 - [x] Teleprompter display controls for size, density, and pace
 - [x] Performance presets that tune frame sampling and model cadence
 - [ ] Optional custom cinematic modes after the default modes are polished
-- [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable
+- [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable (saved-take thumbnails are implemented; shareable cards remain backlog)
 
 ## Completed in mainline
 
@@ -337,7 +337,7 @@ Acceptance criteria:
 ## Near-term feature backlog
 
 - [x] Verify and land the current export/share workflow for active and saved takes
-- [ ] Pair each saved take with a captured frame thumbnail when performance permits
+- [x] Pair each saved take with a captured frame thumbnail when performance permits
 - [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [x] Add pace and responsiveness controls for frame sampling and inference cadence
 - [x] Add teleprompter display controls for text size, density, and reveal pace

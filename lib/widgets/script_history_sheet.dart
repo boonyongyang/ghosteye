@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -138,6 +141,7 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
                           session: session,
                           onOpen: () => widget.onSelectSession(session),
                           onExport: () => widget.onExportSession(session),
+                          onEditNotes: () => _editNotes(session),
                           onToggleFavorite: () {
                             AppHaptics.trigger(AppHapticPattern.selection);
                             ref
@@ -169,6 +173,75 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _editNotes(ScriptSession session) async {
+    AppHaptics.trigger(AppHapticPattern.selection);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (_) => _NotesDialog(initialNotes: session.notes),
+    );
+
+    if (result != null) {
+      await ref
+          .read(scriptHistoryProvider.notifier)
+          .setNotes(session.id, result.trim());
+    }
+  }
+}
+
+/// Owns its own [TextEditingController] so the controller lives exactly as long
+/// as the dialog route (avoiding use-after-dispose during the pop animation).
+class _NotesDialog extends StatefulWidget {
+  const _NotesDialog({required this.initialNotes});
+
+  final String initialNotes;
+
+  @override
+  State<_NotesDialog> createState() => _NotesDialogState();
+}
+
+class _NotesDialogState extends State<_NotesDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialNotes);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF171C25),
+      title: const Text('Shot notes'),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        minLines: 2,
+        maxLines: 5,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(
+          hintText: 'Framing, direction, follow-ups…',
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text),
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
@@ -249,6 +322,7 @@ class _TakeCard extends StatelessWidget {
     required this.session,
     required this.onOpen,
     required this.onExport,
+    required this.onEditNotes,
     required this.onToggleFavorite,
     required this.onDelete,
   });
@@ -256,6 +330,7 @@ class _TakeCard extends StatelessWidget {
   final ScriptSession session;
   final Future<void> Function() onOpen;
   final Future<void> Function() onExport;
+  final VoidCallback onEditNotes;
   final VoidCallback onToggleFavorite;
   final VoidCallback onDelete;
 
@@ -274,62 +349,114 @@ class _TakeCard extends StatelessWidget {
           onOpen();
         },
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
-          child: Column(
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 14),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  if (mode != null) ...<Widget>[
-                    _ModeBadge(mode: mode),
-                    const SizedBox(width: 8),
+              if (session.hasThumbnail) ...<Widget>[
+                _TakeThumbnail(base64Jpeg: session.thumbnail!),
+                const SizedBox(width: 12),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        if (mode != null) ...<Widget>[
+                          _ModeBadge(mode: mode),
+                          const SizedBox(width: 8),
+                        ],
+                        const Spacer(),
+                        _IconAction(
+                          icon: session.hasNotes
+                              ? Icons.sticky_note_2
+                              : Icons.note_add_outlined,
+                          color: session.hasNotes
+                              ? const Color(0xFF67D7EE)
+                              : Colors.white38,
+                          tooltip: session.hasNotes ? 'Edit note' : 'Add note',
+                          onTap: onEditNotes,
+                        ),
+                        _IconAction(
+                          icon: session.isFavorite
+                              ? Icons.star_rounded
+                              : Icons.star_outline_rounded,
+                          color: session.isFavorite
+                              ? const Color(0xFFFDD663)
+                              : Colors.white38,
+                          tooltip: session.isFavorite
+                              ? 'Remove from favorites'
+                              : 'Add to favorites',
+                          onTap: onToggleFavorite,
+                        ),
+                        _IconAction(
+                          icon: Icons.ios_share_outlined,
+                          tooltip: 'Export take',
+                          onTap: () {
+                            AppHaptics.trigger(AppHapticPattern.selection);
+                            onExport();
+                          },
+                        ),
+                        _IconAction(
+                          icon: Icons.delete_outline,
+                          tooltip: 'Delete take',
+                          onTap: onDelete,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        session.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        '${_formatTimestamp(session.updatedAt.toLocal())} · ${session.lineCount} lines',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                    if (session.hasNotes) ...<Widget>[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            const Padding(
+                              padding: EdgeInsets.only(top: 1),
+                              child: Icon(
+                                Icons.sticky_note_2_outlined,
+                                size: 13,
+                                color: Colors.white38,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                session.notes.trim(),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white54,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
-                  const Spacer(),
-                  _IconAction(
-                    icon: session.isFavorite
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: session.isFavorite
-                        ? const Color(0xFFFDD663)
-                        : Colors.white38,
-                    tooltip: session.isFavorite
-                        ? 'Remove from favorites'
-                        : 'Add to favorites',
-                    onTap: onToggleFavorite,
-                  ),
-                  _IconAction(
-                    icon: Icons.ios_share_outlined,
-                    tooltip: 'Export take',
-                    onTap: () {
-                      AppHaptics.trigger(AppHapticPattern.selection);
-                      onExport();
-                    },
-                  ),
-                  _IconAction(
-                    icon: Icons.delete_outline,
-                    tooltip: 'Delete take',
-                    onTap: onDelete,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Text(
-                  session.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Text(
-                  '${_formatTimestamp(session.updatedAt.toLocal())} · ${session.lineCount} lines',
-                  style: theme.textTheme.bodySmall,
                 ),
               ),
             ],
@@ -337,6 +464,52 @@ class _TakeCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _TakeThumbnail extends StatelessWidget {
+  const _TakeThumbnail({required this.base64Jpeg});
+
+  final String base64Jpeg;
+
+  static const double _width = 54;
+  static const double _height = 72;
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _decode(base64Jpeg);
+    if (bytes == null) {
+      return const SizedBox(width: _width, height: _height);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Image.memory(
+        bytes,
+        width: _width,
+        height: _height,
+        fit: BoxFit.cover,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => Container(
+          width: _width,
+          height: _height,
+          color: Colors.white10,
+          child: const Icon(
+            Icons.movie_outlined,
+            size: 18,
+            color: Colors.white24,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static Uint8List? _decode(String value) {
+    try {
+      return base64Decode(value);
+    } catch (_) {
+      return null;
+    }
   }
 }
 

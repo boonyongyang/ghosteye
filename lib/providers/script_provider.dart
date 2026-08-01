@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -67,6 +68,17 @@ final scriptProvider =
 class ScriptController extends Notifier<ScriptState> {
   @override
   ScriptState build() => _createFreshState();
+
+  /// Latest preprocessed frame JPEG for the active session, used to derive a
+  /// take thumbnail. Held outside [state] so it never triggers rebuilds and is
+  /// reset whenever a fresh session begins.
+  Uint8List? _pendingThumbnailSource;
+
+  /// Remembers a representative frame for the active take. The first frame of
+  /// a session becomes its persisted thumbnail (see [_syncHistory]).
+  void rememberFrameForThumbnail(Uint8List jpegBytes) {
+    _pendingThumbnailSource = jpegBytes;
+  }
 
   void startResponse(int generationId) {
     state = state.copyWith(
@@ -193,6 +205,7 @@ class ScriptController extends Notifier<ScriptState> {
   }
 
   ScriptState _createFreshState() {
+    _pendingThumbnailSource = null;
     return ScriptState(
       activeSessionId: _createSessionId(),
       activeSessionStartedAt: DateTime.now().toUtc(),
@@ -209,6 +222,7 @@ class ScriptController extends Notifier<ScriptState> {
           createdAt: createdAt,
           entries: snapshot.entries,
           mode: mode,
+          thumbnailSource: _pendingThumbnailSource,
         );
   }
 
