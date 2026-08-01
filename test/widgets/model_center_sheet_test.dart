@@ -20,7 +20,9 @@ Widget _buildSheet({
   final container = ProviderContainer(
     overrides: <Override>[
       gemmaProvider.overrideWith(() => _FixedGemmaNotifier(gemmaState)),
-      performancePresetProvider.overrideWith((ref) => initialPreset),
+      performancePresetProvider.overrideWith(
+        () => _FixedPerformancePresetNotifier(initialPreset),
+      ),
     ],
   );
 
@@ -48,6 +50,15 @@ class _FixedGemmaNotifier extends AsyncNotifier<GemmaState>
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FixedPerformancePresetNotifier extends PerformancePresetController {
+  _FixedPerformancePresetNotifier(this._initial);
+
+  final PerformancePreset _initial;
+
+  @override
+  PerformancePreset build() => _initial;
 }
 
 void main() {
@@ -215,6 +226,11 @@ void main() {
     await tester.pumpWidget(_buildSheet(onReset: () => called = true));
     await tester.pump();
 
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -500),
+    );
+    await tester.pump();
     await tester.tap(find.text('Reset cached install'));
     await tester.pump();
 

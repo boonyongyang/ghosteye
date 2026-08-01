@@ -24,6 +24,9 @@ class _FakeInferenceModel extends InferenceModel {
   int get maxTokens => 512;
 
   @override
+  PreferredBackend? get activeBackend => null;
+
+  @override
   InferenceModelSession? get session => null;
 
   @override

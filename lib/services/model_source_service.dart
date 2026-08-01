@@ -68,7 +68,22 @@ class ModelSourceService {
   final String _configuredModelTypeName;
   final String? _configuredToken;
 
-  Future<ModelSourceConfig> resolveSource() async {
+  ModelSourceConfig? _cachedSource;
+
+  Future<ModelSourceConfig> resolveSource({bool refresh = false}) async {
+    if (!refresh) {
+      final cachedSource = _cachedSource;
+      if (cachedSource != null) {
+        return cachedSource;
+      }
+    }
+
+    final source = await _resolveSource();
+    _cachedSource = source;
+    return source;
+  }
+
+  Future<ModelSourceConfig> _resolveSource() async {
     final preferences = await _loadPreferences();
     final importedPath = preferences.getString(importedModelPathKey);
     if (importedPath != null && importedPath.isNotEmpty) {
@@ -156,6 +171,7 @@ class ModelSourceService {
     final preferences = await _loadPreferences();
     final previousImportedPath = preferences.getString(importedModelPathKey);
     await preferences.setString(importedModelPathKey, importedPath);
+    _cachedSource = null;
 
     if (previousImportedPath != null &&
         previousImportedPath.isNotEmpty &&
@@ -176,6 +192,7 @@ class ModelSourceService {
   }
 
   Future<void> clearImportedModel() async {
+    _cachedSource = null;
     final preferences = await _loadPreferences();
     final importedPath = preferences.getString(importedModelPathKey);
     await preferences.remove(importedModelPathKey);

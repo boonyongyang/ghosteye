@@ -5,7 +5,7 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center storage/source controls, and performance presets implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
 - Recommended next phase: `release readiness first, creator workflow second`
 
@@ -87,6 +87,7 @@ Acceptance criteria:
 
 - [x] Expose a few pacing presets such as `Cinematic`, `Balanced`, and `Fast`
 - [x] Tune frame sampling and inference cadence by preset
+- [x] Persist the selected performance preset and teleprompter display settings locally
 
 Acceptance criteria:
 - The user can choose between slower richer output and faster lighter output.
@@ -115,7 +116,7 @@ Rule:
 
 1. Release readiness
 2. Frame thumbnails
-3. Teleprompter controls
+3. Frame thumbnails and shot notes
 4. Setup observability
 5. Gemma 4 E4B follow-up
 

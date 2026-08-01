@@ -5,7 +5,7 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 ## Current mainline state
 
 - Project status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, branding pass, take library, Model Center storage/source controls, performance presets, debug diagnostics, and export/share completed`
-- Confidence status: `make verify passing on 2026-06-03 after Gemma 4 E2B release-readiness cleanup`
+- Confidence status: `make verify passing on 2026-07-06 after Android release-signing cleanup`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
 - Spike status: `Gemma 4 E2B is now mainline; Gemma 4 E4B remains a higher-memory follow-up`
 
@@ -23,7 +23,7 @@ Ghosteye is a Flutter camera app that:
 ## Current runtime decisions
 
 - Flutter toolchain in mainline: `3.38.9` / Dart `3.10.8`
-- Mainline inference package: `flutter_gemma 0.16.1`
+- Mainline inference package: `flutter_gemma 0.16.5`
 - Mainline model family: Gemma 4 E2B multimodal
 - Mainline platforms: Android and physical iPhone
 - iOS simulator should not be treated as a trustworthy target for runtime signoff
@@ -38,6 +38,8 @@ Ghosteye is a Flutter camera app that:
 6. `ScriptController` parses Fountain-style output, while `ScriptHistoryService` persists recent takes.
 7. `ScriptExportService` builds Fountain/plain-text exports for active and saved takes.
 8. `ModelCenterSheet` exposes source/backend/storage/privacy/reset state, source-switch controls, and performance presets, while `DebugMetricsSheet` keeps pipeline timing out of the normal director composition.
+9. `AsyncMutex` serializes model lifecycle and history writes so source changes, setup, and persistence cannot race each other.
+10. `TeleprompterSettingsController` and `PerformancePresetController` load user preferences once from `SharedPreferences` and fall back safely in tests.
 
 ## Model source rules
 
@@ -175,6 +177,14 @@ Important behavior:
   UI for exporting the current take or a saved take
 - `lib/widgets/model_center_sheet.dart`
   UI for source/backend/privacy/reset state and performance preset controls
+- `lib/providers/preferences_provider.dart`
+  Shared preferences override and resilient persisted-enum reader
+- `lib/providers/teleprompter_settings_provider.dart`
+  Persisted text-size, density, and reveal-pace controls
+- `lib/widgets/teleprompter_controls.dart`
+  Settings controls embedded in Model Center
+- `lib/services/async_mutex.dart`
+  FIFO async gate used by model lifecycle and history persistence
 - `lib/widgets/debug_metrics_sheet.dart`
   Debug-only sheet for sampler, preprocessor, backend, and inference timing metrics
 - `tool/generate_brand_assets.dart`
@@ -207,7 +217,7 @@ Important behavior:
 - Production hosting for the Gemma 4 E2B `.litertlm` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path
-- Production Android/iOS identifiers
+- Release builds still need a real production keystore, signing team/profile, and store metadata
 - Support/privacy URLs, screenshots, and store metadata
 - A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
 

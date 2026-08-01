@@ -17,6 +17,7 @@ Ghosteye is a Flutter camera app that turns the live scene into scrolling screen
 - One-handed director command dock for capture, history, export, clear, and tips
 - Replayable director tips, local session history, and export/share for active or saved takes
 - Model Center for active source, local storage, reset, source switching, privacy status, and pacing presets
+- Persisted teleprompter controls for text size, line spacing, and streamed reveal pace
 - GPU-first startup with visible CPU fallback status
 - Local-first runtime with no server-side frame processing
 
@@ -93,8 +94,12 @@ make run DEVICE=<device-id>
 make run-android
 make run-ios IOS_DEVICE=<physical-device-id>
 make run-local-model MODEL_PATH=/absolute/path/to/gemma-4-E2B-it.litertlm MODEL_TYPE=gemma4
+make build-apk-release
+make build-appbundle-release
 make docs-audit
 ```
+
+Android release builds require a local `android/key.properties` file that points at a production keystore. Copy `android/key.properties.example`, fill in the local values, and keep both `android/key.properties` and keystore files out of git.
 
 ## Project Docs
 
@@ -108,4 +113,4 @@ make docs-audit
 
 ## Release Readiness
 
-Ghosteye is close to public GitHub shape, with MIT licensing, passing local verification, and GitHub Actions verification in place. The remaining app-release blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, release signing, store assets, and support/privacy links.
+Ghosteye is close to public GitHub shape, with MIT licensing, passing local verification, and GitHub Actions verification in place. The remaining app-release blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, local release credentials, store assets, and support/privacy links.

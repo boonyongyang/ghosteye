@@ -8,11 +8,13 @@ class TypewriterText extends StatefulWidget {
     required this.targetText,
     this.charDelay = AppConstants.typewriterCharDelay,
     this.cursorBlinkInterval = AppConstants.cursorBlinkInterval,
+    this.textScale = 1.0,
   });
 
   final String targetText;
   final Duration charDelay;
   final Duration cursorBlinkInterval;
+  final double textScale;
 
   @override
   State<TypewriterText> createState() => _TypewriterTextState();
@@ -29,9 +31,10 @@ class _TypewriterTextState extends State<TypewriterText>
   @override
   void initState() {
     super.initState();
-    _ticker = AnimationController.unbounded(vsync: this)
-      ..addListener(_handleTick)
-      ..repeat(min: 0, max: 1, period: const Duration(milliseconds: 16));
+    _ticker =
+        AnimationController.unbounded(vsync: this)
+          ..addListener(_handleTick)
+          ..repeat(min: 0, max: 1, period: const Duration(milliseconds: 16));
   }
 
   @override
@@ -82,9 +85,10 @@ class _TypewriterTextState extends State<TypewriterText>
     final visibleText = widget.targetText.substring(0, _visibleCharacters);
     final cursorColor = Theme.of(context).colorScheme.primary;
 
+    final textStyle = Theme.of(context).textTheme.bodyLarge;
     return RichText(
       text: TextSpan(
-        style: Theme.of(context).textTheme.bodyLarge,
+        style: _scaledTextStyle(textStyle),
         children: <InlineSpan>[
           TextSpan(text: visibleText),
           TextSpan(
@@ -93,6 +97,12 @@ class _TypewriterTextState extends State<TypewriterText>
           ),
         ],
       ),
+    );
+  }
+
+  TextStyle? _scaledTextStyle(TextStyle? style) {
+    return style?.copyWith(
+      fontSize: (style.fontSize ?? 14) * widget.textScale,
     );
   }
 }

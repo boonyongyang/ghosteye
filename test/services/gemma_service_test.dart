@@ -27,6 +27,9 @@ class _FakeInferenceModel extends InferenceModel {
   int get maxTokens => 512;
 
   @override
+  PreferredBackend? get activeBackend => null;
+
+  @override
   InferenceModelSession? get session => null;
 
   @override
@@ -56,6 +59,7 @@ Future<ModelSourceService> _createSourceService({
   String? installedSourceSignature,
   String? configuredModelPath,
   String? configuredModelUrl,
+  String? configuredModelTypeName,
   String? configuredToken,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{
@@ -72,6 +76,7 @@ Future<ModelSourceService> _createSourceService({
     pickModelFile: () async => null,
     configuredModelPath: configuredModelPath,
     configuredModelUrl: configuredModelUrl,
+    configuredModelTypeName: configuredModelTypeName,
     configuredToken: configuredToken,
   );
 }
@@ -131,6 +136,62 @@ void main() {
       expect(snapshot.source.origin, ModelSourceOrigin.envUrl);
     },
   );
+
+  test('GemmaService serializes concurrent model preparation', () async {
+    var installed = false;
+    var installCalls = 0;
+    final sourceService = await _createSourceService(
+      configuredModelUrl: 'https://cdn.example.com/gemma.task',
+    );
+    final service = GemmaService(
+      modelSourceService: sourceService,
+      isModelInstalled: (_) async => installed,
+      installModel: ({required source, onProgress}) async {
+        installCalls += 1;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        installed = true;
+      },
+      createModel: (_) async => _FakeInferenceModel(),
+    );
+    addTearDown(service.dispose);
+
+    await Future.wait(<Future<GemmaRuntimeSnapshot>>[
+      service.ensureReady(),
+      service.ensureReady(),
+    ]);
+
+    expect(installCalls, 1);
+  });
+
+  test('GemmaService rejects an unknown model family instead of guessing', () async {
+    final sourceService = await _createSourceService(
+      configuredModelUrl: 'https://cdn.example.com/gemma.task',
+      configuredModelTypeName: 'future-model-family',
+    );
+    final service = GemmaService(
+      modelSourceService: sourceService,
+      isModelInstalled: (_) async => true,
+      createModel: (_) async => _FakeInferenceModel(),
+    );
+    addTearDown(service.dispose);
+
+    await expectLater(
+      service.ensureReady(),
+      throwsA(
+        isA<GemmaStartupFailure>()
+            .having(
+              (failure) => failure.kind,
+              'kind',
+              GemmaStartupFailureKind.modelSource,
+            )
+            .having(
+              (failure) => failure.message,
+              'message',
+              contains('future-model-family'),
+            ),
+      ),
+    );
+  });
 
   test('shouldRecycleConversation enforces exchange and history limits', () {
     expect(

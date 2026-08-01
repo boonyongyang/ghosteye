@@ -4,11 +4,11 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center storage/source controls, performance presets, and debug diagnostics implemented`
-- Verification status: `make verify passing on 2026-06-03 after Gemma 4 E2B release-readiness cleanup`
-- Deployment readiness: `needs release signing, hardware validation, production model hosting, support/privacy URLs, and store prep`
+- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges and favorites, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
+- Verification status: `make verify passing on 2026-08-01 after release-hardening changes`
+- Deployment readiness: `needs local release credentials, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `E2B runtime is mainline; E4B remains a higher-memory follow-up after physical-device validation`
-- Next product phase: `release readiness, frame thumbnails, and teleprompter controls before broader release polish`
+- Next product phase: `release readiness, frame thumbnails/shot notes, and physical-device validation before broader release polish`
 
 ## Current phase readout
 
@@ -107,7 +107,7 @@ Acceptance criteria:
 - [x] Make capture state the dominant control: pause/resume should be visually unmistakable.
 - [x] Move secondary actions into predictable surfaces: history/library, export/share, tips, diagnostics/settings.
 - [x] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
-- [ ] Add teleprompter controls for text size, scroll density, and output pace if they can be kept simple.
+- [x] Add persisted teleprompter controls for text size, scroll density, and output pace.
 - [x] Add a review mode distinction when reopening a saved take so users know capture is paused.
 - [x] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
 - [x] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
@@ -161,7 +161,7 @@ Acceptance criteria:
 - [x] Replace example Android/iOS identifiers.
 - [ ] Finalize production model hosting and auth policy.
 - [ ] Capture release screenshots only after the revamp settles.
-- [ ] Update `README.md`, `roadmap.md`, `agents.md`, and `CONTRIBUTING.md` if behavior or priorities change.
+- [x] Update `README.md`, `roadmap.md`, `agents.md`, and `CONTRIBUTING.md` if behavior or priorities change.
 
 Acceptance criteria:
 
@@ -179,12 +179,12 @@ Acceptance criteria:
 
 ## Feature candidates to consider
 
-- [ ] Model setup wizard with managed/local source selection
-- [ ] Setup preflight checks for network, storage, battery, and privacy
-- [ ] Model center with active source, backend, cache reset, and re-download
-- [ ] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete
-- [ ] Teleprompter display controls for size, density, and pace
-- [ ] Performance presets that tune frame sampling and model cadence
+- [x] Model setup wizard with managed/local source selection
+- [x] Setup preflight checks for network, storage, battery, and privacy
+- [x] Model center with active source, backend, cache reset, and re-download
+- [ ] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete (thumbnails remain backlog)
+- [x] Teleprompter display controls for size, density, and pace
+- [x] Performance presets that tune frame sampling and model cadence
 - [ ] Optional custom cinematic modes after the default modes are polished
 - [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable
 
@@ -340,8 +340,8 @@ Acceptance criteria:
 - [ ] Pair each saved take with a captured frame thumbnail when performance permits
 - [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [x] Add pace and responsiveness controls for frame sampling and inference cadence
-- [ ] Add teleprompter display controls for text size, density, and review mode
-- [ ] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
+- [x] Add teleprompter display controls for text size, density, and reveal pace
+- [x] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
 
 ## Notes for whoever picks this up next
 

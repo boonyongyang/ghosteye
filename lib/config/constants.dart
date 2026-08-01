@@ -14,6 +14,10 @@ class AppConstants {
   static const cursorBlinkInterval = Duration(milliseconds: 500);
   static const maxSavedScriptSessions = 12;
   static const maxTokens = 512;
+  static const modelTokenBuffer = 256;
+  static const modelTemperature = 1.0;
+  static const modelTopK = 64;
+  static const modelTopP = 0.95;
   static const modelInputMaxDimension = 768;
   static const frameJpegQuality = 88;
   static const metricsWindowSize = 15;

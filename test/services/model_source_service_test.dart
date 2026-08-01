@@ -103,6 +103,28 @@ void main() {
     },
   );
 
+  test('resolveSource refresh bypasses its cached source', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final service = await _createService(
+      preferences: preferences,
+      documentsDirectory: Directory.systemTemp,
+      configuredModelUrl: 'https://cdn.example.com/model.task',
+    );
+
+    final initialSource = await service.resolveSource();
+    await preferences.setString(
+      ModelSourceService.importedModelPathKey,
+      '/tmp/imported.task',
+    );
+
+    expect((await service.resolveSource()).location, initialSource.location);
+    expect(
+      (await service.resolveSource(refresh: true)).location,
+      '/tmp/imported.task',
+    );
+  });
+
   test(
     'resolveSource carries configured model type into source signature',
     () async {

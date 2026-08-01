@@ -4,12 +4,13 @@ This checklist is the release gate for making Ghosteye public on GitHub or prepa
 
 ## Current Gate
 
-- Repo verification: `make verify` passing on 2026-06-03.
-- Markdown audit: `make docs-audit` passing on 2026-06-03.
-- Diff hygiene: `git diff --check` passing on 2026-06-03.
+- Repo verification: `make verify` passing on 2026-08-01 after release-hardening changes.
+- Markdown audit: `make docs-audit` passing on 2026-08-01.
+- Diff hygiene: `git diff --check` passing on 2026-08-01.
 - TODO audit: `make todo` has no current TODO/FIXME markers.
-- Device discovery: `make devices` passing on 2026-06-03; physical iPhone targets are visible, Android hardware is not currently visible.
-- GitHub CI: `.github/workflows/verify.yml` runs `make verify` on pushes and pull requests.
+- Device discovery: `make devices` passing on 2026-08-01; only iOS simulator, macOS, and Chrome targets were visible, with no physical Android/iPhone target available for signoff.
+- Native runtime assets: `flutter_gemma 0.16.5` Android LiteRT-LM/qdrant-edge archives checksum-verified and packaged in the debug APK on 2026-08-01.
+- GitHub CI: `.github/workflows/verify.yml` runs docs audit, whitespace checks, and `make verify` on pushes and pull requests.
 - Device testing: `docs/DEVICE_TEST_PLAN.md` documents the required physical Android/iPhone validation pass.
 - GitHub repo: `boonyongyang/ghosteye`, public.
 
@@ -27,7 +28,8 @@ This checklist is the release gate for making Ghosteye public on GitHub or prepa
   - Android namespace/application ID: `com.boonyongyang.ghosteye`
   - iOS bundle ID: `com.boonyongyang.ghosteye`
   - Kotlin package path under `android/app/src/main/kotlin/com/boonyongyang/ghosteye/`
-- [ ] Configure real Android release signing instead of debug signing.
+- [x] Replace debug signing fallback with `android/key.properties`-driven Android release signing.
+- [ ] Provide the production Android keystore locally before building release artifacts.
 - [ ] Configure production iOS signing, team, bundle ID, and capabilities.
 - [ ] Decide whether production iOS model runs need memory-limit entitlements re-enabled with a paid team profile.
 - [ ] Finalize production hosting for the Gemma 4 E2B `.litertlm` artifact.
@@ -55,4 +57,6 @@ make todo
 make bundle-ids
 make config-check
 make devices
+make build-apk-release
+make build-appbundle-release
 ```

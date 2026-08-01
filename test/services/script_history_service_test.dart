@@ -66,6 +66,32 @@ void main() {
     expect(replacedSessions.first.entries.single.text, 'INT. CAB - NIGHT');
   });
 
+  test('concurrent writes retain both sessions', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final service = await _createService(preferences: preferences);
+
+    await Future.wait(<Future<List<ScriptSession>>>[
+      service.upsertSession(
+        _buildSession(
+          id: 'first',
+          timestamp: DateTime.utc(2026, 4, 21, 10),
+        ),
+      ),
+      service.upsertSession(
+        _buildSession(
+          id: 'second',
+          timestamp: DateTime.utc(2026, 4, 21, 11),
+        ),
+      ),
+    ]);
+
+    expect(
+      (await service.loadSessions()).map((session) => session.id),
+      containsAll(<String>['first', 'second']),
+    );
+  });
+
   test('upsertSession respects the max saved session limit', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();

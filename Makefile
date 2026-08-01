@@ -1,4 +1,4 @@
-SHELL := /bin/zsh
+SHELL := /bin/sh
 
 FLUTTER ?= $(if $(shell command -v fvm 2>/dev/null),fvm flutter,flutter)
 DART ?= $(if $(shell command -v fvm 2>/dev/null),fvm dart,dart)
@@ -22,6 +22,7 @@ SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 	clean pub-outdated config-copy config-check config-example run run-config \
 	run-local-model run-android run-android-local-model run-ios \
 	run-ios-local-model logs build-apk-debug build-ios-debug build-web-debug \
+	build-apk-release build-appbundle-release \
 	brand-assets todo bundle-ids docs docs-audit
 
 help:
@@ -53,6 +54,8 @@ help:
 	@printf "  make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make logs DEVICE=<id> flutter logs for a connected device\n"
 	@printf "  make build-apk-debug  flutter build apk --debug\n"
+	@printf "  make build-apk-release flutter build apk --release with android/key.properties\n"
+	@printf "  make build-appbundle-release flutter build appbundle --release with android/key.properties\n"
 	@printf "  make build-ios-debug  flutter build ios --debug --no-codesign\n"
 	@printf "  make build-web-debug  flutter build web --debug\n\n"
 	@printf "Repo diagnostics:\n"
@@ -169,6 +172,20 @@ logs:
 
 build-apk-debug:
 	$(FLUTTER) build apk --debug
+
+build-apk-release:
+	@if [ ! -f android/key.properties ]; then \
+		echo "No android/key.properties found. Copy android/key.properties.example and point it at your production keystore."; \
+		exit 1; \
+	fi
+	$(FLUTTER) build apk --release $(CONFIG_ARGS)
+
+build-appbundle-release:
+	@if [ ! -f android/key.properties ]; then \
+		echo "No android/key.properties found. Copy android/key.properties.example and point it at your production keystore."; \
+		exit 1; \
+	fi
+	$(FLUTTER) build appbundle --release $(CONFIG_ARGS)
 
 build-ios-debug:
 	$(FLUTTER) build ios --debug --no-codesign

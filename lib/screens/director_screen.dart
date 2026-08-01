@@ -271,19 +271,26 @@ Future<void> _showModelCenterSheet(BuildContext context, WidgetRef ref) async {
       return ModelCenterSheet(
         onResetCachedInstall: () {
           Navigator.of(context).pop();
-          ref.read(gemmaProvider.notifier).resetCachedInstall();
+          unawaited(_pauseAndResetModel(ref));
         },
         onImportLocalModel: () async {
           Navigator.of(context).pop();
+          await _pauseCapture(ref);
           await ref.read(gemmaProvider.notifier).importLocalModel();
         },
         onUseConfiguredSource: () async {
           Navigator.of(context).pop();
+          await _pauseCapture(ref);
           await ref.read(gemmaProvider.notifier).useManagedDownload();
         },
       );
     },
   );
+}
+
+Future<void> _pauseAndResetModel(WidgetRef ref) async {
+  await _pauseCapture(ref);
+  await ref.read(gemmaProvider.notifier).resetCachedInstall();
 }
 
 Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {

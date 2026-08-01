@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Ghosteye is a Flutter camera app that runs on-device Gemma 3n multimodal inference via `flutter_gemma` and renders AI-generated screenplay text as a live teleprompter overlay. Three cinematic modes (NOIR, SCI-FI, SITCOM) change the system prompt persona. Camera frames never leave the device.
+Ghosteye is a Flutter camera app that runs on-device Gemma 4 E2B multimodal inference via `flutter_gemma` and renders AI-generated screenplay text as a live teleprompter overlay. Three cinematic modes (NOIR, SCI-FI, SITCOM) change the system prompt persona. Camera frames never leave the device.
 
 ## Commands
 
@@ -44,7 +44,7 @@ To run with a managed model URL or local model path, copy `config.json.example` 
 
 ### State management
 
-Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` in dev deps). `lib/providers/` is the canonical source for all shared state. Services are injected into providers via `Provider<XService>` so tests can `overrideWithValue`.
+Riverpod exclusively, all hand-written (no codegen despite `riverpod_generator` in dev deps). `lib/providers/` is the canonical source for all shared state. Services are injected into providers via `Provider<XService>` so tests can `overrideWithValue`. User preferences are loaded once in `main.dart` and exposed through `sharedPreferencesProvider`; settings controllers fall back to in-memory defaults in tests.
 - `AsyncNotifierProvider` for async lifecycles (gemma, camera, onboarding, script history)
 - `StreamProvider.autoDispose` for the inference pipeline
 - `NotifierProvider` for script state
@@ -109,7 +109,7 @@ flutter run --dart-define=GHOSTEYE_FRAME_JPEG_QUALITY=75
 
 - Providers are hand-written, not generated — don't add `@riverpod` annotations.
 - iOS simulator is not a valid runtime target for on-device Gemma inference.
-- Mainline targets Gemma 3n E2B; Gemma 4 is a separate spike branch.
+- Mainline targets Gemma 4 E2B; Gemma 4 E4B remains a higher-memory follow-up after physical-device validation.
 - Product name is `Ghosteye` everywhere; tagline is "Director's eye for on-device cinema."
 - Mark completed items in `plan.md` as `[x]` rather than deleting them.
 - Use relative links in checked-in Markdown — `make docs-audit` enforces no absolute local paths.

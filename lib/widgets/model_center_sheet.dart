@@ -10,6 +10,7 @@ import '../providers/gemma_provider.dart';
 import '../providers/session_controls_provider.dart';
 import '../services/app_haptics.dart';
 import '../services/gemma_service.dart';
+import 'teleprompter_controls.dart';
 
 class ModelCenterSheet extends ConsumerWidget {
   const ModelCenterSheet({
@@ -84,7 +85,9 @@ class ModelCenterSheet extends ConsumerWidget {
                   selected: preset,
                   onSelect: (next) {
                     AppHaptics.trigger(AppHapticPattern.selection);
-                    ref.read(performancePresetProvider.notifier).state = next;
+                    ref
+                        .read(performancePresetProvider.notifier)
+                        .setPreset(next);
                     ref.read(cameraProvider.notifier).applyPreset(next);
                   },
                 ),
@@ -92,10 +95,14 @@ class ModelCenterSheet extends ConsumerWidget {
                 Text(
                   preset.description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.white38,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    color: Colors.white38,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
+                const SizedBox(height: 20),
+                const _SectionLabel(label: 'TELEPROMPTER'),
+                const SizedBox(height: 8),
+                const TeleprompterControls(),
                 const SizedBox(height: 20),
                 const _SectionLabel(label: 'PRIVACY'),
                 const SizedBox(height: 8),
@@ -122,10 +129,10 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       label,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.white38,
-            letterSpacing: 1.2,
-            fontWeight: FontWeight.w600,
-          ),
+        color: Colors.white38,
+        letterSpacing: 1.2,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
@@ -139,10 +146,9 @@ class _ModelRow extends StatelessWidget {
     if (source == null) {
       return Text(
         'No model configured',
-        style: Theme.of(context)
-            .textTheme
-            .bodyMedium
-            ?.copyWith(color: Colors.white54),
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(color: Colors.white54),
       );
     }
 
@@ -161,11 +167,11 @@ class _ModelRow extends StatelessWidget {
           child: Text(
             kindLabel,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: kindColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
-                ),
+              color: kindColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 10,
+              letterSpacing: 0.8,
+            ),
           ),
         ),
         const SizedBox(width: 10),
@@ -194,9 +200,10 @@ class _RuntimeRow extends StatelessWidget {
       null => 'Unknown',
     };
 
-    final color = (backend == RuntimeBackend.cpu || usedFallback)
-        ? const Color(0xFFFFA726)
-        : Colors.white70;
+    final color =
+        (backend == RuntimeBackend.cpu || usedFallback)
+            ? const Color(0xFFFFA726)
+            : Colors.white70;
 
     return Row(
       children: <Widget>[
@@ -216,9 +223,9 @@ class _RuntimeRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '(CPU fallback)',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: const Color(0xFFFFA726),
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFFFFA726)),
           ),
         ],
       ],
@@ -255,9 +262,10 @@ class _StorageRowState extends State<_StorageRow> {
 
   void _syncFileSizeFuture() {
     final source = widget.source;
-    _fileSizeFuture = source?.kind == ModelSourceKind.file
-        ? _fileSize(source!.location)
-        : null;
+    _fileSizeFuture =
+        source?.kind == ModelSourceKind.file
+            ? _fileSize(source!.location)
+            : null;
   }
 
   @override
@@ -287,10 +295,7 @@ class _StorageRowState extends State<_StorageRow> {
           _ => 'Storage: local file unavailable',
         };
 
-        return _DetailRow(
-          icon: Icons.inventory_2_outlined,
-          text: label,
-        );
+        return _DetailRow(icon: Icons.inventory_2_outlined, text: label);
       },
     );
   }
@@ -376,9 +381,9 @@ class _DetailRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white54,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white54),
           ),
         ),
       ],
@@ -394,41 +399,44 @@ class _PresetPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      children: PerformancePreset.values.map((preset) {
-        final isActive = preset == selected;
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => onSelect(preset),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isActive
-                      ? Colors.white.withOpacity(0.1)
-                      : Colors.white.withOpacity(0.04),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isActive ? Colors.white38 : Colors.white12,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    preset.displayName,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+      children: PerformancePreset.values
+          .map((preset) {
+            final isActive = preset == selected;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () => onSelect(preset),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color:
+                          isActive
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.white.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isActive ? Colors.white38 : Colors.white12,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        preset.displayName,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isActive ? Colors.white : Colors.white38,
                           fontWeight:
                               isActive ? FontWeight.w700 : FontWeight.w500,
                           letterSpacing: 0.6,
                         ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      }).toList(growable: false),
+            );
+          })
+          .toList(growable: false),
     );
   }
 }
@@ -448,9 +456,9 @@ class _PrivacyRow extends StatelessWidget {
           child: Text(
             'Camera frames never leave this device. '
             'Network is used only to download the model.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white54,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Colors.white54),
           ),
         ),
       ],

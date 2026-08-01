@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import '../config/constants.dart';
 import '../models/cinematic_mode.dart';
 import '../models/model_source.dart';
+import 'async_mutex.dart';
 import 'model_source_service.dart';
 
 typedef GemmaProgressCallback = void Function(int progress);
@@ -23,6 +24,19 @@ typedef InstallModelFn =
 typedef UninstallModelFn = Future<void> Function(String modelId);
 typedef CreateModelFn =
     Future<InferenceModel> Function(PreferredBackend backend);
+
+class UnsupportedGemmaModelTypeException implements Exception {
+  const UnsupportedGemmaModelTypeException(this.value);
+
+  final String value;
+
+  @override
+  String toString() {
+    return 'Unsupported model type "$value". Supported values are gemma4, '
+        'gemmaIt, general, deepSeek, qwen, qwen3, llama, hammer, '
+        'functionGemma, and phi.';
+  }
+}
 
 enum RuntimeBackend { gpu, cpu }
 
@@ -114,6 +128,14 @@ GemmaStartupFailure classifyGemmaStartupFailure(
     return const GemmaStartupFailure(
       kind: GemmaStartupFailureKind.modelSource,
       message: NoModelSourceConfiguredException.message,
+    );
+  }
+
+  if (error is UnsupportedGemmaModelTypeException) {
+    return GemmaStartupFailure(
+      kind: GemmaStartupFailureKind.modelSource,
+      message: error.toString(),
+      originalError: error,
     );
   }
 
@@ -417,6 +439,7 @@ class GemmaService {
   final InstallModelFn _installModel;
   final UninstallModelFn _uninstallModel;
   final CreateModelFn _createModel;
+  final AsyncMutex _runtimeMutex = AsyncMutex();
 
   InferenceModel? _model;
   InferenceChat? _chat;
@@ -443,7 +466,7 @@ class GemmaService {
   }
 
   Future<ModelSourceConfig> resolveModelSource({bool refresh = false}) async {
-    return _modelSourceService.resolveSource();
+    return _modelSourceService.resolveSource(refresh: refresh);
   }
 
   Future<bool> isModelInstalled() async {
@@ -452,6 +475,12 @@ class GemmaService {
   }
 
   Future<GemmaRuntimeSnapshot> ensureReady({
+    GemmaProgressCallback? onProgress,
+  }) {
+    return _runtimeMutex.protect(() => _ensureReady(onProgress: onProgress));
+  }
+
+  Future<GemmaRuntimeSnapshot> _ensureReady({
     GemmaProgressCallback? onProgress,
   }) async {
     try {
@@ -481,6 +510,11 @@ class GemmaService {
   }
 
   Future<bool> importLocalModel() async {
+    await cancelGeneration();
+    return _runtimeMutex.protect(_importLocalModel);
+  }
+
+  Future<bool> _importLocalModel() async {
     try {
       final source = await _modelSourceService.importLocalModel();
       if (source == null) {
@@ -504,11 +538,21 @@ class GemmaService {
   }
 
   Future<void> useManagedDownload() async {
+    await cancelGeneration();
+    return _runtimeMutex.protect(_useManagedDownload);
+  }
+
+  Future<void> _useManagedDownload() async {
     await _modelSourceService.clearImportedModel();
     await _resetRuntimeState(clearSource: true);
   }
 
   Future<void> resetCachedInstall() async {
+    await cancelGeneration();
+    return _runtimeMutex.protect(_resetCachedInstall);
+  }
+
+  Future<void> _resetCachedInstall() async {
     ModelSourceConfig? source = _activeSource;
     try {
       source ??= await resolveModelSource();
@@ -526,6 +570,11 @@ class GemmaService {
   }
 
   Future<void> resetConversation() async {
+    await cancelGeneration();
+    return _runtimeMutex.protect(_resetConversation);
+  }
+
+  Future<void> _resetConversation() async {
     await _closeChat();
     _activeMode = null;
     _completedExchanges = 0;
@@ -539,15 +588,19 @@ class GemmaService {
     }
   }
 
-  Future<void> dispose() => _resetRuntimeState(clearSource: true);
+  Future<void> dispose() async {
+    await cancelGeneration();
+    return _runtimeMutex.protect(() => _resetRuntimeState(clearSource: true));
+  }
 
   Stream<String> generateScriptTokens({
     required Uint8List imageBytes,
     required CinematicMode mode,
     InferenceInputReadyCallback? onInputReady,
   }) async* {
+    final release = await _runtimeMutex.acquire();
     try {
-      await ensureReady();
+      await _ensureReady();
       final chat = await _ensureChat(mode);
 
       final inputStopwatch = Stopwatch()..start();
@@ -570,6 +623,8 @@ class GemmaService {
       _completedExchanges += 1;
     } catch (error) {
       throw classifyInferenceFailure(error, source: _activeSource);
+    } finally {
+      release();
     }
   }
 
@@ -597,9 +652,10 @@ class GemmaService {
     _chat = await model.createChat(
       modelType: _modelTypeForSource(_activeSource),
       supportImage: true,
-      tokenBuffer: 256,
-      temperature: 0.9,
-      topK: 40,
+      tokenBuffer: AppConstants.modelTokenBuffer,
+      temperature: AppConstants.modelTemperature,
+      topK: AppConstants.modelTopK,
+      topP: AppConstants.modelTopP,
     );
     await _chat!.addQueryChunk(Message.systemInfo(text: mode.systemPrompt));
     return _chat!;
@@ -768,7 +824,10 @@ class GemmaService {
       'hammer' => ModelType.hammer,
       'functiongemma' => ModelType.functionGemma,
       'phi' => ModelType.phi,
-      _ => ModelType.gemma4,
+      _ =>
+        throw UnsupportedGemmaModelTypeException(
+          source?.modelTypeName ?? AppConstants.defaultModelTypeName,
+        ),
     };
   }
 }
