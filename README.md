@@ -2,6 +2,21 @@
 
 Ghosteye is a Flutter camera app that turns the live scene into scrolling screenplay text with an on-device Gemma vision model. Frames stay on-device, the output plays like a teleprompter, and the app can shift tone across `NOIR`, `SCI-FI`, and `SITCOM` modes.
 
+## Screenshots
+
+Real renders of the app's screens — the production widgets, theme and fonts —
+captured headlessly at a 390x844 phone viewport. The screenplay formatting is
+the app's own Fountain parser classifying a streamed token sequence, and the
+take below is the one that run produced.
+
+| Onboarding | Teleprompter | Take library |
+|---|---|---|
+| ![Ghosteye onboarding intro screen](docs/screenshots/01-onboarding-intro.png) | ![Teleprompter rendering a parsed screenplay scene](docs/screenshots/03-teleprompter.png) | ![Take library listing a saved take](docs/screenshots/04-take-library.png) |
+
+The live camera feed and real Gemma inference need physical hardware, so they
+are not pictured. See [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for the full
+set, what is and is not real in them, and `make screenshots` to regenerate.
+
 ## Status
 
 - Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history with frame thumbnails, active/saved-take export, Model Center storage/source controls, performance presets, and teleprompter display controls.

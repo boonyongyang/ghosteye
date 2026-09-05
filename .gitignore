@@ -49,3 +49,6 @@ app.*.map.json
 
 # Generated project analysis
 graphify-out/
+
+# Fonts fetched on demand by `make screenshots`
+.screenshot-fonts/

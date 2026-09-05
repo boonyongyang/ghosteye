@@ -22,6 +22,7 @@ make build-apk-debug    # verify Android native build
 make build-ios-debug    # flutter build ios --debug --no-codesign
 make brand-assets       # regenerate icons/launch assets from master source image
 make docs-audit         # check markdown for absolute local paths
+make screenshots        # regenerate docs/screenshots/*.png from the real widget tree (excluded from the CI suite)
 make todo               # search TODO/FIXME markers across source
 make bundle-ids         # find remaining example app identifiers before release
 ```
@@ -128,6 +129,7 @@ flutter run --dart-define=GHOSTEYE_FRAME_JPEG_QUALITY=75
 - `roadmap.md` — prioritized backlog with acceptance criteria
 - `agents.md` — agent handoff context, guardrails, and current blockers
 - `CONTRIBUTING.md` — maintainer workflow and doc-sync rules
+- `docs/SCREENSHOTS.md` — rendered UI screenshots, what is and is not real in them, and how the harness works
 
 ## graphify
 
