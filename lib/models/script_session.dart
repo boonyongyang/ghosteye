@@ -57,11 +57,7 @@ class ScriptSession {
 
   int get lineCount => entries.length;
 
-  ScriptSession copyWith({
-    bool? isFavorite,
-    String? thumbnail,
-    String? notes,
-  }) {
+  ScriptSession copyWith({bool? isFavorite, String? thumbnail, String? notes}) {
     return ScriptSession(
       id: id,
       createdAt: createdAt,
@@ -90,11 +86,7 @@ class ScriptSession {
   factory ScriptSession.fromJson(Map<String, Object?> json) {
     final entriesJson = (json['entries'] as List<Object?>? ?? <Object?>[])
         .whereType<Map<Object?, Object?>>()
-        .map(
-          (entry) => ScriptEntry.fromJson(
-            Map<String, Object?>.from(entry),
-          ),
-        )
+        .map((entry) => ScriptEntry.fromJson(Map<String, Object?>.from(entry)))
         .toList(growable: false);
 
     final modeName = json['mode'] as String?;
@@ -110,9 +102,11 @@ class ScriptSession {
 
     return ScriptSession(
       id: json['id'] as String? ?? '',
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
-      updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
+      updatedAt:
+          DateTime.tryParse(json['updatedAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       entries: entriesJson,
       mode: mode,

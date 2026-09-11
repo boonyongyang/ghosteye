@@ -29,9 +29,7 @@ ScriptSession _makeSession({
   );
 }
 
-Widget _buildSheet({
-  List<ScriptSession> sessions = const <ScriptSession>[],
-}) {
+Widget _buildSheet({List<ScriptSession> sessions = const <ScriptSession>[]}) {
   final container = ProviderContainer(
     overrides: <Override>[
       scriptHistoryServiceProvider.overrideWithValue(
@@ -61,8 +59,7 @@ Widget _buildSheet({
   );
 }
 
-class _FixedHistoryController
-    extends AsyncNotifier<List<ScriptSession>>
+class _FixedHistoryController extends AsyncNotifier<List<ScriptSession>>
     implements ScriptHistoryController {
   _FixedHistoryController(this._sessions);
 
@@ -73,17 +70,16 @@ class _FixedHistoryController
 
   @override
   Future<void> toggleFavorite(String sessionId) async {
-    final updated = state.value!.map((s) {
-      return s.id == sessionId ? s.copyWith(isFavorite: !s.isFavorite) : s;
-    }).toList();
+    final updated =
+        state.value!.map((s) {
+          return s.id == sessionId ? s.copyWith(isFavorite: !s.isFavorite) : s;
+        }).toList();
     state = AsyncData(updated);
   }
 
   @override
   Future<void> deleteSession(String sessionId) async {
-    state = AsyncData(
-      state.value!.where((s) => s.id != sessionId).toList(),
-    );
+    state = AsyncData(state.value!.where((s) => s.id != sessionId).toList());
   }
 
   @override
@@ -100,16 +96,18 @@ class _FixedHistoryController
 
   @override
   Future<void> setNotes(String sessionId, String notes) async {
-    final updated = state.value!.map((s) {
-      return s.id == sessionId ? s.copyWith(notes: notes) : s;
-    }).toList();
+    final updated =
+        state.value!.map((s) {
+          return s.id == sessionId ? s.copyWith(notes: notes) : s;
+        }).toList();
     state = AsyncData(updated);
   }
 }
 
 void main() {
-  testWidgets('shows Take Library title and auto-generated title on card',
-      (tester) async {
+  testWidgets('shows Take Library title and auto-generated title on card', (
+    tester,
+  ) async {
     final sessions = <ScriptSession>[
       _makeSession(
         id: 'a',
@@ -125,10 +123,15 @@ void main() {
     expect(find.text('INT. ROOFTOP - NIGHT'), findsOneWidget);
   });
 
-  testWidgets('shows mode badge for sessions with a recorded mode',
-      (tester) async {
+  testWidgets('shows mode badge for sessions with a recorded mode', (
+    tester,
+  ) async {
     final sessions = <ScriptSession>[
-      _makeSession(id: 'a', slugline: 'EXT. ALLEY - DAWN', mode: CinematicMode.sciFi),
+      _makeSession(
+        id: 'a',
+        slugline: 'EXT. ALLEY - DAWN',
+        mode: CinematicMode.sciFi,
+      ),
     ];
 
     await tester.pumpWidget(_buildSheet(sessions: sessions));
@@ -138,10 +141,21 @@ void main() {
     expect(find.text('SCI-FI'), findsAtLeastNWidgets(2));
   });
 
-  testWidgets('filter tab FAVORITES shows only favorited takes', (tester) async {
+  testWidgets('filter tab FAVORITES shows only favorited takes', (
+    tester,
+  ) async {
     final sessions = <ScriptSession>[
-      _makeSession(id: 'fav', slugline: 'INT. LAB - DAY', mode: CinematicMode.sciFi, isFavorite: true),
-      _makeSession(id: 'unfav', slugline: 'EXT. PARK - NOON', mode: CinematicMode.noir),
+      _makeSession(
+        id: 'fav',
+        slugline: 'INT. LAB - DAY',
+        mode: CinematicMode.sciFi,
+        isFavorite: true,
+      ),
+      _makeSession(
+        id: 'unfav',
+        slugline: 'EXT. PARK - NOON',
+        mode: CinematicMode.noir,
+      ),
     ];
 
     await tester.pumpWidget(_buildSheet(sessions: sessions));
@@ -156,8 +170,16 @@ void main() {
 
   testWidgets('mode filter tab shows only matching takes', (tester) async {
     final sessions = <ScriptSession>[
-      _makeSession(id: 'n', slugline: 'INT. OFFICE - NIGHT', mode: CinematicMode.noir),
-      _makeSession(id: 's', slugline: 'EXT. SPACE - ALWAYS', mode: CinematicMode.sciFi),
+      _makeSession(
+        id: 'n',
+        slugline: 'INT. OFFICE - NIGHT',
+        mode: CinematicMode.noir,
+      ),
+      _makeSession(
+        id: 's',
+        slugline: 'EXT. SPACE - ALWAYS',
+        mode: CinematicMode.sciFi,
+      ),
     ];
 
     await tester.pumpWidget(_buildSheet(sessions: sessions));
@@ -173,7 +195,11 @@ void main() {
 
   testWidgets('tapping star toggles isFavorite on the card', (tester) async {
     final sessions = <ScriptSession>[
-      _makeSession(id: 'a', slugline: 'INT. CAFE - DAY', mode: CinematicMode.sitcom),
+      _makeSession(
+        id: 'a',
+        slugline: 'INT. CAFE - DAY',
+        mode: CinematicMode.sitcom,
+      ),
     ];
 
     await tester.pumpWidget(_buildSheet(sessions: sessions));
@@ -189,23 +215,33 @@ void main() {
 
   testWidgets('favorites are sorted to the top of the list', (tester) async {
     final sessions = <ScriptSession>[
-      _makeSession(id: 'first', slugline: 'INT. ALLEY - NIGHT', mode: CinematicMode.noir),
-      _makeSession(id: 'fav', slugline: 'EXT. ROOFTOP - DUSK', mode: CinematicMode.sciFi, isFavorite: true),
+      _makeSession(
+        id: 'first',
+        slugline: 'INT. ALLEY - NIGHT',
+        mode: CinematicMode.noir,
+      ),
+      _makeSession(
+        id: 'fav',
+        slugline: 'EXT. ROOFTOP - DUSK',
+        mode: CinematicMode.sciFi,
+        isFavorite: true,
+      ),
     ];
 
     await tester.pumpWidget(_buildSheet(sessions: sessions));
     await tester.pump();
 
-    final titles = tester
-        .widgetList<Text>(
-          find.descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Text),
-          ),
-        )
-        .map((t) => t.data ?? '')
-        .where((t) => t.startsWith('INT.') || t.startsWith('EXT.'))
-        .toList();
+    final titles =
+        tester
+            .widgetList<Text>(
+              find.descendant(
+                of: find.byType(ListView),
+                matching: find.byType(Text),
+              ),
+            )
+            .map((t) => t.data ?? '')
+            .where((t) => t.startsWith('INT.') || t.startsWith('EXT.'))
+            .toList();
 
     expect(titles.first, 'EXT. ROOFTOP - DUSK');
   });
@@ -217,8 +253,9 @@ void main() {
     expect(find.textContaining('Ghosteye will save'), findsOneWidget);
   });
 
-  testWidgets('editing a shot note saves it and shows it on the card',
-      (tester) async {
+  testWidgets('editing a shot note saves it and shows it on the card', (
+    tester,
+  ) async {
     final sessions = <ScriptSession>[
       _makeSession(id: 'a', slugline: 'INT. ROOFTOP - NIGHT'),
     ];

@@ -47,10 +47,7 @@ Future<_RecordingOnboardingController> _pumpOnboarding(
   final router = GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const OnboardingScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const OnboardingScreen()),
       GoRoute(
         path: '/setup',
         builder: (context, state) => const Scaffold(body: Text(_setupMarker)),
@@ -61,9 +58,7 @@ Future<_RecordingOnboardingController> _pumpOnboarding(
 
   await tester.pumpWidget(
     ProviderScope(
-      overrides: <Override>[
-        onboardingProvider.overrideWith(() => controller),
-      ],
+      overrides: <Override>[onboardingProvider.overrideWith(() => controller)],
       child: MaterialApp.router(routerConfig: router),
     ),
   );
@@ -79,8 +74,9 @@ Future<void> _tapPrimary(WidgetTester tester, String label) async {
 }
 
 void main() {
-  testWidgets('opens on the first page with no Back affordance',
-      (tester) async {
+  testWidgets('opens on the first page with no Back affordance', (
+    tester,
+  ) async {
     await _pumpOnboarding(tester);
 
     expect(find.text('Keep the shot on the device'), findsOneWidget);
@@ -90,8 +86,9 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Next'), findsOneWidget);
   });
 
-  testWidgets('Back appears after advancing and returns to the prior page',
-      (tester) async {
+  testWidgets('Back appears after advancing and returns to the prior page', (
+    tester,
+  ) async {
     await _pumpOnboarding(tester);
 
     await _tapPrimary(tester, 'Next');
@@ -109,8 +106,9 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Back'), findsNothing);
   });
 
-  testWidgets('the last page swaps the primary action to Start setup',
-      (tester) async {
+  testWidgets('the last page swaps the primary action to Start setup', (
+    tester,
+  ) async {
     await _pumpOnboarding(tester);
 
     await _tapPrimary(tester, 'Next');
@@ -124,8 +122,9 @@ void main() {
     expect(find.widgetWithText(FilledButton, 'Start setup'), findsOneWidget);
   });
 
-  testWidgets('Skip completes onboarding once and routes to setup',
-      (tester) async {
+  testWidgets('Skip completes onboarding once and routes to setup', (
+    tester,
+  ) async {
     final controller = await _pumpOnboarding(tester);
 
     await tester.tap(find.text('Skip'));
@@ -135,8 +134,9 @@ void main() {
     expect(find.text(_setupMarker), findsOneWidget);
   });
 
-  testWidgets('an in-flight submit disables the actions and blocks re-entry',
-      (tester) async {
+  testWidgets('an in-flight submit disables the actions and blocks re-entry', (
+    tester,
+  ) async {
     final gate = Completer<void>();
     final controller = await _pumpOnboarding(tester, gate: gate.future);
 
@@ -147,11 +147,15 @@ void main() {
 
     // While the submit is in flight both actions are disabled...
     expect(
-      tester.widget<TextButton>(find.widgetWithText(TextButton, 'Skip')).onPressed,
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, 'Skip'))
+          .onPressed,
       isNull,
     );
     expect(
-      tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Next')).onPressed,
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Next'))
+          .onPressed,
       isNull,
     );
 

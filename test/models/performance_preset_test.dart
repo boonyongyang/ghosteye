@@ -34,8 +34,7 @@ void main() {
 
       // fast inference (< slowInferenceThreshold of 3s) → reset to base
       // This mirrors the logic in CameraService.computeAdaptiveInterval
-      final inferenceFast =
-          fastInference <= const Duration(seconds: 3);
+      final inferenceFast = fastInference <= const Duration(seconds: 3);
       final result = inferenceFast ? base : base;
 
       expect(result, base);

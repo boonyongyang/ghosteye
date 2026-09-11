@@ -158,21 +158,21 @@ class _FakeScriptExportService extends ScriptExportService {
 
 class _FakeMetricsNotifier extends InferencePipelineMetricsNotifier {
   _FakeMetricsNotifier(InferencePipelineMetrics initialState)
-      : super(settings: initialState.settings) {
+    : super(settings: initialState.settings) {
     state = initialState;
   }
 }
 
 class _FakeReadyCameraController extends CameraController {
   _FakeReadyCameraController()
-      : super(
-          const CameraDescription(
-            name: 'back',
-            lensDirection: CameraLensDirection.back,
-            sensorOrientation: 90,
-          ),
-          ResolutionPreset.high,
-        ) {
+    : super(
+        const CameraDescription(
+          name: 'back',
+          lensDirection: CameraLensDirection.back,
+          sensorOrientation: 90,
+        ),
+        ResolutionPreset.high,
+      ) {
     value = value.copyWith(
       isInitialized: true,
       previewSize: const Size(1080, 1920),
@@ -204,15 +204,16 @@ Future<ProviderContainer> _pumpDirectorScreen(
   final container = ProviderContainer(
     overrides: <Override>[
       cameraProvider.overrideWith(
-        () => cameraSessionState == null
-            ? _FakeCameraNotifier(
-                cameraFailure ??
-                    const CameraFailure(
-                      kind: CameraFailureKind.permissionDeniedPermanently,
-                      message: 'Camera access was denied earlier.',
-                    ),
-              )
-            : _NoopCameraNotifier(),
+        () =>
+            cameraSessionState == null
+                ? _FakeCameraNotifier(
+                  cameraFailure ??
+                      const CameraFailure(
+                        kind: CameraFailureKind.permissionDeniedPermanently,
+                        message: 'Camera access was denied earlier.',
+                      ),
+                )
+                : _NoopCameraNotifier(),
       ),
       if (cameraSessionState != null)
         cameraSessionViewProvider.overrideWith((ref) => cameraSessionState),
@@ -239,25 +240,23 @@ Future<ProviderContainer> _pumpDirectorScreen(
       captureEnabledProvider.overrideWith((ref) => captureEnabled),
       scriptProvider.overrideWith(() => _SeededScriptController(scriptState)),
       scriptHistoryProvider.overrideWith(
-        () => _FakeScriptHistoryNotifier(
-          <ScriptSession>[
-            ScriptSession(
-              id: 'saved-1',
-              createdAt: DateTime.utc(2026, 4, 21, 10),
-              updatedAt: DateTime.utc(2026, 4, 21, 10, 30),
-              entries: const <ScriptEntry>[
-                ScriptEntry(
-                  type: ScriptEntryType.slugline,
-                  text: 'INT. CAB - NIGHT',
-                ),
-                ScriptEntry(
-                  type: ScriptEntryType.action,
-                  text: 'Streetlight fractures over the windshield.',
-                ),
-              ],
-            ),
-          ],
-        ),
+        () => _FakeScriptHistoryNotifier(<ScriptSession>[
+          ScriptSession(
+            id: 'saved-1',
+            createdAt: DateTime.utc(2026, 4, 21, 10),
+            updatedAt: DateTime.utc(2026, 4, 21, 10, 30),
+            entries: const <ScriptEntry>[
+              ScriptEntry(
+                type: ScriptEntryType.slugline,
+                text: 'INT. CAB - NIGHT',
+              ),
+              ScriptEntry(
+                type: ScriptEntryType.action,
+                text: 'Streetlight fractures over the windshield.',
+              ),
+            ],
+          ),
+        ]),
       ),
       scriptExportServiceProvider.overrideWithValue(
         exportService ?? ScriptExportService(),
@@ -281,8 +280,9 @@ Future<ProviderContainer> _pumpDirectorScreen(
 }
 
 void main() {
-  testWidgets('DirectorScreen shows paused status and permission recovery',
-      (tester) async {
+  testWidgets('DirectorScreen shows paused status and permission recovery', (
+    tester,
+  ) async {
     await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
@@ -301,8 +301,9 @@ void main() {
     expect(find.text('Retry Camera'), findsOneWidget);
   });
 
-  testWidgets('DirectorScreen shows processing state and CPU fallback badge',
-      (tester) async {
+  testWidgets('DirectorScreen shows processing state and CPU fallback badge', (
+    tester,
+  ) async {
     await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(
@@ -331,109 +332,113 @@ void main() {
     expect(find.text('CPU (fallback)'), findsOneWidget);
   });
 
-  testWidgets('DirectorScreen shows rolling preprocessing metrics in debug UI',
-      (tester) async {
-    await _pumpDirectorScreen(
-      tester,
-      inferenceStatus: const InferenceStatusState(),
-      captureEnabled: true,
-      scriptState: ScriptState(),
-      gemmaState: const GemmaState(
-        phase: GemmaPhase.ready,
-        activeBackend: RuntimeBackend.gpu,
-      ),
-      pipelineMetrics: const InferencePipelineMetrics(
-        settings: FramePreprocessorSettings(
-          backend: FramePreprocessorBackend.ffi,
-          maxDimension: 640,
-          jpegQuality: 82,
+  testWidgets(
+    'DirectorScreen shows rolling preprocessing metrics in debug UI',
+    (tester) async {
+      await _pumpDirectorScreen(
+        tester,
+        inferenceStatus: const InferenceStatusState(),
+        captureEnabled: true,
+        scriptState: ScriptState(),
+        gemmaState: const GemmaState(
+          phase: GemmaPhase.ready,
+          activeBackend: RuntimeBackend.gpu,
         ),
-        frameCopy: DurationMetricSnapshot(
-          median: Duration(milliseconds: 4),
-          sampleCount: 4,
+        pipelineMetrics: const InferencePipelineMetrics(
+          settings: FramePreprocessorSettings(
+            backend: FramePreprocessorBackend.ffi,
+            maxDimension: 640,
+            jpegQuality: 82,
+          ),
+          frameCopy: DurationMetricSnapshot(
+            median: Duration(milliseconds: 4),
+            sampleCount: 4,
+          ),
+          preprocessing: DurationMetricSnapshot(
+            median: Duration(milliseconds: 11),
+            sampleCount: 4,
+          ),
+          modelInput: DurationMetricSnapshot(
+            median: Duration(milliseconds: 18),
+            sampleCount: 4,
+          ),
+          firstToken: DurationMetricSnapshot(
+            median: Duration(milliseconds: 320),
+            sampleCount: 4,
+          ),
+          fullResponse: DurationMetricSnapshot(
+            median: Duration(milliseconds: 2100),
+            sampleCount: 4,
+          ),
         ),
-        preprocessing: DurationMetricSnapshot(
-          median: Duration(milliseconds: 11),
-          sampleCount: 4,
-        ),
-        modelInput: DurationMetricSnapshot(
-          median: Duration(milliseconds: 18),
-          sampleCount: 4,
-        ),
-        firstToken: DurationMetricSnapshot(
-          median: Duration(milliseconds: 320),
-          sampleCount: 4,
-        ),
-        fullResponse: DurationMetricSnapshot(
-          median: Duration(milliseconds: 2100),
-          sampleCount: 4,
-        ),
-      ),
-    );
+      );
 
-    // Metrics now live in the debug sheet — open it first.
-    expect(find.text('DEV METRICS'), findsOneWidget);
-    await tester.tap(find.text('DEV METRICS'));
-    await tester.pumpAndSettle();
+      // Metrics now live in the debug sheet — open it first.
+      expect(find.text('DEV METRICS'), findsOneWidget);
+      await tester.tap(find.text('DEV METRICS'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Pipeline Diagnostics'), findsOneWidget);
-    expect(find.textContaining('FFI 640px Q82'), findsOneWidget);
-    expect(find.text('4 ms med'), findsOneWidget);
-    expect(find.text('11 ms med'), findsOneWidget);
-    expect(find.text('18 ms med'), findsOneWidget);
-    expect(find.text('320 ms med'), findsOneWidget);
-    expect(find.text('2100 ms med'), findsOneWidget);
-  });
+      expect(find.text('Pipeline Diagnostics'), findsOneWidget);
+      expect(find.textContaining('FFI 640px Q82'), findsOneWidget);
+      expect(find.text('4 ms med'), findsOneWidget);
+      expect(find.text('11 ms med'), findsOneWidget);
+      expect(find.text('18 ms med'), findsOneWidget);
+      expect(find.text('320 ms med'), findsOneWidget);
+      expect(find.text('2100 ms med'), findsOneWidget);
+    },
+  );
 
   testWidgets(
-      'DirectorScreen shows first-run tips once and resumes capture after dismiss',
-      (tester) async {
-    final readySession = CameraSession(
-      controller: _FakeReadyCameraController(),
-      sampledFrames: const Stream<FrameData>.empty(),
-      sampler: FrameSampler(interval: const Duration(milliseconds: 1500)),
-      sampleInterval: const Duration(milliseconds: 1500),
-    );
+    'DirectorScreen shows first-run tips once and resumes capture after dismiss',
+    (tester) async {
+      final readySession = CameraSession(
+        controller: _FakeReadyCameraController(),
+        sampledFrames: const Stream<FrameData>.empty(),
+        sampler: FrameSampler(interval: const Duration(milliseconds: 1500)),
+        sampleInterval: const Duration(milliseconds: 1500),
+      );
 
-    final container = await _pumpDirectorScreen(
-      tester,
-      inferenceStatus: const InferenceStatusState(),
-      captureEnabled: true,
-      scriptState: ScriptState(),
-      gemmaState: const GemmaState(
-        phase: GemmaPhase.ready,
-        activeBackend: RuntimeBackend.gpu,
-      ),
-      cameraSessionState: AsyncData(readySession),
-      onboardingStatus: const OnboardingStatus(
-        introComplete: true,
-        directorTipsSeen: false,
-      ),
-    );
+      final container = await _pumpDirectorScreen(
+        tester,
+        inferenceStatus: const InferenceStatusState(),
+        captureEnabled: true,
+        scriptState: ScriptState(),
+        gemmaState: const GemmaState(
+          phase: GemmaPhase.ready,
+          activeBackend: RuntimeBackend.gpu,
+        ),
+        cameraSessionState: AsyncData(readySession),
+        onboardingStatus: const OnboardingStatus(
+          introComplete: true,
+          directorTipsSeen: false,
+        ),
+      );
 
-    await tester.pump();
-    await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Before the first take'), findsOneWidget);
-    expect(container.read(captureEnabledProvider), isFalse);
+      expect(find.text('Before the first take'), findsOneWidget);
+      expect(container.read(captureEnabledProvider), isFalse);
 
-    await tester.ensureVisible(find.text('Start shooting'));
-    await tester.tap(find.text('Start shooting'));
-    await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Start shooting'));
+      await tester.tap(find.text('Start shooting'));
+      await tester.pumpAndSettle();
 
-    expect(container.read(captureEnabledProvider), isTrue);
-    expect(
-      container.read(onboardingProvider).valueOrNull?.directorTipsSeen,
-      isTrue,
-    );
-    expect(find.text('Before the first take'), findsNothing);
+      expect(container.read(captureEnabledProvider), isTrue);
+      expect(
+        container.read(onboardingProvider).valueOrNull?.directorTipsSeen,
+        isTrue,
+      );
+      expect(find.text('Before the first take'), findsNothing);
 
-    await tester.pump();
-    expect(find.text('Before the first take'), findsNothing);
-  });
+      await tester.pump();
+      expect(find.text('Before the first take'), findsNothing);
+    },
+  );
 
-  testWidgets('DirectorScreen does not auto-show tips when camera is failing',
-      (tester) async {
+  testWidgets('DirectorScreen does not auto-show tips when camera is failing', (
+    tester,
+  ) async {
     await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
@@ -507,53 +512,56 @@ void main() {
     expect(find.text('ERROR'), findsOneWidget);
   });
 
-  testWidgets('DirectorScreen clear resets script and later generations render',
-      (tester) async {
-    final container = await _pumpDirectorScreen(
-      tester,
-      inferenceStatus: const InferenceStatusState(
-        activity: InferenceActivity.processing,
-      ),
-      captureEnabled: true,
-      scriptState: ScriptState(
-        entries: <ScriptEntry>[
-          const ScriptEntry(
-            type: ScriptEntryType.action,
-            text: 'Rain needles the windshield.',
-          ),
-        ],
-      ),
-      gemmaState: const GemmaState(
-        phase: GemmaPhase.ready,
-        activeBackend: RuntimeBackend.gpu,
-      ),
-    );
+  testWidgets(
+    'DirectorScreen clear resets script and later generations render',
+    (tester) async {
+      final container = await _pumpDirectorScreen(
+        tester,
+        inferenceStatus: const InferenceStatusState(
+          activity: InferenceActivity.processing,
+        ),
+        captureEnabled: true,
+        scriptState: ScriptState(
+          entries: <ScriptEntry>[
+            const ScriptEntry(
+              type: ScriptEntryType.action,
+              text: 'Rain needles the windshield.',
+            ),
+          ],
+        ),
+        gemmaState: const GemmaState(
+          phase: GemmaPhase.ready,
+          activeBackend: RuntimeBackend.gpu,
+        ),
+      );
 
-    expect(find.text('THINKING'), findsOneWidget);
-    expect(find.text('Rain needles the windshield.'), findsOneWidget);
+      expect(find.text('THINKING'), findsOneWidget);
+      expect(find.text('Rain needles the windshield.'), findsOneWidget);
 
-    await tester.tap(find.text('Clear'));
-    await tester.pump();
-    await tester.pump();
+      await tester.tap(find.text('Clear'));
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.text('Rain needles the windshield.'), findsNothing);
+      expect(find.text('Rain needles the windshield.'), findsNothing);
 
-    final scriptController = container.read(scriptProvider.notifier);
-    scriptController.startResponse(42);
-    scriptController.appendToken(
-      generationId: 42,
-      token: 'EXT. ROOFTOP - DAWN',
-    );
-    scriptController.finishResponse(42);
+      final scriptController = container.read(scriptProvider.notifier);
+      scriptController.startResponse(42);
+      scriptController.appendToken(
+        generationId: 42,
+        token: 'EXT. ROOFTOP - DAWN',
+      );
+      scriptController.finishResponse(42);
 
-    await tester.pump();
-    await tester.pump();
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.text('EXT. ROOFTOP - DAWN'), findsOneWidget);
-  });
+      expect(find.text('EXT. ROOFTOP - DAWN'), findsOneWidget);
+    },
+  );
 
-  testWidgets('DirectorScreen can reopen a saved take from history',
-      (tester) async {
+  testWidgets('DirectorScreen can reopen a saved take from history', (
+    tester,
+  ) async {
     final container = await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
@@ -592,8 +600,9 @@ void main() {
     expect(container.read(reviewModeProvider), isTrue);
   });
 
-  testWidgets('DirectorScreen clears review mode when resuming capture',
-      (tester) async {
+  testWidgets('DirectorScreen clears review mode when resuming capture', (
+    tester,
+  ) async {
     final container = await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
@@ -621,8 +630,9 @@ void main() {
     expect(container.read(captureEnabledProvider), isTrue);
   });
 
-  testWidgets('DirectorScreen shows empty state hint when script is empty',
-      (tester) async {
+  testWidgets('DirectorScreen shows empty state hint when script is empty', (
+    tester,
+  ) async {
     await _pumpDirectorScreen(
       tester,
       inferenceStatus: const InferenceStatusState(),
@@ -634,31 +644,29 @@ void main() {
       ),
     );
 
-    expect(
-      find.textContaining('Scene is live'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('Scene is live'), findsOneWidget);
   });
 
   testWidgets(
-      'DirectorScreen shows paused hint when capture is off and script is empty',
-      (tester) async {
-    await _pumpDirectorScreen(
-      tester,
-      inferenceStatus: const InferenceStatusState(
-        activity: InferenceActivity.paused,
-      ),
-      captureEnabled: false,
-      scriptState: ScriptState(),
-      gemmaState: const GemmaState(
-        phase: GemmaPhase.ready,
-        activeBackend: RuntimeBackend.gpu,
-      ),
-    );
+    'DirectorScreen shows paused hint when capture is off and script is empty',
+    (tester) async {
+      await _pumpDirectorScreen(
+        tester,
+        inferenceStatus: const InferenceStatusState(
+          activity: InferenceActivity.paused,
+        ),
+        captureEnabled: false,
+        scriptState: ScriptState(),
+        gemmaState: const GemmaState(
+          phase: GemmaPhase.ready,
+          activeBackend: RuntimeBackend.gpu,
+        ),
+      );
 
-    expect(find.text('Capture paused.'), findsOneWidget);
-    expect(find.textContaining('Scene is live'), findsNothing);
-  });
+      expect(find.text('Capture paused.'), findsOneWidget);
+      expect(find.textContaining('Scene is live'), findsNothing);
+    },
+  );
 
   testWidgets('DirectorScreen exports the current take', (tester) async {
     final exportService = _FakeScriptExportService();
@@ -694,8 +702,9 @@ void main() {
     expect(exportService.sharedTitle, 'Current take');
   });
 
-  testWidgets('DirectorScreen exports a saved take from history',
-      (tester) async {
+  testWidgets('DirectorScreen exports a saved take from history', (
+    tester,
+  ) async {
     final exportService = _FakeScriptExportService();
     await _pumpDirectorScreen(
       tester,

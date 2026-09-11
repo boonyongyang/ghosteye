@@ -13,20 +13,20 @@ enum _LibraryFilter { all, favorites, noir, sciFi, sitcom }
 
 extension on _LibraryFilter {
   String get label => switch (this) {
-        _LibraryFilter.all => 'ALL',
-        _LibraryFilter.favorites => '★',
-        _LibraryFilter.noir => 'NOIR',
-        _LibraryFilter.sciFi => 'SCI-FI',
-        _LibraryFilter.sitcom => 'SITCOM',
-      };
+    _LibraryFilter.all => 'ALL',
+    _LibraryFilter.favorites => '★',
+    _LibraryFilter.noir => 'NOIR',
+    _LibraryFilter.sciFi => 'SCI-FI',
+    _LibraryFilter.sitcom => 'SITCOM',
+  };
 
   bool matches(ScriptSession session) => switch (this) {
-        _LibraryFilter.all => true,
-        _LibraryFilter.favorites => session.isFavorite,
-        _LibraryFilter.noir => session.mode == CinematicMode.noir,
-        _LibraryFilter.sciFi => session.mode == CinematicMode.sciFi,
-        _LibraryFilter.sitcom => session.mode == CinematicMode.sitcom,
-      };
+    _LibraryFilter.all => true,
+    _LibraryFilter.favorites => session.isFavorite,
+    _LibraryFilter.noir => session.mode == CinematicMode.noir,
+    _LibraryFilter.sciFi => session.mode == CinematicMode.sciFi,
+    _LibraryFilter.sitcom => session.mode == CinematicMode.sitcom,
+  };
 }
 
 class ScriptHistorySheet extends ConsumerStatefulWidget {
@@ -91,12 +91,12 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
                   ),
                   historyState.valueOrNull?.isNotEmpty == true
                       ? TextButton(
-                          onPressed: () {
-                            AppHaptics.trigger(AppHapticPattern.emphasis);
-                            ref.read(scriptHistoryProvider.notifier).clearAll();
-                          },
-                          child: const Text('Clear all'),
-                        )
+                        onPressed: () {
+                          AppHaptics.trigger(AppHapticPattern.emphasis);
+                          ref.read(scriptHistoryProvider.notifier).clearAll();
+                        },
+                        child: const Text('Clear all'),
+                      )
                       : const SizedBox.shrink(),
                 ],
               ),
@@ -120,14 +120,16 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
                       ...sessions.where((s) => s.isFavorite),
                       ...sessions.where((s) => !s.isFavorite),
                     ];
-                    final visible =
-                        sorted.where(_filter.matches).toList(growable: false);
+                    final visible = sorted
+                        .where(_filter.matches)
+                        .toList(growable: false);
 
                     if (visible.isEmpty) {
                       return _EmptyLibraryState(
-                        message: _filter == _LibraryFilter.favorites
-                            ? 'No favorited takes yet. Tap ★ on a take to pin it.'
-                            : 'No takes recorded in ${_filter.label} mode.',
+                        message:
+                            _filter == _LibraryFilter.favorites
+                                ? 'No favorited takes yet. Tap ★ on a take to pin it.'
+                                : 'No takes recorded in ${_filter.label} mode.',
                       );
                     }
 
@@ -158,15 +160,18 @@ class _ScriptHistorySheetState extends ConsumerState<ScriptHistorySheet> {
                       },
                     );
                   },
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 36),
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
-                  error: (_, __) => const _EmptyLibraryState(
-                    message: 'Ghosteye could not load saved takes right now.',
-                  ),
+                  loading:
+                      () => const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 36),
+                          child: CircularProgressIndicator(),
+                        ),
+                      ),
+                  error:
+                      (_, __) => const _EmptyLibraryState(
+                        message:
+                            'Ghosteye could not load saved takes right now.',
+                      ),
                 ),
               ),
             ],
@@ -257,64 +262,73 @@ class _FilterBar extends StatelessWidget {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: _LibraryFilter.values.map((filter) {
-          final isActive = filter == selected;
-          final isMode = filter == _LibraryFilter.noir ||
-              filter == _LibraryFilter.sciFi ||
-              filter == _LibraryFilter.sitcom;
-          final modeColor = isMode
-              ? _modeColor(filter)
-              : filter == _LibraryFilter.favorites
-                  ? const Color(0xFFFDD663)
-                  : null;
+        children: _LibraryFilter.values
+            .map((filter) {
+              final isActive = filter == selected;
+              final isMode =
+                  filter == _LibraryFilter.noir ||
+                  filter == _LibraryFilter.sciFi ||
+                  filter == _LibraryFilter.sitcom;
+              final modeColor =
+                  isMode
+                      ? _modeColor(filter)
+                      : filter == _LibraryFilter.favorites
+                      ? const Color(0xFFFDD663)
+                      : null;
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () {
-                AppHaptics.trigger(AppHapticPattern.selection);
-                onSelect(filter);
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  color: isActive
-                      ? (modeColor ?? Colors.white).withOpacity(0.15)
-                      : Colors.white.withOpacity(0.05),
-                  border: Border.all(
-                    color: isActive
-                        ? (modeColor ?? Colors.white).withOpacity(0.5)
-                        : Colors.white12,
-                  ),
-                ),
-                child: Text(
-                  filter.label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isActive
-                            ? (modeColor ?? Colors.white)
-                            : Colors.white38,
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    AppHaptics.trigger(AppHapticPattern.selection);
+                    onSelect(filter);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      color:
+                          isActive
+                              ? (modeColor ?? Colors.white).withOpacity(0.15)
+                              : Colors.white.withOpacity(0.05),
+                      border: Border.all(
+                        color:
+                            isActive
+                                ? (modeColor ?? Colors.white).withOpacity(0.5)
+                                : Colors.white12,
+                      ),
+                    ),
+                    child: Text(
+                      filter.label,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color:
+                            isActive
+                                ? (modeColor ?? Colors.white)
+                                : Colors.white38,
                         fontWeight:
                             isActive ? FontWeight.w700 : FontWeight.w500,
                         letterSpacing: 0.8,
                       ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          );
-        }).toList(growable: false),
+              );
+            })
+            .toList(growable: false),
       ),
     );
   }
 
   Color _modeColor(_LibraryFilter filter) => switch (filter) {
-        _LibraryFilter.noir => CinematicMode.noir.badgeColor,
-        _LibraryFilter.sciFi => CinematicMode.sciFi.badgeColor,
-        _LibraryFilter.sitcom => CinematicMode.sitcom.badgeColor,
-        _ => Colors.white,
-      };
+    _LibraryFilter.noir => CinematicMode.noir.badgeColor,
+    _LibraryFilter.sciFi => CinematicMode.sciFi.badgeColor,
+    _LibraryFilter.sitcom => CinematicMode.sitcom.badgeColor,
+    _ => Colors.white,
+  };
 }
 
 class _TakeCard extends StatelessWidget {
@@ -369,25 +383,30 @@ class _TakeCard extends StatelessWidget {
                         ],
                         const Spacer(),
                         _IconAction(
-                          icon: session.hasNotes
-                              ? Icons.sticky_note_2
-                              : Icons.note_add_outlined,
-                          color: session.hasNotes
-                              ? const Color(0xFF67D7EE)
-                              : Colors.white38,
+                          icon:
+                              session.hasNotes
+                                  ? Icons.sticky_note_2
+                                  : Icons.note_add_outlined,
+                          color:
+                              session.hasNotes
+                                  ? const Color(0xFF67D7EE)
+                                  : Colors.white38,
                           tooltip: session.hasNotes ? 'Edit note' : 'Add note',
                           onTap: onEditNotes,
                         ),
                         _IconAction(
-                          icon: session.isFavorite
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          color: session.isFavorite
-                              ? const Color(0xFFFDD663)
-                              : Colors.white38,
-                          tooltip: session.isFavorite
-                              ? 'Remove from favorites'
-                              : 'Add to favorites',
+                          icon:
+                              session.isFavorite
+                                  ? Icons.star_rounded
+                                  : Icons.star_outline_rounded,
+                          color:
+                              session.isFavorite
+                                  ? const Color(0xFFFDD663)
+                                  : Colors.white38,
+                          tooltip:
+                              session.isFavorite
+                                  ? 'Remove from favorites'
+                                  : 'Add to favorites',
                           onTap: onToggleFavorite,
                         ),
                         _IconAction(
@@ -490,16 +509,17 @@ class _TakeThumbnail extends StatelessWidget {
         height: _height,
         fit: BoxFit.cover,
         gaplessPlayback: true,
-        errorBuilder: (_, __, ___) => Container(
-          width: _width,
-          height: _height,
-          color: Colors.white10,
-          child: const Icon(
-            Icons.movie_outlined,
-            size: 18,
-            color: Colors.white24,
-          ),
-        ),
+        errorBuilder:
+            (_, __, ___) => Container(
+              width: _width,
+              height: _height,
+              color: Colors.white10,
+              child: const Icon(
+                Icons.movie_outlined,
+                size: 18,
+                color: Colors.white24,
+              ),
+            ),
       ),
     );
   }
@@ -531,11 +551,11 @@ class _ModeBadge extends StatelessWidget {
       child: Text(
         mode.displayName,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-              fontSize: 10,
-              letterSpacing: 0.8,
-            ),
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 10,
+          letterSpacing: 0.8,
+        ),
       ),
     );
   }
@@ -587,13 +607,15 @@ class _EmptyLibraryState extends StatelessWidget {
 
 String _formatTimestamp(DateTime value) {
   final now = DateTime.now();
-  final isSameDay = now.year == value.year &&
+  final isSameDay =
+      now.year == value.year &&
       now.month == value.month &&
       now.day == value.day;
 
-  final hour = value.hour == 0
-      ? 12
-      : value.hour > 12
+  final hour =
+      value.hour == 0
+          ? 12
+          : value.hour > 12
           ? value.hour - 12
           : value.hour;
   final minute = value.minute.toString().padLeft(2, '0');

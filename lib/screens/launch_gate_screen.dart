@@ -56,10 +56,7 @@ class _LaunchGateScreenState extends ConsumerState<LaunchGateScreen> {
                 SizedBox(height: 24),
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text(
-                  'Checking first-run state',
-                  textAlign: TextAlign.center,
-                ),
+                Text('Checking first-run state', textAlign: TextAlign.center),
               ],
             ),
           ),

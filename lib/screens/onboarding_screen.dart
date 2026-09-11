@@ -264,9 +264,13 @@ class _OnboardingPosterPage extends StatelessWidget {
       builder: (context, constraints) {
         final isCompact = constraints.maxHeight < 650;
         final topPad =
-            isCompact ? constraints.maxHeight * 0.08 : constraints.maxHeight * 0.16;
+            isCompact
+                ? constraints.maxHeight * 0.08
+                : constraints.maxHeight * 0.16;
         final bottomPad =
-            isCompact ? constraints.maxHeight * 0.20 : constraints.maxHeight * 0.28;
+            isCompact
+                ? constraints.maxHeight * 0.20
+                : constraints.maxHeight * 0.28;
         final titleFontSize = isCompact ? 30.0 : 42.0;
 
         return AnimatedBuilder(
@@ -366,9 +370,7 @@ class _OnboardingPosterPage extends StatelessWidget {
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.26),
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: Colors.white12,
-                                ),
+                                border: Border.all(color: Colors.white12),
                               ),
                               child: Text(
                                 page.eyebrow,
@@ -471,9 +473,7 @@ class _OnboardingControlBar extends StatelessWidget {
             children: <Widget>[
               Text(
                 '0${currentPage + 1}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: accent,
-                ),
+                style: theme.textTheme.titleMedium?.copyWith(color: accent),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -484,10 +484,7 @@ class _OnboardingControlBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Text(
-                '0$pageCount',
-                style: theme.textTheme.bodySmall,
-              ),
+              Text('0$pageCount', style: theme.textTheme.bodySmall),
             ],
           ),
           const SizedBox(height: 14),
@@ -495,12 +492,13 @@ class _OnboardingControlBar extends StatelessWidget {
             children: <Widget>[
               SizedBox(
                 width: 104,
-                child: currentPage == 0
-                    ? const SizedBox.shrink()
-                    : OutlinedButton(
-                        onPressed: submitting ? null : () => onBack(),
-                        child: const Text('Back'),
-                      ),
+                child:
+                    currentPage == 0
+                        ? const SizedBox.shrink()
+                        : OutlinedButton(
+                          onPressed: submitting ? null : () => onBack(),
+                          child: const Text('Back'),
+                        ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -551,10 +549,7 @@ class _PageIndicators extends StatelessWidget {
 }
 
 class _OnboardingDetailRow extends StatelessWidget {
-  const _OnboardingDetailRow({
-    required this.color,
-    required this.detail,
-  });
+  const _OnboardingDetailRow({required this.color, required this.detail});
 
   final Color color;
   final String detail;
@@ -585,8 +580,8 @@ class _OnboardingDetailRow extends StatelessWidget {
           child: Text(
             detail,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.white.withOpacity(0.86),
-                ),
+              color: Colors.white.withOpacity(0.86),
+            ),
           ),
         ),
       ],
@@ -595,10 +590,7 @@ class _OnboardingDetailRow extends StatelessWidget {
 }
 
 class _SetupHandoffPreview extends StatelessWidget {
-  const _SetupHandoffPreview({
-    required this.accent,
-    required this.items,
-  });
+  const _SetupHandoffPreview({required this.accent, required this.items});
 
   final Color accent;
   final List<_SetupHandoffItem> items;
@@ -616,10 +608,7 @@ class _SetupHandoffPreview extends StatelessWidget {
         child: Column(
           children: <Widget>[
             for (var index = 0; index < items.length; index++) ...<Widget>[
-              _SetupHandoffRow(
-                accent: accent,
-                item: items[index],
-              ),
+              _SetupHandoffRow(accent: accent, item: items[index]),
               if (index != items.length - 1)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -634,10 +623,7 @@ class _SetupHandoffPreview extends StatelessWidget {
 }
 
 class _SetupHandoffRow extends StatelessWidget {
-  const _SetupHandoffRow({
-    required this.accent,
-    required this.item,
-  });
+  const _SetupHandoffRow({required this.accent, required this.item});
 
   final Color accent;
   final _SetupHandoffItem item;
@@ -672,10 +658,7 @@ class _SetupHandoffRow extends StatelessWidget {
 }
 
 class _GlassPillButton extends StatelessWidget {
-  const _GlassPillButton({
-    required this.label,
-    required this.onPressed,
-  });
+  const _GlassPillButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback? onPressed;
@@ -686,19 +669,13 @@ class _GlassPillButton extends StatelessWidget {
       blur: 18,
       backgroundColor: Colors.black.withOpacity(0.16),
       padding: EdgeInsets.zero,
-      child: TextButton(
-        onPressed: onPressed,
-        child: Text(label),
-      ),
+      child: TextButton(onPressed: onPressed, child: Text(label)),
     );
   }
 }
 
 class _LightOrb extends StatelessWidget {
-  const _LightOrb({
-    required this.size,
-    required this.color,
-  });
+  const _LightOrb({required this.size, required this.color});
 
   final double size;
   final Color color;
@@ -712,10 +689,7 @@ class _LightOrb extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: <Color>[
-              color,
-              color.withOpacity(0),
-            ],
+            colors: <Color>[color, color.withOpacity(0)],
           ),
         ),
       ),
@@ -724,10 +698,7 @@ class _LightOrb extends StatelessWidget {
 }
 
 class _LightBar extends StatelessWidget {
-  const _LightBar({
-    required this.width,
-    required this.color,
-  });
+  const _LightBar({required this.width, required this.color});
 
   final double width;
   final Color color;
@@ -740,11 +711,7 @@ class _LightBar extends StatelessWidget {
         height: 2,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: <Color>[
-              color.withOpacity(0),
-              color,
-              color.withOpacity(0),
-            ],
+            colors: <Color>[color.withOpacity(0), color, color.withOpacity(0)],
           ),
           boxShadow: <BoxShadow>[
             BoxShadow(
@@ -760,10 +727,7 @@ class _LightBar extends StatelessWidget {
 }
 
 class _ShutterRings extends StatelessWidget {
-  const _ShutterRings({
-    required this.size,
-    required this.color,
-  });
+  const _ShutterRings({required this.size, required this.color});
 
   final double size;
   final Color color;

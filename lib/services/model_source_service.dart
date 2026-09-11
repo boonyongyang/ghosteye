@@ -22,10 +22,7 @@ class NoModelSourceConfiguredException implements Exception {
 }
 
 class PickedModelFile {
-  const PickedModelFile({
-    required this.path,
-    required this.name,
-  });
+  const PickedModelFile({required this.path, required this.name});
 
   final String path;
   final String name;
@@ -38,16 +35,19 @@ class ModelSourceService {
     PickModelFileFn? pickModelFile,
     String? configuredModelPath,
     String? configuredModelUrl,
+    String? configuredModelTypeName,
     String? configuredToken,
-  })  : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance,
-        _loadDocumentsDirectory =
-            loadDocumentsDirectory ?? getApplicationDocumentsDirectory,
-        _pickModelFile = pickModelFile ?? _defaultPickModelFile,
-        _configuredModelPath =
-            configuredModelPath ?? AppConstants.configuredModelPath,
-        _configuredModelUrl =
-            configuredModelUrl ?? AppConstants.configuredModelUrl,
-        _configuredToken = configuredToken ?? AppConstants.modelAccessToken;
+  }) : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance,
+       _loadDocumentsDirectory =
+           loadDocumentsDirectory ?? getApplicationDocumentsDirectory,
+       _pickModelFile = pickModelFile ?? _defaultPickModelFile,
+       _configuredModelPath =
+           configuredModelPath ?? AppConstants.configuredModelPath,
+       _configuredModelUrl =
+           configuredModelUrl ?? AppConstants.configuredModelUrl,
+       _configuredModelTypeName =
+           configuredModelTypeName ?? AppConstants.configuredModelTypeName,
+       _configuredToken = configuredToken ?? AppConstants.modelAccessToken;
 
   static const importedModelPathKey = 'ghosteye.imported_model_path';
   static const installedSourceSignatureKey =
@@ -65,9 +65,25 @@ class ModelSourceService {
   final PickModelFileFn _pickModelFile;
   final String? _configuredModelPath;
   final String? _configuredModelUrl;
+  final String _configuredModelTypeName;
   final String? _configuredToken;
 
-  Future<ModelSourceConfig> resolveSource() async {
+  ModelSourceConfig? _cachedSource;
+
+  Future<ModelSourceConfig> resolveSource({bool refresh = false}) async {
+    if (!refresh) {
+      final cachedSource = _cachedSource;
+      if (cachedSource != null) {
+        return cachedSource;
+      }
+    }
+
+    final source = await _resolveSource();
+    _cachedSource = source;
+    return source;
+  }
+
+  Future<ModelSourceConfig> _resolveSource() async {
     final preferences = await _loadPreferences();
     final importedPath = preferences.getString(importedModelPathKey);
     if (importedPath != null && importedPath.isNotEmpty) {
@@ -76,6 +92,7 @@ class ModelSourceService {
         origin: ModelSourceOrigin.importedFile,
         location: importedPath,
         label: 'Imported local model',
+        modelTypeName: _configuredModelTypeName,
       );
     }
 
@@ -86,6 +103,7 @@ class ModelSourceService {
         origin: ModelSourceOrigin.envPath,
         location: configuredPath,
         label: 'Configured local model',
+        modelTypeName: _configuredModelTypeName,
       );
     }
 
@@ -96,6 +114,7 @@ class ModelSourceService {
         origin: ModelSourceOrigin.envUrl,
         location: configuredUrl,
         label: 'Managed download',
+        modelTypeName: _configuredModelTypeName,
         token: _configuredToken,
       );
     }
@@ -152,6 +171,7 @@ class ModelSourceService {
     final preferences = await _loadPreferences();
     final previousImportedPath = preferences.getString(importedModelPathKey);
     await preferences.setString(importedModelPathKey, importedPath);
+    _cachedSource = null;
 
     if (previousImportedPath != null &&
         previousImportedPath.isNotEmpty &&
@@ -167,10 +187,12 @@ class ModelSourceService {
       origin: ModelSourceOrigin.importedFile,
       location: importedPath,
       label: 'Imported local model',
+      modelTypeName: _configuredModelTypeName,
     );
   }
 
   Future<void> clearImportedModel() async {
+    _cachedSource = null;
     final preferences = await _loadPreferences();
     final importedPath = preferences.getString(importedModelPathKey);
     await preferences.remove(importedModelPathKey);
@@ -218,9 +240,6 @@ class ModelSourceService {
       return null;
     }
 
-    return PickedModelFile(
-      path: filePath,
-      name: selectedFile.name,
-    );
+    return PickedModelFile(path: filePath, name: selectedFile.name);
   }
 }

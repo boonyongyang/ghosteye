@@ -52,9 +52,10 @@ class _InferenceIndicatorState extends State<InferenceIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final activity = widget.captureEnabled
-        ? widget.status.activity
-        : InferenceActivity.paused;
+    final activity =
+        widget.captureEnabled
+            ? widget.status.activity
+            : InferenceActivity.paused;
     final showDegraded =
         widget.isDegraded && activity != InferenceActivity.error;
 
@@ -66,19 +67,20 @@ class _InferenceIndicatorState extends State<InferenceIndicator>
       InferenceActivity.error => AppTheme.error,
     };
 
-    final label = showDegraded
-        ? switch (activity) {
-            InferenceActivity.idle => 'CPU READY',
-            InferenceActivity.paused => 'CPU PAUSED',
-            InferenceActivity.processing => 'CPU THINKING',
-            InferenceActivity.error => 'ERROR',
-          }
-        : switch (activity) {
-            InferenceActivity.idle => 'IDLE',
-            InferenceActivity.paused => 'PAUSED',
-            InferenceActivity.processing => 'THINKING',
-            InferenceActivity.error => 'ERROR',
-          };
+    final label =
+        showDegraded
+            ? switch (activity) {
+              InferenceActivity.idle => 'CPU READY',
+              InferenceActivity.paused => 'CPU PAUSED',
+              InferenceActivity.processing => 'CPU THINKING',
+              InferenceActivity.error => 'ERROR',
+            }
+            : switch (activity) {
+              InferenceActivity.idle => 'IDLE',
+              InferenceActivity.paused => 'PAUSED',
+              InferenceActivity.processing => 'THINKING',
+              InferenceActivity.error => 'ERROR',
+            };
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -105,10 +107,9 @@ class _InferenceIndicatorState extends State<InferenceIndicator>
         const SizedBox(width: 10),
         Text(
           label,
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(letterSpacing: 1.2),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(letterSpacing: 1.2),
         ),
       ],
     );

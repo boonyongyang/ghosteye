@@ -4,17 +4,17 @@ This file is the repo's working implementation checklist. Completed work stays c
 
 ## Overall status
 
-- Mainline branch status: `Gemma 3n setup workspace with copyable failure diagnostics, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, frame thumbnails, and shot notes, Model Center storage/source controls, performance presets, teleprompter display controls, and debug diagnostics implemented`
-- Verification status: `make verify passing on 2026-05-27 after public GitHub prep`
-- Deployment readiness: `needs production app IDs, hardware validation, production model hosting, support/privacy URLs, and store prep`
-- Gemma 4 status: `not started in mainline; separate spike still pending`
-- Next product phase: `release readiness and setup observability before broader release polish`
+- Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, frame thumbnails, and shot notes, copyable setup diagnostics, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
+- Verification status: `make verify passing on 2026-08-01 after release-hardening changes`
+- Deployment readiness: `needs local release credentials, hardware validation, production model hosting, support/privacy URLs, and store prep`
+- Gemma 4 status: `E2B runtime is mainline; E4B remains a higher-memory follow-up after physical-device validation`
+- Next product phase: `release readiness and physical-device validation before broader release polish`
 
 ## Current phase readout
 
 Ghosteye is no longer in the foundation-only phase. The main app already has a working route gate, source-aware model setup, branded launch assets, immersive onboarding, director tips, local history, and export/share for active and saved takes. The next risk is not another isolated feature; it is whether the first-run journey feels coherent, modern, trustworthy, and usable for someone who is not already familiar with local Gemma model setup.
 
-Treat the next phase as a product-experience revamp across setup, onboarding, and the live director workspace. Keep the Gemma 3n runtime path stable while improving the way users understand, recover, control, and return to the app.
+Treat the next phase as a product-experience revamp across setup, onboarding, and the live director workspace. Keep the Gemma 4 E2B runtime path stable while improving the way users understand, recover, control, and return to the app.
 
 ## UX revamp diagnosis
 
@@ -107,7 +107,7 @@ Acceptance criteria:
 - [x] Make capture state the dominant control: pause/resume should be visually unmistakable.
 - [x] Move secondary actions into predictable surfaces: history/library, export/share, tips, diagnostics/settings.
 - [x] Convert cinematic mode selection into a polished segmented control or mode dial with concise mode descriptions available on demand.
-- [x] Add teleprompter controls for text size, scroll density, and output pace via the Model Center `TELEPROMPTER` section.
+- [x] Add persisted teleprompter controls for text size, scroll density, and output pace.
 - [x] Add a review mode distinction when reopening a saved take so users know capture is paused.
 - [x] Keep debug metrics out of the normal composition and expose them through a debug/diagnostics surface in debug builds.
 - [x] Improve empty, paused, processing, degraded CPU fallback, and camera permission states.
@@ -126,7 +126,7 @@ Acceptance criteria:
 - [x] Add optional thumbnails from representative captured frames, generated once per take from the already-preprocessed frame JPEG.
 - [x] Add search/filter by mode, date, and title once there is enough metadata.
 - [x] Finish export/share as a first-class workflow: Fountain, plain text, clipboard, share sheet, and saved-take export.
-- [x] Add a lightweight "shot notes" field per take that stays local and is appended to Fountain/plain-text exports.
+- [x] Add a lightweight "shot notes" field that stays local and exports with the take.
 - [ ] Consider custom cinematic presets after the default three modes feel stable.
 
 Acceptance criteria:
@@ -143,7 +143,7 @@ Acceptance criteria:
 - [x] Add cache reset and re-download controls with confirmation.
 - [x] Add source-switch controls that respect the existing precedence rules.
 - [x] Add a privacy/status screen that states when network is used and when frames stay on-device.
-- [x] Add support diagnostics copy for common setup failures (technical detail block with failure kind, source, and raw error behind the setup "Show details" expander, plus a copy-to-clipboard action).
+- [x] Add support diagnostics copy for common setup failures, including a copyable technical detail block behind the setup failure expander.
 - [x] Add performance presets for frame sampling and inference cadence: `Cinematic`, `Balanced`, and `Fast`.
 
 Acceptance criteria:
@@ -157,11 +157,11 @@ Acceptance criteria:
 - [ ] Validate the full first-run flow on Android hardware.
 - [ ] Validate the full first-run flow on physical iPhone hardware.
 - [ ] Measure first-token time, full-response time, setup duration, and fallback frequency.
-- [~] Decide whether the FFI preprocessing backend provides enough benefit to keep surfaced. Host benchmark (`make benchmark`) shows the native convert+encode path is ~4–6x faster than Dart across 720p/1080p BGRA/YUV, so the recommendation is to KEEP it as default; still confirm the win on ARM during device validation.
-- [ ] Replace example Android/iOS identifiers.
+- [ ] Decide whether the FFI preprocessing backend provides enough device-level benefit to keep surfaced.
+- [x] Replace example Android/iOS identifiers.
 - [ ] Finalize production model hosting and auth policy.
 - [ ] Capture release screenshots only after the revamp settles.
-- [ ] Update `README.md`, `roadmap.md`, `agents.md`, and `CONTRIBUTING.md` if behavior or priorities change.
+- [x] Update `README.md`, `roadmap.md`, `agents.md`, and `CONTRIBUTING.md` if behavior or priorities change.
 
 Acceptance criteria:
 
@@ -171,28 +171,26 @@ Acceptance criteria:
 
 ## Suggested updated build order
 
-1. Finish recoverable setup actions and diagnostic details, especially reset cached install and explicit source switching. (done)
-2. Polish director mode, review, empty, paused, degraded, and permission states. (done)
-3. Promote history/export into a take library workflow. (done)
-4. Add settings/model diagnostics and performance presets. (done)
-5. Persist user preferences (performance preset, teleprompter settings) across restarts — done; see `roadmap.md` item 8.
-6. Close engineering-health gaps (all done): FFI tests on Linux CI, docs-audit in CI, bash-compatible Makefile, logic-bearing widget tests, preference persistence, dependency triage, and the Dart-vs-FFI benchmark — see `roadmap.md` Priority 2.5.
-7. Run hardware validation and release-readiness cleanup.
+1. Finish recoverable setup actions and diagnostic details, especially reset cached install and explicit source switching.
+2. Polish director mode, review, empty, paused, degraded, and permission states.
+3. Promote history/export into a take library workflow.
+4. Add settings/model diagnostics and performance presets.
+5. Run hardware validation and release-readiness cleanup.
 
 ## Feature candidates to consider
 
-- [ ] Model setup wizard with managed/local source selection
-- [ ] Setup preflight checks for network, storage, battery, and privacy
-- [ ] Model center with active source, backend, cache reset, and re-download
-- [ ] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete
+- [x] Model setup wizard with managed/local source selection
+- [x] Setup preflight checks for network, storage, battery, and privacy
+- [x] Model center with active source, backend, cache reset, and re-download
+- [x] Take library with title, mode, timestamp, favorite, thumbnail, export, and delete
 - [x] Teleprompter display controls for size, density, and pace
-- [ ] Performance presets that tune frame sampling and model cadence
+- [x] Performance presets that tune frame sampling and model cadence
 - [ ] Optional custom cinematic modes after the default modes are polished
-- [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable
+- [ ] Shareable export cards or thumbnails after plain text/Fountain export is stable (saved-take thumbnails are implemented; shareable cards remain backlog)
 
 ## Completed in mainline
 
-- [x] Keep production on Gemma 3n E2B multimodal for cross-platform on-device inference
+- [x] Move production target to Gemma 4 E2B multimodal for cross-platform on-device inference
 - [x] Remove the hardcoded legacy Hugging Face fallback and the `HUGGINGFACE_TOKEN` alias from mainline release behavior
 - [x] Add source-aware model resolution with this precedence:
   1. persisted imported model path
@@ -204,6 +202,7 @@ Acceptance criteria:
 - [x] Route local files through `flutter_gemma` file installs
 - [x] Persist imported local model files in app storage
 - [x] Persist installed source signatures so source changes force reinstall
+- [x] Include configured model type in installed source signatures for local model-family spikes
 - [x] Add splash-screen recovery actions for `Import local model` and `Use managed download`
 - [x] Replace the setup splash layout with a guided setup workspace that shows active source, preflight context, progress, and recovery actions
 - [x] Make startup and inference guidance source-aware instead of always Hugging Face-specific
@@ -222,10 +221,6 @@ Acceptance criteria:
 - [x] Add persisted onboarding state with legacy-install auto-bypass
 - [x] Add a one-time director tips sheet plus replayable `Tips` action
 - [x] Replace loose director action chips with a bottom command dock and dominant capture control
-- [x] Add teleprompter display controls for text size, line spacing, and reveal pace in the Model Center sheet
-- [x] Attach a representative frame thumbnail to each saved take, generated once per take from the preprocessed frame JPEG and stored inline as base64
-- [x] Add per-take shot notes editable from the take library and appended to Fountain/plain-text exports
-- [x] Surface copyable technical diagnostics on setup failures for support triage
 - [x] Add system haptic feedback to onboarding, buttons, selections, and key action controls
 - [x] Persist recent screenplay takes locally as timestamped sessions
 - [x] Add a lightweight history sheet to reopen saved takes in paused review mode
@@ -253,7 +248,7 @@ Acceptance criteria:
 
 ### Production rollout
 
-- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
+- [ ] Host the Gemma 4 E2B `.litertlm` artifact on production infrastructure
 - [ ] Decide whether the managed model URL is public or token-gated
 - [ ] Set the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 
@@ -262,27 +257,27 @@ Acceptance criteria:
 - [x] Add GitHub Actions verification for pushes and pull requests
 - [x] Add `RELEASE_CHECKLIST.md` as the focused release gate
 - [x] Choose and add a top-level open-source license
-- [ ] Choose the production Android application ID and iOS bundle ID
+- [x] Choose the production Android application ID and iOS bundle ID
 - [ ] Decide whether `packages/ghosteye_frame_ffi` remains internal-only or needs full standalone package metadata
 - [ ] Add final GitHub About metadata and public repo media once screenshots and support URLs exist
 
 ### Release polish
 
-- [ ] Replace example bundle identifiers and package names
+- [x] Replace example bundle identifiers and package names
 - [ ] Capture release screenshots and promo imagery
 - [ ] Finalize store listing copy, support URL, and privacy-policy requirements
 - [ ] Decide whether the launch screen art should stay static or evolve into a fully custom native splash package
 - [x] Re-run `flutter analyze`
 - [x] Re-run `flutter test`
 
-### Gemma 4 spike
+### Gemma 4 follow-up
 
-- [ ] Create a separate spike branch for Gemma 4 exploration
-- [ ] Upgrade Flutter on the spike branch
-- [ ] Upgrade `flutter_gemma` on the spike branch
-- [ ] Verify Gemma 4 install behavior
-- [ ] Verify Android camera-to-model viability with Gemma 4
-- [ ] Verify iOS multimodal viability with Gemma 4
+- [x] Upgrade Flutter baseline for Gemma 4 E2B
+- [x] Upgrade `flutter_gemma` for Gemma 4 E2B
+- [ ] Verify Gemma 4 E2B install behavior
+- [ ] Verify Android camera-to-model viability with Gemma 4 E2B
+- [ ] Verify iOS multimodal viability with Gemma 4 E2B
+- [ ] Evaluate Gemma 4 E4B only after E2B is stable on target devices
 - [ ] Measure model size and startup-time impact
 - [ ] Record a go/no-go decision with blockers if the spike fails
 
@@ -342,14 +337,14 @@ Acceptance criteria:
 ## Near-term feature backlog
 
 - [x] Verify and land the current export/share workflow for active and saved takes
-- [x] Pair each saved take with a captured frame thumbnail (inline base64, generated once per take)
+- [x] Pair each saved take with a captured frame thumbnail when performance permits
 - [x] Add a model center for storage, cache reset, active-source diagnostics, and source switching
 - [x] Add pace and responsiveness controls for frame sampling and inference cadence
 - [x] Add teleprompter display controls for text size, density, and reveal pace
-- [ ] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
+- [x] Add take naming, favorites, and lightweight filtering after the library surface is redesigned
 
 ## Notes for whoever picks this up next
 
 - Do not treat the iOS simulator as a reliable runtime target for the current on-device stack.
-- Do not mix the Gemma 4 spike into the mainline Gemma 3n branch.
+- Do not expand to Gemma 4 E4B until Gemma 4 E2B proves acceptable on physical Android and iPhone hardware.
 - Keep the checklist above updated by converting completed items from `[ ]` to `[x]` instead of deleting them.

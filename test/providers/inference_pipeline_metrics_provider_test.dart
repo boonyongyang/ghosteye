@@ -110,8 +110,9 @@ void main() {
         final container = _makeContainer();
         addTearDown(container.dispose);
 
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         notifier.recordFullResponse(const Duration(milliseconds: 500));
         notifier.recordFullResponse(const Duration(milliseconds: 600));
 
@@ -141,8 +142,9 @@ void main() {
         final container = _makeContainer();
         addTearDown(container.dispose);
 
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         notifier.recordCanceledResponse();
         notifier.recordCanceledResponse();
         notifier.recordCanceledResponse();
@@ -174,8 +176,9 @@ void main() {
       final container = _makeContainer();
       addTearDown(container.dispose);
 
-      final notifier =
-          container.read(inferencePipelineMetricsProvider.notifier);
+      final notifier = container.read(
+        inferencePipelineMetricsProvider.notifier,
+      );
       notifier.recordFullResponse(const Duration(milliseconds: 100));
       notifier.recordCanceledResponse();
       notifier.recordFailedResponse();
@@ -207,8 +210,9 @@ void main() {
         addTearDown(container.dispose);
 
         // Added out-of-order to verify sorting: sorted = [10, 20, 30]
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         notifier.recordFrameCopy(const Duration(milliseconds: 10));
         notifier.recordFrameCopy(const Duration(milliseconds: 30));
         notifier.recordFrameCopy(const Duration(milliseconds: 20));
@@ -220,24 +224,26 @@ void main() {
       });
 
       test(
-          'median of an even count is the average of the two middle values',
-          () {
-        final container = _makeContainer();
-        addTearDown(container.dispose);
+        'median of an even count is the average of the two middle values',
+        () {
+          final container = _makeContainer();
+          addTearDown(container.dispose);
 
-        // Sorted: [10, 20, 30, 40] → median = (20+30)/2 = 25 ms
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
-        notifier.recordFrameCopy(const Duration(milliseconds: 10));
-        notifier.recordFrameCopy(const Duration(milliseconds: 20));
-        notifier.recordFrameCopy(const Duration(milliseconds: 30));
-        notifier.recordFrameCopy(const Duration(milliseconds: 40));
+          // Sorted: [10, 20, 30, 40] → median = (20+30)/2 = 25 ms
+          final notifier = container.read(
+            inferencePipelineMetricsProvider.notifier,
+          );
+          notifier.recordFrameCopy(const Duration(milliseconds: 10));
+          notifier.recordFrameCopy(const Duration(milliseconds: 20));
+          notifier.recordFrameCopy(const Duration(milliseconds: 30));
+          notifier.recordFrameCopy(const Duration(milliseconds: 40));
 
-        expect(
-          container.read(inferencePipelineMetricsProvider).frameCopy.median,
-          equals(const Duration(milliseconds: 25)),
-        );
-      });
+          expect(
+            container.read(inferencePipelineMetricsProvider).frameCopy.median,
+            equals(const Duration(milliseconds: 25)),
+          );
+        },
+      );
     });
 
     group('window size enforcement', () {
@@ -245,14 +251,18 @@ void main() {
         final container = _makeContainer(windowSize: 3);
         addTearDown(container.dispose);
 
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         for (var i = 0; i < 5; i++) {
           notifier.recordFrameCopy(Duration(milliseconds: i * 10));
         }
 
         expect(
-          container.read(inferencePipelineMetricsProvider).frameCopy.sampleCount,
+          container
+              .read(inferencePipelineMetricsProvider)
+              .frameCopy
+              .sampleCount,
           equals(3),
         );
       });
@@ -261,8 +271,9 @@ void main() {
         final container = _makeContainer(windowSize: 3);
         addTearDown(container.dispose);
 
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         // Fill window: [10, 20, 30]
         notifier.recordFrameCopy(const Duration(milliseconds: 10));
         notifier.recordFrameCopy(const Duration(milliseconds: 20));
@@ -271,8 +282,7 @@ void main() {
         notifier.recordFrameCopy(const Duration(milliseconds: 400));
 
         // Sorted: [20, 30, 400] → median = 30 ms
-        final snap =
-            container.read(inferencePipelineMetricsProvider).frameCopy;
+        final snap = container.read(inferencePipelineMetricsProvider).frameCopy;
         expect(snap.median, equals(const Duration(milliseconds: 30)));
         expect(snap.sampleCount, equals(3));
       });
@@ -281,8 +291,9 @@ void main() {
         final container = _makeContainer(windowSize: 2);
         addTearDown(container.dispose);
 
-        final notifier =
-            container.read(inferencePipelineMetricsProvider.notifier);
+        final notifier = container.read(
+          inferencePipelineMetricsProvider.notifier,
+        );
         notifier.recordFrameCopy(const Duration(milliseconds: 10));
         notifier.recordFrameCopy(const Duration(milliseconds: 20));
         notifier.recordFrameCopy(const Duration(milliseconds: 99));

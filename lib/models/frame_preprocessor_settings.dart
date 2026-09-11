@@ -1,9 +1,6 @@
 import '../config/constants.dart';
 
-enum FramePreprocessorBackend {
-  dart,
-  ffi,
-}
+enum FramePreprocessorBackend { dart, ffi }
 
 class FramePreprocessorSettings {
   const FramePreprocessorSettings({

@@ -1,4 +1,5 @@
 {
-  "GHOSTEYE_GEMMA_MODEL_URL": "https://your-cdn.example.com/models/gemma-3n-E2B-it-int4.litertlm",
+  "GHOSTEYE_GEMMA_MODEL_URL": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/7fa1d78473894f7e736a21d920c3aa80f950c0db/gemma-4-E2B-it.litertlm",
+  "GHOSTEYE_GEMMA_MODEL_TYPE": "gemma4",
   "GHOSTEYE_GEMMA_TOKEN": "optional_bearer_token_for_gated_downloads"
 }

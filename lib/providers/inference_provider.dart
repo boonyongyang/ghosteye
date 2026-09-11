@@ -14,12 +14,7 @@ import 'onboarding_provider.dart';
 import 'session_controls_provider.dart';
 import 'script_provider.dart';
 
-enum InferenceActivity {
-  idle,
-  paused,
-  processing,
-  error,
-}
+enum InferenceActivity { idle, paused, processing, error }
 
 const Object _activeGenerationIdNoChange = Object();
 
@@ -51,12 +46,10 @@ class InferenceStatusState {
           lastInferenceDuration ?? this.lastInferenceDuration,
       errorMessage: errorMessage,
       errorKind: errorKind,
-      activeGenerationId: identical(
-        activeGenerationId,
-        _activeGenerationIdNoChange,
-      )
-          ? this.activeGenerationId
-          : activeGenerationId as int?,
+      activeGenerationId:
+          identical(activeGenerationId, _activeGenerationIdNoChange)
+              ? this.activeGenerationId
+              : activeGenerationId as int?,
     );
   }
 }
@@ -71,28 +64,28 @@ class InferenceEvent {
   });
 
   const InferenceEvent.processing(int generationId)
-      : this._(
-          activity: InferenceActivity.processing,
-          generationId: generationId,
-        );
+    : this._(
+        activity: InferenceActivity.processing,
+        generationId: generationId,
+      );
   const InferenceEvent.token(String token, int generationId)
-      : this._(
-          activity: InferenceActivity.processing,
-          token: token,
-          generationId: generationId,
-        );
+    : this._(
+        activity: InferenceActivity.processing,
+        token: token,
+        generationId: generationId,
+      );
   const InferenceEvent.completed(Duration duration, int generationId)
-      : this._(
-          activity: InferenceActivity.idle,
-          duration: duration,
-          generationId: generationId,
-        );
+    : this._(
+        activity: InferenceActivity.idle,
+        duration: duration,
+        generationId: generationId,
+      );
   const InferenceEvent.error(String errorMessage, int generationId)
-      : this._(
-          activity: InferenceActivity.error,
-          errorMessage: errorMessage,
-          generationId: generationId,
-        );
+    : this._(
+        activity: InferenceActivity.error,
+        errorMessage: errorMessage,
+        generationId: generationId,
+      );
 
   final InferenceActivity activity;
   final String? token;
@@ -161,9 +154,10 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
   }
 
   void setCanceledStatus() {
-    final activity = ref.read(captureEnabledProvider)
-        ? InferenceActivity.idle
-        : InferenceActivity.paused;
+    final activity =
+        ref.read(captureEnabledProvider)
+            ? InferenceActivity.idle
+            : InferenceActivity.paused;
     ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
       activity: activity,
       activeGenerationId: null,
@@ -185,17 +179,14 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
 
     if (!ref.read(captureEnabledProvider)) {
       ref.read(inferenceStatusProvider.notifier).state =
-          const InferenceStatusState(
-        activity: InferenceActivity.paused,
-      );
+          const InferenceStatusState(activity: InferenceActivity.paused);
       ref.read(cameraProvider.notifier).completeInference();
       return;
     }
 
-    final generationId =
-        ref.read(inferenceGenerationCounterProvider.notifier).update(
-              (state) => state + 1,
-            );
+    final generationId = ref
+        .read(inferenceGenerationCounterProvider.notifier)
+        .update((state) => state + 1);
     final stopwatch = Stopwatch()..start();
 
     ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
@@ -207,8 +198,9 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
 
     try {
       final preprocessingStopwatch = Stopwatch()..start();
-      final preprocessedFrame =
-          await ref.read(framePreprocessorProvider).preprocess(frame);
+      final preprocessedFrame = await ref
+          .read(framePreprocessorProvider)
+          .preprocess(frame);
       preprocessingStopwatch.stop();
       recordMetrics(
         () => metricsController.recordPreprocessing(
@@ -227,7 +219,9 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
 
       final sampledAt = frame.sampledAt;
       var firstTokenRecorded = false;
-      final tokenStream = ref.read(gemmaServiceProvider).generateScriptTokens(
+      final tokenStream = ref
+          .read(gemmaServiceProvider)
+          .generateScriptTokens(
             imageBytes: preprocessedFrame.imageBytes,
             mode: mode,
             onInputReady: (duration) {
@@ -235,8 +229,9 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
             },
           );
 
-      await for (final token
-          in tokenStream.timeout(AppConstants.fallbackInferenceTimeout)) {
+      await for (final token in tokenStream.timeout(
+        AppConstants.fallbackInferenceTimeout,
+      )) {
         if (isGenerationStale(generationId, mode)) {
           await cancelCurrentGeneration(generationId);
           return;
@@ -251,10 +246,7 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
           );
         }
 
-        scriptController.appendToken(
-          generationId: generationId,
-          token: token,
-        );
+        scriptController.appendToken(generationId: generationId, token: token);
         controller.add(InferenceEvent.token(token, generationId));
       }
 
@@ -312,6 +304,7 @@ final inferenceProvider = StreamProvider.autoDispose<InferenceEvent>((ref) {
       recordMetrics(metricsController.recordFailedResponse);
       final failure = classifyInferenceFailure(error);
       scriptController.cancelActiveResponse();
+      ref.read(cameraProvider.notifier).completeInference();
       ref.read(inferenceStatusProvider.notifier).state = InferenceStatusState(
         activity: InferenceActivity.error,
         errorMessage: failure.message,

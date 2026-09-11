@@ -4,10 +4,10 @@ This file is for a future agent or engineer picking up work in this repo. It kee
 
 ## Current mainline state
 
-- Project status: `Gemma 3n setup workspace with copyable failure diagnostics, setup-handoff onboarding, director command dock, branding pass, take library with frame thumbnails and shot notes, Model Center storage/source controls, performance presets, teleprompter display controls, debug diagnostics, and export/share completed`
-- Confidence status: `make verify passing on 2026-05-27 after public GitHub prep`
+- Project status: `Gemma 4 E2B setup workspace, copyable setup diagnostics, setup-handoff onboarding, director command dock, take library with frame thumbnails and shot notes, Model Center source/storage controls, persisted performance and teleprompter settings, runtime recovery hardening, debug diagnostics, and export/share completed`
+- Confidence status: `make verify and Android/iOS no-code-sign builds passing on 2026-08-01 after release hardening`
 - Remaining execution status: `real-device validation, production rollout, and store prep still pending`
-- Spike status: `Gemma 4 investigation intentionally deferred to a separate branch`
+- Spike status: `Gemma 4 E2B is now mainline; Gemma 4 E4B remains a higher-memory follow-up`
 
 ## What the app does
 
@@ -22,9 +22,9 @@ Ghosteye is a Flutter camera app that:
 
 ## Current runtime decisions
 
-- Flutter toolchain in mainline: `3.24.4` / Dart `3.5.4`
-- Mainline inference package: `flutter_gemma 0.11.8`
-- Mainline model family: Gemma 3n E2B multimodal
+- Flutter toolchain in mainline: `3.38.9` / Dart `3.10.8`
+- Mainline inference package: `flutter_gemma 0.16.5`
+- Mainline model family: Gemma 4 E2B multimodal
 - Mainline platforms: Android and physical iPhone
 - iOS simulator should not be treated as a trustworthy target for runtime signoff
 
@@ -38,6 +38,8 @@ Ghosteye is a Flutter camera app that:
 6. `ScriptController` parses Fountain-style output, while `ScriptHistoryService` persists recent takes.
 7. `ScriptExportService` builds Fountain/plain-text exports for active and saved takes.
 8. `ModelCenterSheet` exposes source/backend/storage/privacy/reset state, source-switch controls, and performance presets, while `DebugMetricsSheet` keeps pipeline timing out of the normal director composition.
+9. `AsyncMutex` serializes model lifecycle and history writes so source changes, setup, and persistence cannot race each other.
+10. `TeleprompterSettingsController` and `PerformancePresetController` load user preferences once from `SharedPreferences` and fall back safely in tests.
 
 ## Model source rules
 
@@ -54,6 +56,7 @@ Important behavior:
 - local paths and imported files install via `flutter_gemma` file source
 - imported files are copied into app documents storage
 - installed source signatures are persisted so switching source forces reinstall
+- installed source signatures include the configured model type so model-family spikes force reinstall
 - the mainline app no longer hardcodes a legacy Hugging Face fallback or a `HUGGINGFACE_TOKEN` alias
 - Hugging Face-specific copy should only appear when the configured managed URL itself points to Hugging Face
 
@@ -63,6 +66,8 @@ Important behavior:
   Primary managed download URL
 - `GHOSTEYE_GEMMA_MODEL_PATH`
   Explicit local model file path override
+- `GHOSTEYE_GEMMA_MODEL_TYPE`
+  Optional runtime model-family selector for local tests; defaults to `gemma4`
 - `GHOSTEYE_GEMMA_TOKEN`
   Optional token for gated model downloads
 - Supported local/imported file extensions:
@@ -172,6 +177,14 @@ Important behavior:
   UI for exporting the current take or a saved take
 - `lib/widgets/model_center_sheet.dart`
   UI for source/backend/privacy/reset state and performance preset controls
+- `lib/providers/preferences_provider.dart`
+  Shared preferences override and resilient persisted-enum reader
+- `lib/providers/teleprompter_settings_provider.dart`
+  Persisted text-size, density, and reveal-pace controls
+- `lib/widgets/teleprompter_controls.dart`
+  Settings controls embedded in Model Center
+- `lib/services/async_mutex.dart`
+  FIFO async gate used by model lifecycle and history persistence
 - `lib/widgets/debug_metrics_sheet.dart`
   Debug-only sheet for sampler, preprocessor, backend, and inference timing metrics
 - `tool/generate_brand_assets.dart`
@@ -201,26 +214,26 @@ Important behavior:
 
 ## Current blockers
 
-- Production hosting for the Gemma 3n `.litertlm` or `.task` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
+- Production hosting for the Gemma 4 E2B `.litertlm` artifact and the shipping `GHOSTEYE_GEMMA_MODEL_URL`
 - Final managed-download auth policy
 - Android and physical-iPhone validation of the setup path
-- Production Android/iOS identifiers
+- Release builds still need a real production keystore, signing team/profile, and store metadata
 - Support/privacy URLs, screenshots, and store metadata
 - A decision on whether `packages/ghosteye_frame_ffi` stays purely internal forever or gets standalone package treatment later
 
-## Known engineering-health gaps (agent-executable)
+## Engineering-health status
 
-Tracked with acceptance criteria in `roadmap.md` Priority 2.5:
+The previously identified engineering-health gaps are addressed in this branch:
 
-- The FFI native C library — now the default preprocessing path — is only compiled/tested when the suite runs on macOS; Ubuntu CI silently skips it. Extend the test compile step to Linux (`cc -shared -fPIC`).
-- `performancePresetProvider` and `teleprompterSettingsProvider` are in-memory only; user choices reset on every relaunch. Persist them via `shared_preferences`.
-- `make docs-audit` is not run in CI, so the no-absolute-links doc rule is unenforced.
-- The `Makefile` pins `SHELL := /bin/zsh`, forcing CI to apt-get install zsh and breaking `make` in zsh-less environments.
-- ~101 dependencies have newer versions; Flutter is pinned to 3.24.4 (Oct 2024). A triaged refresh is prerequisite work for the Gemma 4 spike.
+- FFI preprocessing is exercised in CI on Linux and macOS.
+- Performance and teleprompter preferences hydrate from `SharedPreferences`.
+- Docs and whitespace audits run in CI.
+- The Makefile uses a POSIX shell and includes explicit release guards.
+- `flutter_gemma` is locked to the compatible `0.16.5` patch line; the Flutter 3.38.9 baseline is intentionally not bulk-upgraded with the newer 1.x package line.
 
 ## Guardrails for future work
 
-- Keep mainline focused on Gemma 3n unless the Gemma 4 spike proves cross-platform multimodal parity.
+- Keep mainline focused on Gemma 4 E2B unless Gemma 4 E4B proves acceptable memory and latency on target devices.
 - Keep `README.md` public-facing. Use `plan.md` for checklist state and `roadmap.md` for future backlog.
 - Do not delete completed checklist items from `plan.md`; mark them as completed instead.
 - If you change source precedence, onboarding behavior, or runtime setup copy, update `README.md`, `plan.md`, and this file together.

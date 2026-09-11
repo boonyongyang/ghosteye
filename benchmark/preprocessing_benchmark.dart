@@ -69,8 +69,7 @@ FrameData _yuvFrame(int width, int height) {
 }
 
 Duration _median(List<Duration> samples) {
-  final sorted = List<Duration>.from(samples)
-    ..sort((a, b) => a.compareTo(b));
+  final sorted = List<Duration>.from(samples)..sort((a, b) => a.compareTo(b));
   final mid = sorted.length ~/ 2;
   if (sorted.length.isOdd) {
     return sorted[mid];
@@ -111,18 +110,26 @@ void main() {
       '${Platform.isMacOS ? '.dylib' : '.so'}',
     );
     const source = 'packages/ghosteye_frame_ffi/src/ghosteye_frame_ffi.c';
-    final args = Platform.isMacOS
-        ? <String>['-dynamiclib', '-O2', '-std=c11', '-o', libraryFile.path, source]
-        : <String>[
-            '-shared',
-            '-fPIC',
-            '-O2',
-            '-std=c11',
-            '-o',
-            libraryFile.path,
-            source,
-            '-lm',
-          ];
+    final args =
+        Platform.isMacOS
+            ? <String>[
+              '-dynamiclib',
+              '-O2',
+              '-std=c11',
+              '-o',
+              libraryFile.path,
+              source,
+            ]
+            : <String>[
+              '-shared',
+              '-fPIC',
+              '-O2',
+              '-std=c11',
+              '-o',
+              libraryFile.path,
+              source,
+              '-lm',
+            ];
     final result = Process.runSync('cc', args);
     if (result.exitCode != 0) {
       throw StateError('Failed to compile FFI library: ${result.stderr}');
@@ -145,8 +152,10 @@ void main() {
     ];
 
     stdout.writeln('');
-    stdout.writeln('=== Preprocessing benchmark (host, median of '
-        '$_iterations runs, ms) ===');
+    stdout.writeln(
+      '=== Preprocessing benchmark (host, median of '
+      '$_iterations runs, ms) ===',
+    );
     stdout.writeln('format   size        dart      ffi     speedup');
 
     for (final size in sizes) {
@@ -155,65 +164,73 @@ void main() {
 
       final bgra = _bgraFrame(width, height);
       final dartBgra = _medianMillis(
-        () => codec
-            .convertFrameToImageBytes(
-              bgra,
-              maxDimension: _maxDimension,
-              jpegQuality: _quality,
-            )
-            .length,
+        () =>
+            codec
+                .convertFrameToImageBytes(
+                  bgra,
+                  maxDimension: _maxDimension,
+                  jpegQuality: _quality,
+                )
+                .length,
       );
       final ffiBgra = _medianMillis(
-        () => ffi
-            .convertBgra8888ToJpeg(
-              bytes: bgra.planes.first.bytes,
-              width: width,
-              height: height,
-              bytesPerRow: bgra.planes.first.bytesPerRow,
-              maxDimension: _maxDimension,
-              quality: _quality,
-            )
-            .length,
+        () =>
+            ffi
+                .convertBgra8888ToJpeg(
+                  bytes: bgra.planes.first.bytes,
+                  width: width,
+                  height: height,
+                  bytesPerRow: bgra.planes.first.bytesPerRow,
+                  maxDimension: _maxDimension,
+                  quality: _quality,
+                )
+                .length,
       );
 
       final yuv = _yuvFrame(width, height);
       final dartYuv = _medianMillis(
-        () => codec
-            .convertFrameToImageBytes(
-              yuv,
-              maxDimension: _maxDimension,
-              jpegQuality: _quality,
-            )
-            .length,
+        () =>
+            codec
+                .convertFrameToImageBytes(
+                  yuv,
+                  maxDimension: _maxDimension,
+                  jpegQuality: _quality,
+                )
+                .length,
       );
       final ffiYuv = _medianMillis(
-        () => ffi
-            .convertYuv420ToJpeg(
-              yPlane: yuv.planes[0].bytes,
-              yBytesPerRow: yuv.planes[0].bytesPerRow,
-              uPlane: yuv.planes[1].bytes,
-              uBytesPerRow: yuv.planes[1].bytesPerRow,
-              uBytesPerPixel: yuv.planes[1].bytesPerPixel,
-              vPlane: yuv.planes[2].bytes,
-              vBytesPerRow: yuv.planes[2].bytesPerRow,
-              vBytesPerPixel: yuv.planes[2].bytesPerPixel,
-              width: width,
-              height: height,
-              maxDimension: _maxDimension,
-              quality: _quality,
-            )
-            .length,
+        () =>
+            ffi
+                .convertYuv420ToJpeg(
+                  yPlane: yuv.planes[0].bytes,
+                  yBytesPerRow: yuv.planes[0].bytesPerRow,
+                  uPlane: yuv.planes[1].bytes,
+                  uBytesPerRow: yuv.planes[1].bytesPerRow,
+                  uBytesPerPixel: yuv.planes[1].bytesPerPixel,
+                  vPlane: yuv.planes[2].bytes,
+                  vBytesPerRow: yuv.planes[2].bytesPerRow,
+                  vBytesPerPixel: yuv.planes[2].bytesPerPixel,
+                  width: width,
+                  height: height,
+                  maxDimension: _maxDimension,
+                  quality: _quality,
+                )
+                .length,
       );
 
       final sizeLabel = '${width}x$height';
-      stdout.writeln('bgra8888 ${sizeLabel.padRight(11)} '
-          '${dartBgra.toStringAsFixed(2).padLeft(7)} '
-          '${ffiBgra.toStringAsFixed(2).padLeft(7)} '
-          '${(dartBgra / ffiBgra).toStringAsFixed(2).padLeft(7)}x');
-      stdout.writeln('yuv420   ${sizeLabel.padRight(11)} '
-          '${dartYuv.toStringAsFixed(2).padLeft(7)} '
-          '${ffiYuv.toStringAsFixed(2).padLeft(7)} '
-          '${(dartYuv / ffiYuv).toStringAsFixed(2).padLeft(7)}x');
+      stdout.writeln(
+        'bgra8888 ${sizeLabel.padRight(11)} '
+        '${dartBgra.toStringAsFixed(2).padLeft(7)} '
+        '${ffiBgra.toStringAsFixed(2).padLeft(7)} '
+        '${(dartBgra / ffiBgra).toStringAsFixed(2).padLeft(7)}x',
+      );
+      stdout.writeln(
+        'yuv420   ${sizeLabel.padRight(11)} '
+        '${dartYuv.toStringAsFixed(2).padLeft(7)} '
+        '${ffiYuv.toStringAsFixed(2).padLeft(7)} '
+        '${(dartYuv / ffiYuv).toStringAsFixed(2).padLeft(7)}x',
+      );
     }
     stdout.writeln('');
 

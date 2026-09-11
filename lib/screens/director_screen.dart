@@ -109,36 +109,40 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
                   ],
                   _DirectorActions(
                     captureEnabled: captureEnabled,
-                    onToggleCapture: () => captureEnabled
-                        ? unawaited(_pauseCapture(ref))
-                        : _resumeCapture(ref),
+                    onToggleCapture:
+                        () =>
+                            captureEnabled
+                                ? unawaited(_pauseCapture(ref))
+                                : _resumeCapture(ref),
                     onClearScript: () => unawaited(_resetScene(ref)),
-                    onShowHistory: () =>
-                        unawaited(_showHistorySheet(context, ref)),
-                    onShowExport: () => unawaited(
-                      _showExportSheet(
-                        context,
-                        title: 'Current take',
-                        entries: scriptState.entries,
-                        capturedAt: scriptState.activeSessionStartedAt,
-                      ),
-                    ),
+                    onShowHistory:
+                        () => unawaited(_showHistorySheet(context, ref)),
+                    onShowExport:
+                        () => unawaited(
+                          _showExportSheet(
+                            context,
+                            title: 'Current take',
+                            entries: scriptState.entries,
+                            capturedAt: scriptState.activeSessionStartedAt,
+                          ),
+                        ),
                     onShowTips: () => unawaited(_showDirectorTips()),
-                    onShowModelCenter: () =>
-                        unawaited(_showModelCenterSheet(context, ref)),
+                    onShowModelCenter:
+                        () => unawaited(_showModelCenterSheet(context, ref)),
                   ),
                   const SizedBox(height: 12),
                   if (kDebugMode)
                     Center(
                       child: GestureDetector(
-                        onTap: () => unawaited(
-                          showModalBottomSheet<void>(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) => const DebugMetricsSheet(),
-                          ),
-                        ),
+                        onTap:
+                            () => unawaited(
+                              showModalBottomSheet<void>(
+                                context: context,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.transparent,
+                                builder: (_) => const DebugMetricsSheet(),
+                              ),
+                            ),
                         child: const _DebugBadge(label: 'DEV METRICS'),
                       ),
                     ),
@@ -197,9 +201,10 @@ class _DirectorScreenState extends ConsumerState<DirectorScreen> {
       return;
     }
 
-    final primaryLabel = firstRun
-        ? 'Start shooting'
-        : wasCaptureEnabled
+    final primaryLabel =
+        firstRun
+            ? 'Start shooting'
+            : wasCaptureEnabled
             ? 'Back to scene'
             : 'Close tips';
 
@@ -271,19 +276,26 @@ Future<void> _showModelCenterSheet(BuildContext context, WidgetRef ref) async {
       return ModelCenterSheet(
         onResetCachedInstall: () {
           Navigator.of(context).pop();
-          ref.read(gemmaProvider.notifier).resetCachedInstall();
+          unawaited(_pauseAndResetModel(ref));
         },
         onImportLocalModel: () async {
           Navigator.of(context).pop();
+          await _pauseCapture(ref);
           await ref.read(gemmaProvider.notifier).importLocalModel();
         },
         onUseConfiguredSource: () async {
           Navigator.of(context).pop();
+          await _pauseCapture(ref);
           await ref.read(gemmaProvider.notifier).useManagedDownload();
         },
       );
     },
   );
+}
+
+Future<void> _pauseAndResetModel(WidgetRef ref) async {
+  await _pauseCapture(ref);
+  await ref.read(gemmaProvider.notifier).resetCachedInstall();
 }
 
 Future<void> _showHistorySheet(BuildContext context, WidgetRef ref) async {
@@ -557,9 +569,9 @@ class _DockAction extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -582,9 +594,7 @@ class _ReviewModeBanner extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color(0xFFF2B95C).withOpacity(0.12),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: const Color(0xFFF2B95C).withOpacity(0.3),
-            ),
+            border: Border.all(color: const Color(0xFFF2B95C).withOpacity(0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -598,9 +608,9 @@ class _ReviewModeBanner extends StatelessWidget {
               Text(
                 'REVIEWING SAVED TAKE',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFFF2B95C),
-                      letterSpacing: 1.0,
-                    ),
+                  color: const Color(0xFFF2B95C),
+                  letterSpacing: 1.0,
+                ),
               ),
             ],
           ),
@@ -625,10 +635,7 @@ class _DebugBadge extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        child: Text(label, style: Theme.of(context).textTheme.bodySmall),
       ),
     );
   }

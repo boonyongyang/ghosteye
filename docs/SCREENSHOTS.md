@@ -67,24 +67,19 @@ what pauses the scene before the first capture.
 
 `tool/screenshots/generate_screenshots.dart` is a `flutter_test` file kept
 outside `test/` so the CI suite never runs it — the same isolation the
-`benchmark/` directory uses.
+`benchmark/` directory uses. It needs no network access.
 
-Three details are load-bearing, and all three were failure modes first:
+Two details are load-bearing, and both were failure modes first:
 
-1. **Fonts must be registered per test.** The theme's type comes from
-   `google_fonts`, which cannot fetch in a headless test. The faces are fetched
-   by `make screenshots` into a gitignored `.screenshot-fonts/` and registered
-   with `FontLoader` under the exact variant names google_fonts asks for
-   (`CourierPrime_regular`, `CourierPrime_700`, ...). This happens in `setUp`,
-   not `setUpAll`, because the test binding resets registered fonts between
-   test cases. Material's icon font is loaded from the Flutter SDK the same way,
-   or every `Icon` draws as an empty box.
-2. **The theme is built exactly once.** google_fonts throws when it cannot find
-   its own copy of a font, and it *removes* the variant from its attempted-set
-   on failure — so every rebuild throws again, as an unawaited future that
-   `tester.takeException()` cannot reach. The theme is therefore constructed a
-   single time inside a guarded zone and reused.
-3. **Capture goes through `matchesGoldenFile`.** A manual
+1. **Fonts must be registered per test.** The brand faces are bundled in
+   `assets/fonts` and declared in `pubspec.yaml`, but `flutter test` does not
+   load an app's declared fonts automatically — without registering them every
+   glyph renders as a filled box. This happens in `setUp`, not `setUpAll`,
+   because the test binding resets registered fonts between test cases, so
+   loading once would only serve the first screenshot. Material's icon font
+   ships with the Flutter SDK rather than the app and needs the same treatment,
+   or every `Icon` draws as an empty square.
+2. **Capture goes through `matchesGoldenFile`.** A manual
    `RenderRepaintBoundary.toImage()` writes a correct PNG but leaves the test
    shell unable to shut down, so the run hangs after the file lands.
 

@@ -10,25 +10,25 @@ enum CinematicMode {
   final String displayName;
 
   Color get badgeColor => switch (this) {
-        CinematicMode.noir => const Color(0xFFF2B95C),
-        CinematicMode.sciFi => const Color(0xFF67D7EE),
-        CinematicMode.sitcom => const Color(0xFFB39DDB),
-      };
+    CinematicMode.noir => const Color(0xFFF2B95C),
+    CinematicMode.sciFi => const Color(0xFF67D7EE),
+    CinematicMode.sitcom => const Color(0xFFB39DDB),
+  };
 
   String get shortDescription => switch (this) {
-        CinematicMode.noir =>
-          'Hard-boiled 1940s shadows. Cynicism, chiaroscuro, wet pavement.',
-        CinematicMode.sciFi =>
-          'Cerebral sci-fi lens. Everything mundane has cosmic weight.',
-        CinematicMode.sitcom =>
-          'Ensemble sitcom writer. Find the absurdity in every beat.',
-      };
+    CinematicMode.noir =>
+      'Hard-boiled 1940s shadows. Cynicism, chiaroscuro, wet pavement.',
+    CinematicMode.sciFi =>
+      'Cerebral sci-fi lens. Everything mundane has cosmic weight.',
+    CinematicMode.sitcom =>
+      'Ensemble sitcom writer. Find the absurdity in every beat.',
+  };
 
   String get systemPrompt => switch (this) {
-        CinematicMode.noir => _noirPrompt,
-        CinematicMode.sciFi => _sciFiPrompt,
-        CinematicMode.sitcom => _sitcomPrompt,
-      };
+    CinematicMode.noir => _noirPrompt,
+    CinematicMode.sciFi => _sciFiPrompt,
+    CinematicMode.sitcom => _sitcomPrompt,
+  };
 }
 
 const _noirPrompt =

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="#090B10" />
+    <item android:drawable="@color/ghosteye_background" />
     <item>
         <bitmap
             android:gravity="center"

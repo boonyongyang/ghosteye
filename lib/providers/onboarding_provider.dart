@@ -9,8 +9,8 @@ final onboardingServiceProvider = Provider<OnboardingService>((ref) {
 
 final onboardingProvider =
     AsyncNotifierProvider<OnboardingController, OnboardingStatus>(
-  OnboardingController.new,
-);
+      OnboardingController.new,
+    );
 
 class OnboardingController extends AsyncNotifier<OnboardingStatus> {
   @override

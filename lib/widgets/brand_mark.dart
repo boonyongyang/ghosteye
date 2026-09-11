@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../config/constants.dart';
 
 class BrandMark extends StatelessWidget {
-  const BrandMark({
-    super.key,
-    this.size = 136,
-    this.radius = 32,
-  });
+  const BrandMark({super.key, this.size = 136, this.radius = 32});
 
   final double size;
   final double radius;
@@ -40,10 +36,7 @@ class BrandMark extends StatelessWidget {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: <Color>[
-                    Color(0xFF10212C),
-                    Color(0xFF0A0D12),
-                  ],
+                  colors: <Color>[Color(0xFF10212C), Color(0xFF0A0D12)],
                 ),
                 border: Border.all(color: const Color(0x22F2B95C)),
               ),

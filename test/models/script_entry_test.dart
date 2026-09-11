@@ -34,8 +34,9 @@ void main() {
       });
 
       test('fromJson returns empty text when text key is absent', () {
-        final entry =
-            ScriptEntry.fromJson(<String, Object?>{'type': 'slugline'});
+        final entry = ScriptEntry.fromJson(<String, Object?>{
+          'type': 'slugline',
+        });
         expect(entry.text, isEmpty);
       });
 

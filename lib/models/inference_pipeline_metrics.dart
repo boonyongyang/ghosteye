@@ -1,11 +1,7 @@
 import 'frame_preprocessor_settings.dart';
 
 class DurationMetricSnapshot {
-  const DurationMetricSnapshot({
-    this.last,
-    this.median,
-    this.sampleCount = 0,
-  });
+  const DurationMetricSnapshot({this.last, this.median, this.sampleCount = 0});
 
   final Duration? last;
   final Duration? median;

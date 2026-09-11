@@ -26,8 +26,6 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Ghosteye uses the camera to watch the current shot and turn it into a screenplay overlay.</string>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Ghosteye may use local network access while preparing on-device inference services during development.</string>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

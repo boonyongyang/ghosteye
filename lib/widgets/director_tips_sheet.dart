@@ -40,10 +40,7 @@ class DirectorTipsSheet extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              Text(
-                'Before the first take',
-                style: theme.textTheme.titleLarge,
-              ),
+              Text('Before the first take', style: theme.textTheme.titleLarge),
               const SizedBox(height: 8),
               Text(
                 'Ghosteye is ready. Keep the phone steady, frame the shot you want, and let the first scene build intentionally.',

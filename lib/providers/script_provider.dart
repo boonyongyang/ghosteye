@@ -45,25 +45,30 @@ class ScriptState {
       entries: entries ?? this.entries,
       liveResponse: liveResponse ?? this.liveResponse,
       isGenerating: isGenerating ?? this.isGenerating,
-      errorMessage: errorMessage == _noChange
-          ? this.errorMessage
-          : errorMessage as String?,
+      errorMessage:
+          errorMessage == _noChange
+              ? this.errorMessage
+              : errorMessage as String?,
       scrollTick: scrollTick ?? this.scrollTick,
-      activeGenerationId: activeGenerationId == _noChange
-          ? this.activeGenerationId
-          : activeGenerationId as int?,
-      activeSessionId: activeSessionId == _noChange
-          ? this.activeSessionId
-          : activeSessionId as String?,
-      activeSessionStartedAt: activeSessionStartedAt == _noChange
-          ? this.activeSessionStartedAt
-          : activeSessionStartedAt as DateTime?,
+      activeGenerationId:
+          activeGenerationId == _noChange
+              ? this.activeGenerationId
+              : activeGenerationId as int?,
+      activeSessionId:
+          activeSessionId == _noChange
+              ? this.activeSessionId
+              : activeSessionId as String?,
+      activeSessionStartedAt:
+          activeSessionStartedAt == _noChange
+              ? this.activeSessionStartedAt
+              : activeSessionStartedAt as DateTime?,
     );
   }
 }
 
-final scriptProvider =
-    NotifierProvider<ScriptController, ScriptState>(ScriptController.new);
+final scriptProvider = NotifierProvider<ScriptController, ScriptState>(
+  ScriptController.new,
+);
 
 class ScriptController extends Notifier<ScriptState> {
   @override
@@ -90,10 +95,7 @@ class ScriptController extends Notifier<ScriptState> {
     );
   }
 
-  void appendToken({
-    required int generationId,
-    required String token,
-  }) {
+  void appendToken({required int generationId, required String token}) {
     if (state.activeGenerationId != generationId) {
       return;
     }
@@ -127,10 +129,7 @@ class ScriptController extends Notifier<ScriptState> {
     }
   }
 
-  void fail({
-    required int generationId,
-    required String message,
-  }) {
+  void fail({required int generationId, required String message}) {
     if (state.activeGenerationId != generationId) {
       return;
     }
@@ -176,17 +175,20 @@ class ScriptController extends Notifier<ScriptState> {
         .toList(growable: false);
 
     var previousType = ScriptEntryType.action;
-    return lines.map((line) {
-      final type = _classifyLine(line, previousType);
-      previousType = type;
-      return ScriptEntry(type: type, text: line);
-    }).toList(growable: false);
+    return lines
+        .map((line) {
+          final type = _classifyLine(line, previousType);
+          previousType = type;
+          return ScriptEntry(type: type, text: line);
+        })
+        .toList(growable: false);
   }
 
   ScriptEntryType _classifyLine(String line, ScriptEntryType previousType) {
     final isUppercase = line == line.toUpperCase();
-    final isSlugline =
-        RegExp(r'^(INT|EXT|EST|INT\./EXT|I/E)[.\s-]').hasMatch(line);
+    final isSlugline = RegExp(
+      r'^(INT|EXT|EST|INT\./EXT|I/E)[.\s-]',
+    ).hasMatch(line);
 
     if (isSlugline) {
       return ScriptEntryType.slugline;
@@ -217,7 +219,9 @@ class ScriptController extends Notifier<ScriptState> {
     final createdAt = snapshot.activeSessionStartedAt ?? DateTime.now().toUtc();
     final mode = ref.read(cinematicModeProvider);
 
-    await ref.read(scriptHistoryProvider.notifier).syncSession(
+    await ref
+        .read(scriptHistoryProvider.notifier)
+        .syncSession(
           sessionId: sessionId,
           createdAt: createdAt,
           entries: snapshot.entries,

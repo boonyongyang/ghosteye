@@ -1,15 +1,8 @@
 import '../config/constants.dart';
 
-enum ModelSourceKind {
-  network,
-  file,
-}
+enum ModelSourceKind { network, file }
 
-enum ModelSourceOrigin {
-  importedFile,
-  envPath,
-  envUrl,
-}
+enum ModelSourceOrigin { importedFile, envPath, envUrl }
 
 class ModelSourceConfig {
   const ModelSourceConfig({
@@ -17,6 +10,7 @@ class ModelSourceConfig {
     required this.origin,
     required this.location,
     required this.label,
+    this.modelTypeName = AppConstants.defaultModelTypeName,
     this.token,
   });
 
@@ -24,6 +18,7 @@ class ModelSourceConfig {
   final ModelSourceOrigin origin;
   final String location;
   final String label;
+  final String modelTypeName;
   final String? token;
 
   bool get isNetwork => kind == ModelSourceKind.network;
@@ -35,5 +30,5 @@ class ModelSourceConfig {
 
   String get modelId => AppConstants.modelIdFromLocation(location);
 
-  String get signature => '${origin.name}:$location';
+  String get signature => '${origin.name}:$location:modelType:$modelTypeName';
 }

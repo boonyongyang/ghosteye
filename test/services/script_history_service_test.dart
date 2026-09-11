@@ -8,9 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<ScriptHistoryService> _createService({
   required SharedPreferences preferences,
 }) async {
-  return ScriptHistoryService(
-    loadPreferences: () async => preferences,
-  );
+  return ScriptHistoryService(loadPreferences: () async => preferences);
 }
 
 ScriptSession _buildSession({
@@ -23,10 +21,7 @@ ScriptSession _buildSession({
     createdAt: timestamp,
     updatedAt: timestamp,
     entries: <ScriptEntry>[
-      ScriptEntry(
-        type: ScriptEntryType.slugline,
-        text: text,
-      ),
+      ScriptEntry(type: ScriptEntryType.slugline, text: text),
     ],
   );
 }
@@ -59,11 +54,31 @@ void main() {
     );
     final replacedSessions = await service.upsertSession(updatedFirst);
 
-    expect(
-      replacedSessions.map((session) => session.id),
-      <String>['first', 'second'],
-    );
+    expect(replacedSessions.map((session) => session.id), <String>[
+      'first',
+      'second',
+    ]);
     expect(replacedSessions.first.entries.single.text, 'INT. CAB - NIGHT');
+  });
+
+  test('concurrent writes retain both sessions', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final preferences = await SharedPreferences.getInstance();
+    final service = await _createService(preferences: preferences);
+
+    await Future.wait(<Future<List<ScriptSession>>>[
+      service.upsertSession(
+        _buildSession(id: 'first', timestamp: DateTime.utc(2026, 4, 21, 10)),
+      ),
+      service.upsertSession(
+        _buildSession(id: 'second', timestamp: DateTime.utc(2026, 4, 21, 11)),
+      ),
+    ]);
+
+    expect(
+      (await service.loadSessions()).map((session) => session.id),
+      containsAll(<String>['first', 'second']),
+    );
   });
 
   test('upsertSession respects the max saved session limit', () async {
@@ -71,9 +86,11 @@ void main() {
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(preferences: preferences);
 
-    for (var index = 0;
-        index < AppConstants.maxSavedScriptSessions + 3;
-        index++) {
+    for (
+      var index = 0;
+      index < AppConstants.maxSavedScriptSessions + 3;
+      index++
+    ) {
       await service.upsertSession(
         _buildSession(
           id: 'session-$index',
@@ -87,10 +104,7 @@ void main() {
 
     expect(sessions, hasLength(AppConstants.maxSavedScriptSessions));
     expect(sessions.first.id, 'session-14');
-    expect(
-      sessions.last.id,
-      'session-3',
-    );
+    expect(sessions.last.id, 'session-3');
   });
 
   test('deleteSession and clearSessions remove stored history', () async {
@@ -99,16 +113,10 @@ void main() {
     final service = await _createService(preferences: preferences);
 
     await service.upsertSession(
-      _buildSession(
-        id: 'keep',
-        timestamp: DateTime.utc(2026, 4, 21, 10),
-      ),
+      _buildSession(id: 'keep', timestamp: DateTime.utc(2026, 4, 21, 10)),
     );
     await service.upsertSession(
-      _buildSession(
-        id: 'delete',
-        timestamp: DateTime.utc(2026, 4, 21, 11),
-      ),
+      _buildSession(id: 'delete', timestamp: DateTime.utc(2026, 4, 21, 11)),
     );
 
     final remaining = await service.deleteSession('delete');

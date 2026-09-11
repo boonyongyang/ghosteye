@@ -81,10 +81,7 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      expect(
-        container.read(performancePresetProvider),
-        PerformancePreset.fast,
-      );
+      expect(container.read(performancePresetProvider), PerformancePreset.fast);
     });
 
     test('setPreset persists and a fresh container rehydrates it', () async {

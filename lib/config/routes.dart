@@ -9,10 +9,7 @@ GoRouter createAppRouter() {
   return GoRouter(
     initialLocation: '/',
     routes: <RouteBase>[
-      GoRoute(
-        path: '/',
-        builder: (context, state) => const LaunchGateScreen(),
-      ),
+      GoRoute(path: '/', builder: (context, state) => const LaunchGateScreen()),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),

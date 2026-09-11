@@ -28,10 +28,7 @@ class DiagnosticBlock extends StatelessWidget {
             Icon(icon, size: 18, color: iconColor),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
+              child: Text(text, style: Theme.of(context).textTheme.bodySmall),
             ),
           ],
         ),

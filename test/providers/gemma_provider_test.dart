@@ -24,14 +24,21 @@ class _FakeInferenceModel extends InferenceModel {
   int get maxTokens => 512;
 
   @override
+  PreferredBackend? get activeBackend => null;
+
+  @override
   InferenceModelSession? get session => null;
 
   @override
   Future<InferenceModelSession> createSession({
+    bool? enableAudioModality,
+    bool enableThinking = false,
     double temperature = .8,
     int randomSeed = 1,
     int topK = 1,
     double? topP,
+    String? systemInstruction,
+    List<Tool> tools = const [],
     String? loraPath,
     bool? enableVisionModality,
   }) {
@@ -58,38 +65,41 @@ Future<ModelSourceService> _createSourceService({
 }
 
 void main() {
-  test('GemmaNotifier surfaces unsupported local model imports as errors',
-      () async {
-    final sourceService = await _createSourceService(
-      pickModelFile: () async => const PickedModelFile(
-        path: '/tmp/not-a-model.txt',
-        name: 'not-a-model.txt',
-      ),
-    );
-    final gemmaService = GemmaService(
-      modelSourceService: sourceService,
-      isModelInstalled: (_) async => true,
-      createModel: (_) async => _FakeInferenceModel(),
-    );
-    final container = ProviderContainer(
-      overrides: <Override>[
-        gemmaServiceProvider.overrideWithValue(gemmaService),
-      ],
-    );
-    addTearDown(container.dispose);
-    addTearDown(gemmaService.dispose);
+  test(
+    'GemmaNotifier surfaces unsupported local model imports as errors',
+    () async {
+      final sourceService = await _createSourceService(
+        pickModelFile:
+            () async => const PickedModelFile(
+              path: '/tmp/not-a-model.txt',
+              name: 'not-a-model.txt',
+            ),
+      );
+      final gemmaService = GemmaService(
+        modelSourceService: sourceService,
+        isModelInstalled: (_) async => true,
+        createModel: (_) async => _FakeInferenceModel(),
+      );
+      final container = ProviderContainer(
+        overrides: <Override>[
+          gemmaServiceProvider.overrideWithValue(gemmaService),
+        ],
+      );
+      addTearDown(container.dispose);
+      addTearDown(gemmaService.dispose);
 
-    await container.read(gemmaProvider.future);
-    await container.read(gemmaProvider.notifier).importLocalModel();
+      await container.read(gemmaProvider.future);
+      await container.read(gemmaProvider.notifier).importLocalModel();
 
-    final state = container.read(gemmaProvider).valueOrNull;
-    expect(state, isNotNull);
-    expect(state!.phase, GemmaPhase.error);
-    expect(state.failureKind, GemmaStartupFailureKind.localModel);
-    expect(state.message, contains('.task'));
-    expect(state.diagnosticDetail, isNotNull);
-    expect(state.diagnosticDetail, isNotEmpty);
-  });
+      final state = container.read(gemmaProvider).valueOrNull;
+      expect(state, isNotNull);
+      expect(state!.phase, GemmaPhase.error);
+      expect(state.failureKind, GemmaStartupFailureKind.localModel);
+      expect(state.message, contains('.task'));
+      expect(state.diagnosticDetail, isNotNull);
+      expect(state.diagnosticDetail, isNotEmpty);
+    },
+  );
 
   test('GemmaNotifier surfaces missing model source configuration', () async {
     final sourceService = await _createSourceService(

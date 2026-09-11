@@ -1,25 +1,13 @@
-enum ScriptEntryType {
-  slugline,
-  action,
-  character,
-  dialogue,
-  parenthetical,
-}
+enum ScriptEntryType { slugline, action, character, dialogue, parenthetical }
 
 class ScriptEntry {
-  const ScriptEntry({
-    required this.type,
-    required this.text,
-  });
+  const ScriptEntry({required this.type, required this.text});
 
   final ScriptEntryType type;
   final String text;
 
   Map<String, Object?> toJson() {
-    return <String, Object?>{
-      'type': type.name,
-      'text': text,
-    };
+    return <String, Object?>{'type': type.name, 'text': text};
   }
 
   factory ScriptEntry.fromJson(Map<String, Object?> json) {
@@ -29,10 +17,7 @@ class ScriptEntry {
       orElse: () => ScriptEntryType.action,
     );
 
-    return ScriptEntry(
-      type: type,
-      text: json['text'] as String? ?? '',
-    );
+    return ScriptEntry(type: type, text: json['text'] as String? ?? '');
   }
 
   @override

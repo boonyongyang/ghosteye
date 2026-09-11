@@ -25,8 +25,9 @@ Future<void> _pumpIndicator(
 }
 
 void main() {
-  testWidgets('shows IDLE / THINKING / ERROR for the active status',
-      (tester) async {
+  testWidgets('shows IDLE / THINKING / ERROR for the active status', (
+    tester,
+  ) async {
     await _pumpIndicator(
       tester,
       activity: InferenceActivity.idle,
@@ -49,8 +50,9 @@ void main() {
     expect(find.text('ERROR'), findsOneWidget);
   });
 
-  testWidgets('capture disabled overrides the status to PAUSED',
-      (tester) async {
+  testWidgets('capture disabled overrides the status to PAUSED', (
+    tester,
+  ) async {
     await _pumpIndicator(
       tester,
       activity: InferenceActivity.processing,
@@ -61,8 +63,9 @@ void main() {
     expect(find.text('THINKING'), findsNothing);
   });
 
-  testWidgets('degraded runtime prefixes non-error states with CPU',
-      (tester) async {
+  testWidgets('degraded runtime prefixes non-error states with CPU', (
+    tester,
+  ) async {
     await _pumpIndicator(
       tester,
       activity: InferenceActivity.idle,
@@ -80,8 +83,9 @@ void main() {
     expect(find.text('CPU THINKING'), findsOneWidget);
   });
 
-  testWidgets('error state is not decorated as a CPU-degraded state',
-      (tester) async {
+  testWidgets('error state is not decorated as a CPU-degraded state', (
+    tester,
+  ) async {
     await _pumpIndicator(
       tester,
       activity: InferenceActivity.error,

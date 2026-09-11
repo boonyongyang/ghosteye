@@ -1,31 +1,32 @@
-# bash is available by default on macOS and Ubuntu CI; recipes stay POSIX-sh
-# compatible so no extra shell needs to be installed.
-SHELL := /bin/bash
+# Recipes stay POSIX-sh compatible so CI does not need an extra shell.
+SHELL := /bin/sh
 
-FLUTTER ?= flutter
-DART ?= dart
+FLUTTER ?= $(if $(shell command -v fvm 2>/dev/null),fvm flutter,flutter)
+DART ?= $(if $(shell command -v fvm 2>/dev/null),fvm dart,dart)
 
 CONFIG ?= config.json
 ANDROID_DEVICE ?= android
 IOS_DEVICE ?=
 DEVICE ?=
 MODEL_PATH ?=
+MODEL_TYPE ?=
 SOURCE_IMAGE ?= assets/branding/ghosteye-icon-source-ai.png
 
 CONFIG_ARGS := $(if $(wildcard $(CONFIG)),--dart-define-from-file=$(CONFIG),)
 DEVICE_ARGS := $(if $(DEVICE),-d $(DEVICE),)
 MODEL_PATH_ARGS := $(if $(MODEL_PATH),--dart-define=GHOSTEYE_GEMMA_MODEL_PATH="$(MODEL_PATH)",)
+MODEL_TYPE_ARGS := $(if $(MODEL_TYPE),--dart-define=GHOSTEYE_GEMMA_MODEL_TYPE="$(MODEL_TYPE)",)
 FORMAT_DIRS := lib test tool packages/ghosteye_frame_ffi/lib
 SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
-SCREENSHOT_FONT_DIR ?= .screenshot-fonts
-GOOGLE_FONTS_RAW ?= https://raw.githubusercontent.com/google/fonts/main/ofl
+SCREENSHOT_CHECK_DIR ?= build/screenshot-check
 
 .PHONY: help bootstrap doctor devices emulators analyze test verify benchmark format fix \
 	clean pub-outdated config-copy config-check config-example run run-config \
 	run-local-model run-android run-android-local-model run-ios \
 	run-ios-local-model logs build-apk-debug build-ios-debug build-web-debug \
-	brand-assets todo bundle-ids docs docs-audit screenshots
+	build-apk-release build-appbundle-release \
+	brand-assets todo bundle-ids docs docs-audit screenshots screenshots-check
 
 help:
 	@printf "Ghosteye maintainer commands\n\n"
@@ -50,13 +51,15 @@ help:
 	@printf "  make run              flutter run %s\n" "$(CONFIG_ARGS)"
 	@printf "  make run DEVICE=<id>  flutter run -d <id> %s\n" "$(CONFIG_ARGS)"
 	@printf "  make run-config       require and run with %s\n" "$(CONFIG)"
-	@printf "  make run-local-model MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-local-model MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make run-android      flutter run -d %s %s\n" "$(ANDROID_DEVICE)" "$(CONFIG_ARGS)"
-	@printf "  make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-android-local-model MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make run-ios IOS_DEVICE=<physical-device-id>\n"
-	@printf "  make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm\n"
+	@printf "  make run-ios-local-model IOS_DEVICE=<physical-device-id> MODEL_PATH=/absolute/path/model.litertlm MODEL_TYPE=gemma4|gemmaIt|general\n"
 	@printf "  make logs DEVICE=<id> flutter logs for a connected device\n"
 	@printf "  make build-apk-debug  flutter build apk --debug\n"
+	@printf "  make build-apk-release flutter build apk --release with android/key.properties\n"
+	@printf "  make build-appbundle-release flutter build appbundle --release with android/key.properties\n"
 	@printf "  make build-ios-debug  flutter build ios --debug --no-codesign\n"
 	@printf "  make build-web-debug  flutter build web --debug\n\n"
 	@printf "Repo diagnostics:\n"
@@ -92,18 +95,24 @@ benchmark:
 	$(FLUTTER) test benchmark/preprocessing_benchmark.dart
 
 # Regenerates docs/screenshots/*.png from the real widget tree.
-# Lives outside test/ so `flutter test` never runs it. The two Google Fonts
-# families the theme uses are fetched into a gitignored directory first --
-# without them the headless engine renders every glyph as a filled box.
+# Lives outside test/ so `flutter test` never runs it. The brand faces are
+# bundled in assets/fonts, so this needs no network access.
 screenshots:
-	@mkdir -p $(SCREENSHOT_FONT_DIR)
-	@for f in CourierPrime-Regular CourierPrime-Bold CourierPrime-Italic CourierPrime-BoldItalic; do \
-		[ -s $(SCREENSHOT_FONT_DIR)/$$f.ttf ] || curl -sSfL "$(GOOGLE_FONTS_RAW)/courierprime/$$f.ttf" -o $(SCREENSHOT_FONT_DIR)/$$f.ttf; \
-	done
-	@[ -s $(SCREENSHOT_FONT_DIR)/CormorantGaramond-var.ttf ] || \
-		curl -sSfL "$(GOOGLE_FONTS_RAW)/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf" \
-			-o $(SCREENSHOT_FONT_DIR)/CormorantGaramond-var.ttf
 	$(FLUTTER) test --update-goldens tool/screenshots/generate_screenshots.dart
+
+# Compiles and runs the screenshot harness against a throwaway output dir.
+# The harness lives outside test/, so `make verify` never touches it and it can
+# rot silently -- a renamed widget or dropped dependency would only surface the
+# next time someone ran `make screenshots`. This proves it still runs without
+# comparing pixels, which would be brittle across platforms.
+screenshots-check:
+	@rm -rf $(SCREENSHOT_CHECK_DIR)
+	@GHOSTEYE_SCREENSHOT_OUT=$(SCREENSHOT_CHECK_DIR) \
+		$(FLUTTER) test --update-goldens tool/screenshots/generate_screenshots.dart
+	@test "$$(ls -1 $(SCREENSHOT_CHECK_DIR)/*.png 2>/dev/null | wc -l)" -ge 5 \
+		|| { echo "screenshot harness produced no output"; exit 1; }
+	@rm -rf $(SCREENSHOT_CHECK_DIR)
+	@echo "Screenshot harness runs clean."
 
 format:
 	$(DART) format $(FORMAT_DIRS)
@@ -151,7 +160,7 @@ run-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run $(DEVICE_ARGS) $(MODEL_PATH_ARGS)
+	$(FLUTTER) run $(DEVICE_ARGS) $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 run-android:
 	$(FLUTTER) run -d $(ANDROID_DEVICE) $(CONFIG_ARGS)
@@ -161,7 +170,7 @@ run-android-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run -d $(ANDROID_DEVICE) $(MODEL_PATH_ARGS)
+	$(FLUTTER) run -d $(ANDROID_DEVICE) $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 run-ios:
 	@if [ -z "$(IOS_DEVICE)" ]; then \
@@ -179,7 +188,7 @@ run-ios-local-model:
 		echo "Set MODEL_PATH=/absolute/path/to/model.litertlm or model.task."; \
 		exit 1; \
 	fi
-	$(FLUTTER) run -d "$(IOS_DEVICE)" $(MODEL_PATH_ARGS)
+	$(FLUTTER) run -d "$(IOS_DEVICE)" $(MODEL_PATH_ARGS) $(MODEL_TYPE_ARGS)
 
 logs:
 	@if [ -z "$(DEVICE)" ]; then \
@@ -190,6 +199,20 @@ logs:
 
 build-apk-debug:
 	$(FLUTTER) build apk --debug
+
+build-apk-release:
+	@if [ ! -f android/key.properties ]; then \
+		echo "No android/key.properties found. Copy android/key.properties.example and point it at your production keystore."; \
+		exit 1; \
+	fi
+	$(FLUTTER) build apk --release $(CONFIG_ARGS)
+
+build-appbundle-release:
+	@if [ ! -f android/key.properties ]; then \
+		echo "No android/key.properties found. Copy android/key.properties.example and point it at your production keystore."; \
+		exit 1; \
+	fi
+	$(FLUTTER) build appbundle --release $(CONFIG_ARGS)
 
 build-ios-debug:
 	$(FLUTTER) build ios --debug --no-codesign

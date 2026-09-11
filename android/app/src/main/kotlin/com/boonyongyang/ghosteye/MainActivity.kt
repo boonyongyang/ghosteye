@@ -1,4 +1,4 @@
-package com.example.ghosteye
+package com.boonyongyang.ghosteye
 
 import io.flutter.embedding.android.FlutterActivity
 

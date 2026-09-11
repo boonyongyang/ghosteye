@@ -12,6 +12,7 @@ Future<ModelSourceService> _createService({
   PickModelFileFn? pickModelFile,
   String? configuredModelPath,
   String? configuredModelUrl,
+  String? configuredModelTypeName,
   String? configuredToken,
 }) async {
   return ModelSourceService(
@@ -20,6 +21,7 @@ Future<ModelSourceService> _createService({
     pickModelFile: pickModelFile ?? () async => null,
     configuredModelPath: configuredModelPath,
     configuredModelUrl: configuredModelUrl,
+    configuredModelTypeName: configuredModelTypeName,
     configuredToken: configuredToken,
   );
 }
@@ -41,11 +43,9 @@ void main() {
   });
 
   test('resolveSource prefers persisted imported model path', () async {
-    SharedPreferences.setMockInitialValues(
-      <String, Object>{
-        ModelSourceService.importedModelPathKey: '/tmp/imported.task',
-      },
-    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ModelSourceService.importedModelPathKey: '/tmp/imported.task',
+    });
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(
       preferences: preferences,
@@ -62,43 +62,87 @@ void main() {
     expect(source.location, '/tmp/imported.task');
   });
 
-  test('resolveSource prefers configured model path over managed URL',
-      () async {
+  test(
+    'resolveSource prefers configured model path over managed URL',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final service = await _createService(
+        preferences: preferences,
+        documentsDirectory: Directory.systemTemp,
+        configuredModelPath: '/env/model.task',
+        configuredModelUrl: 'https://cdn.example.com/model.task',
+      );
+
+      final source = await service.resolveSource();
+
+      expect(source.origin, ModelSourceOrigin.envPath);
+      expect(source.kind, ModelSourceKind.file);
+      expect(source.location, '/env/model.task');
+    },
+  );
+
+  test(
+    'resolveSource uses configured managed download URL when no local path is set',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final service = await _createService(
+        preferences: preferences,
+        documentsDirectory: Directory.systemTemp,
+        configuredModelUrl: 'https://cdn.example.com/model.task',
+        configuredToken: 'managed-token',
+      );
+
+      final source = await service.resolveSource();
+
+      expect(source.origin, ModelSourceOrigin.envUrl);
+      expect(source.kind, ModelSourceKind.network);
+      expect(source.location, 'https://cdn.example.com/model.task');
+      expect(source.token, 'managed-token');
+    },
+  );
+
+  test('resolveSource refresh bypasses its cached source', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(
       preferences: preferences,
       documentsDirectory: Directory.systemTemp,
-      configuredModelPath: '/env/model.task',
       configuredModelUrl: 'https://cdn.example.com/model.task',
     );
 
-    final source = await service.resolveSource();
+    final initialSource = await service.resolveSource();
+    await preferences.setString(
+      ModelSourceService.importedModelPathKey,
+      '/tmp/imported.task',
+    );
 
-    expect(source.origin, ModelSourceOrigin.envPath);
-    expect(source.kind, ModelSourceKind.file);
-    expect(source.location, '/env/model.task');
+    expect((await service.resolveSource()).location, initialSource.location);
+    expect(
+      (await service.resolveSource(refresh: true)).location,
+      '/tmp/imported.task',
+    );
   });
 
   test(
-      'resolveSource uses configured managed download URL when no local path is set',
-      () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final preferences = await SharedPreferences.getInstance();
-    final service = await _createService(
-      preferences: preferences,
-      documentsDirectory: Directory.systemTemp,
-      configuredModelUrl: 'https://cdn.example.com/model.task',
-      configuredToken: 'managed-token',
-    );
+    'resolveSource carries configured model type into source signature',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final service = await _createService(
+        preferences: preferences,
+        documentsDirectory: Directory.systemTemp,
+        configuredModelUrl: 'https://cdn.example.com/model.litertlm',
+        configuredModelTypeName: 'general',
+      );
 
-    final source = await service.resolveSource();
+      final source = await service.resolveSource();
 
-    expect(source.origin, ModelSourceOrigin.envUrl);
-    expect(source.kind, ModelSourceKind.network);
-    expect(source.location, 'https://cdn.example.com/model.task');
-    expect(source.token, 'managed-token');
-  });
+      expect(source.modelTypeName, 'general');
+      expect(source.signature, contains('modelType:general'));
+    },
+  );
 
   test('resolveSource throws when no model source is configured', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -114,49 +158,53 @@ void main() {
     );
   });
 
-  test('importLocalModel copies the file and persists the imported path',
-      () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final preferences = await SharedPreferences.getInstance();
-    final documentsDirectory = await Directory.systemTemp.createTemp(
-      'ghosteye-model-source-docs',
-    );
-    addTearDown(() async {
-      if (await documentsDirectory.exists()) {
-        await documentsDirectory.delete(recursive: true);
-      }
-    });
+  test(
+    'importLocalModel copies the file and persists the imported path',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final preferences = await SharedPreferences.getInstance();
+      final documentsDirectory = await Directory.systemTemp.createTemp(
+        'ghosteye-model-source-docs',
+      );
+      addTearDown(() async {
+        if (await documentsDirectory.exists()) {
+          await documentsDirectory.delete(recursive: true);
+        }
+      });
 
-    final sourceFile = File('${documentsDirectory.path}/source-model.task');
-    await sourceFile.writeAsString('fake model');
+      final sourceFile = File('${documentsDirectory.path}/source-model.task');
+      await sourceFile.writeAsString('fake model');
 
-    final service = await _createService(
-      preferences: preferences,
-      documentsDirectory: documentsDirectory,
-      pickModelFile: () async => PickedModelFile(
-        path: sourceFile.path,
-        name: 'source-model.task',
-      ),
-    );
+      final service = await _createService(
+        preferences: preferences,
+        documentsDirectory: documentsDirectory,
+        pickModelFile:
+            () async => PickedModelFile(
+              path: sourceFile.path,
+              name: 'source-model.task',
+            ),
+      );
 
-    final importedSource = await service.importLocalModel();
-    final persistedPath =
-        preferences.getString(ModelSourceService.importedModelPathKey);
+      final importedSource = await service.importLocalModel();
+      final persistedPath = preferences.getString(
+        ModelSourceService.importedModelPathKey,
+      );
 
-    expect(importedSource, isNotNull);
-    expect(importedSource!.origin, ModelSourceOrigin.importedFile);
-    expect(importedSource.kind, ModelSourceKind.file);
-    expect(persistedPath, importedSource.location);
-    expect(await File(importedSource.location).exists(), isTrue);
+      expect(importedSource, isNotNull);
+      expect(importedSource!.origin, ModelSourceOrigin.importedFile);
+      expect(importedSource.kind, ModelSourceKind.file);
+      expect(persistedPath, importedSource.location);
+      expect(await File(importedSource.location).exists(), isTrue);
 
-    await service.clearImportedModel();
+      await service.clearImportedModel();
 
-    expect(
-      preferences.getString(ModelSourceService.importedModelPathKey),
-      isNull,
-    );
-    expect(await File(importedSource.location).exists(), isFalse);
-  });
+      expect(
+        preferences.getString(ModelSourceService.importedModelPathKey),
+        isNull,
+      );
+      expect(await File(importedSource.location).exists(), isFalse);
+    },
+  );
 
   test('importLocalModel returns null when the picker is canceled', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -176,29 +224,31 @@ void main() {
     );
   });
 
-  test('clearInstalledSourceSignature removes the persisted signature',
-      () async {
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      ModelSourceService.installedSourceSignatureKey: 'some-signature',
-    });
-    final preferences = await SharedPreferences.getInstance();
-    final service = await _createService(
-      preferences: preferences,
-      documentsDirectory: Directory.systemTemp,
-    );
+  test(
+    'clearInstalledSourceSignature removes the persisted signature',
+    () async {
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        ModelSourceService.installedSourceSignatureKey: 'some-signature',
+      });
+      final preferences = await SharedPreferences.getInstance();
+      final service = await _createService(
+        preferences: preferences,
+        documentsDirectory: Directory.systemTemp,
+      );
 
-    expect(
-      preferences.getString(ModelSourceService.installedSourceSignatureKey),
-      'some-signature',
-    );
+      expect(
+        preferences.getString(ModelSourceService.installedSourceSignatureKey),
+        'some-signature',
+      );
 
-    await service.clearInstalledSourceSignature();
+      await service.clearInstalledSourceSignature();
 
-    expect(
-      preferences.getString(ModelSourceService.installedSourceSignatureKey),
-      isNull,
-    );
-  });
+      expect(
+        preferences.getString(ModelSourceService.installedSourceSignatureKey),
+        isNull,
+      );
+    },
+  );
 
   test('importLocalModel rejects unsupported file extensions', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -206,10 +256,11 @@ void main() {
     final service = await _createService(
       preferences: preferences,
       documentsDirectory: Directory.systemTemp,
-      pickModelFile: () async => const PickedModelFile(
-        path: '/tmp/not-a-model.txt',
-        name: 'not-a-model.txt',
-      ),
+      pickModelFile:
+          () async => const PickedModelFile(
+            path: '/tmp/not-a-model.txt',
+            name: 'not-a-model.txt',
+          ),
     );
 
     await expectLater(

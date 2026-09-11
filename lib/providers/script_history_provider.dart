@@ -18,8 +18,8 @@ final thumbnailEncoderProvider = Provider<ThumbnailEncoder>((ref) {
 
 final scriptHistoryProvider =
     AsyncNotifierProvider<ScriptHistoryController, List<ScriptSession>>(
-  ScriptHistoryController.new,
-);
+      ScriptHistoryController.new,
+    );
 
 class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
   @override
@@ -51,8 +51,9 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
     // Capture a thumbnail once per session and keep the first one generated so
     // the card art stays stable as later frames extend the same take.
     if (thumbnail == null && thumbnailSource != null) {
-      thumbnail =
-          ref.read(thumbnailEncoderProvider).encodeFromJpeg(thumbnailSource);
+      thumbnail = ref
+          .read(thumbnailEncoderProvider)
+          .encodeFromJpeg(thumbnailSource);
     }
 
     final session = ScriptSession(
@@ -65,9 +66,9 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
       thumbnail: thumbnail,
     );
 
-    final sessions = await ref.read(scriptHistoryServiceProvider).upsertSession(
-          session,
-        );
+    final sessions = await ref
+        .read(scriptHistoryServiceProvider)
+        .upsertSession(session);
     state = AsyncData(sessions);
   }
 
@@ -83,8 +84,9 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
     if (target == null) return;
 
     final updated = target.copyWith(isFavorite: !target.isFavorite);
-    final sessions =
-        await ref.read(scriptHistoryServiceProvider).upsertSession(updated);
+    final sessions = await ref
+        .read(scriptHistoryServiceProvider)
+        .upsertSession(updated);
     state = AsyncData(sessions);
   }
 
@@ -108,8 +110,9 @@ class ScriptHistoryController extends AsyncNotifier<List<ScriptSession>> {
   }
 
   Future<void> deleteSession(String sessionId) async {
-    final sessions =
-        await ref.read(scriptHistoryServiceProvider).deleteSession(sessionId);
+    final sessions = await ref
+        .read(scriptHistoryServiceProvider)
+        .deleteSession(sessionId);
     state = AsyncData(sessions);
   }
 

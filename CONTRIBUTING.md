@@ -102,15 +102,16 @@ Keep these files aligned when related behavior changes:
 ## Current contribution priorities
 
 - Real-device Android and iPhone validation of the managed-download and imported-model flows
-- Production hosting and authentication policy for the Gemma 3n `.litertlm` or `.task` artifact
+- Production hosting and authentication policy for the Gemma 4 E2B `.litertlm` artifact
 - Release metadata, screenshots, support links, and privacy-policy planning
-- Creator workflow improvements after release-readiness work: take library polish, frame thumbnails, diagnostics, and pacing controls
+- Creator workflow improvements after release-readiness work: take library thumbnails/shot notes and deeper setup observability
 
 ## Open-source and GitHub gaps
 
 The repo is structurally close to being shareable, but a few publication basics are still outstanding:
 
 - The repo now uses the MIT license; keep the top-level `LICENSE` file present when publishing.
-- Example Android/iOS application identifiers still need replacement before release.
+- Production Android/iOS application identifiers have been replaced; keep future bundle ID changes synchronized across docs and native configs.
+- Android release builds require a local `android/key.properties` file and production keystore. Do not commit release signing secrets.
 - Store screenshots, support links, privacy-policy details, and public repo metadata are still pending.
 - The internal `ghosteye_frame_ffi` package should stay clearly documented as an internal package unless you decide to publish it separately.

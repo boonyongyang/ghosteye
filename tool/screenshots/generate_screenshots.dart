@@ -4,10 +4,10 @@
 // CI suite (`flutter test`) never picks it up, the same way `benchmark/` is
 // kept out of the suite.
 //
-// Run it with `make screenshots`, which downloads the two Google Fonts
-// families the theme uses into a gitignored directory first. Without those
-// fonts the headless engine falls back to its test font and every glyph
-// renders as a filled box.
+// Run it with `make screenshots`. The brand faces are bundled in
+// `assets/fonts`, but `flutter test` does not load an app's declared fonts
+// automatically, so the harness registers them itself; otherwise the headless
+// engine falls back to its test font and every glyph renders as a filled box.
 //
 // What these images are: the real widget tree, the real `AppTheme`, and — for
 // the teleprompter — the real Fountain parser, driven through the real
@@ -15,7 +15,6 @@
 // Gemma inference. Both need physical hardware, so no screen that depends on
 // them is captured here.
 
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -30,7 +29,6 @@ import 'package:ghosteye/screens/onboarding_screen.dart';
 import 'package:ghosteye/widgets/director_tips_sheet.dart';
 import 'package:ghosteye/widgets/script_history_sheet.dart';
 import 'package:ghosteye/widgets/script_scroll_view.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Logical size of a modern phone viewport.
@@ -39,151 +37,68 @@ const Size _viewport = Size(390, 844);
 /// Rendered at 2x so the PNGs stay legible in docs without being enormous.
 const double _scale = 2.0;
 
-String get _fontsDir =>
-    Platform.environment['GHOSTEYE_SCREENSHOT_FONTS'] ?? '.screenshot-fonts';
-
 String get _outDir =>
     Platform.environment['GHOSTEYE_SCREENSHOT_OUT'] ?? 'docs/screenshots';
 
-/// google_fonts builds a `TextStyle` whose primary `fontFamily` is
-/// `'<Family>_<variant>'`, where variant is `regular`, `italic`, `700`,
-/// `700italic`, and so on (see `GoogleFontsVariant.toString`). Registering only
-/// the bare family name and leaning on `fontFamilyFallback` is not enough in
-/// the headless engine — it keeps the Ahem test font and every glyph renders as
-/// a filled box. So every variant name is registered explicitly.
+/// The brand faces are bundled in `assets/fonts` and declared in pubspec, but
+/// `flutter test` does not load an app's declared fonts automatically — without
+/// this every glyph renders as a filled box. Material's icon font ships with
+/// the SDK rather than the app and needs the same treatment, or every `Icon`
+/// draws as an empty square.
 ///
-/// These must be registered in `setUp`, not `setUpAll`: the test binding resets
-/// registered fonts between test cases, so fonts loaded once would only survive
-/// into the first screenshot.
-final Map<String, Uint8List> _fontCache = <String, Uint8List>{};
+/// This must run in `setUp`, not `setUpAll`: the test binding resets registered
+/// fonts between test cases, so loading once would only serve the first
+/// screenshot.
+const Map<String, List<String>> _bundledFonts = <String, List<String>>{
+  'CourierPrime': <String>[
+    'assets/fonts/CourierPrime-Regular.ttf',
+    'assets/fonts/CourierPrime-Italic.ttf',
+    'assets/fonts/CourierPrime-Bold.ttf',
+    'assets/fonts/CourierPrime-BoldItalic.ttf',
+  ],
+  'CormorantGaramond': <String>['assets/fonts/CormorantGaramond.ttf'],
+};
 
-Uint8List _fontBytes(String fileName) {
-  return _fontCache.putIfAbsent(fileName, () {
-    final file = File('$_fontsDir/$fileName');
-    if (!file.existsSync()) {
-      throw StateError(
-        'Missing font ${file.path}. Run `make screenshots`, which fetches the '
-        'fonts before invoking this tool.',
-      );
-    }
-    return file.readAsBytesSync();
-  });
-}
-
-/// Maps every google_fonts variant name to the face that should satisfy it.
-Map<String, String> _fontRegistrations() {
-  final map = <String, String>{
-    'CourierPrime': 'CourierPrime-Regular.ttf',
-    'CormorantGaramond': 'CormorantGaramond-var.ttf',
-  };
-
-  for (var weight = 100; weight <= 900; weight += 100) {
-    // w400 stringifies to 'regular'/'italic'; every other weight keeps its number.
-    final upright = weight == 400 ? 'regular' : '$weight';
-    final italic = weight == 400 ? 'italic' : '${weight}italic';
-    final bold = weight >= 600;
-
-    map['CourierPrime_$upright'] =
-        bold ? 'CourierPrime-Bold.ttf' : 'CourierPrime-Regular.ttf';
-    map['CourierPrime_$italic'] =
-        bold ? 'CourierPrime-BoldItalic.ttf' : 'CourierPrime-Italic.ttf';
-    // Cormorant Garamond ships as a single variable face upstream.
-    map['CormorantGaramond_$upright'] = 'CormorantGaramond-var.ttf';
-    map['CormorantGaramond_$italic'] = 'CormorantGaramond-var.ttf';
-  }
-
-  return map;
-}
-
-/// Material's icon glyphs live in a font that ships with the Flutter SDK
-/// rather than in the app, so the headless engine draws every `Icon` as an
-/// empty box until it is registered.
 String? _materialIconsPath() {
-  final vendored = File('$_fontsDir/MaterialIcons-Regular.otf');
-  if (vendored.existsSync()) {
-    return vendored.path;
-  }
   final root = Platform.environment['FLUTTER_ROOT'];
-  if (root != null) {
-    final sdkCopy = File(
-      '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
-    );
-    if (sdkCopy.existsSync()) {
-      return sdkCopy.path;
-    }
+  if (root == null) {
+    return null;
   }
-  return null;
+  final sdkCopy = File(
+    '$root/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf',
+  );
+  return sdkCopy.existsSync() ? sdkCopy.path : null;
+}
+
+Future<void> _loadFont(String family, List<String> paths) async {
+  final loader = FontLoader(family);
+  for (final path in paths) {
+    final file = File(path);
+    if (!file.existsSync()) {
+      throw StateError('Missing bundled font ${file.path}');
+    }
+    final bytes = file.readAsBytesSync();
+    loader.addFont(Future<ByteData>.value(ByteData.view(bytes.buffer)));
+  }
+  await loader.load();
 }
 
 Future<void> _registerFonts() async {
-  GoogleFonts.config.allowRuntimeFetching = false;
-
-  final iconsPath = _materialIconsPath();
-  if (iconsPath != null) {
-    final iconBytes = File(iconsPath).readAsBytesSync();
-    await (FontLoader('MaterialIcons')
-          ..addFont(Future<ByteData>.value(ByteData.view(iconBytes.buffer))))
-        .load();
+  for (final entry in _bundledFonts.entries) {
+    await _loadFont(entry.key, entry.value);
   }
-
-  for (final entry in _fontRegistrations().entries) {
-    final bytes = _fontBytes(entry.value);
-    await (FontLoader(entry.key)
-          ..addFont(Future<ByteData>.value(ByteData.view(bytes.buffer))))
-        .load();
+  final icons = _materialIconsPath();
+  if (icons != null) {
+    await _loadFont('MaterialIcons', <String>[icons]);
   }
 }
 
-ThemeData? _cachedTheme;
-
-/// The app theme, built exactly once.
-///
-/// google_fonts asks its own loader for every variant the theme constructs.
-/// We deliberately do not ship these fonts as app assets and keep runtime
-/// fetching off (determinism), so that lookup fails and throws — as an
-/// unawaited future, which surfaces as a post-test failure that
-/// `tester.takeException()` cannot reach. Worse, google_fonts *removes* a
-/// variant from its attempted-set when the load fails, so every rebuild of the
-/// theme throws again.
-///
-/// So build the theme a single time inside a guarded zone, swallow that one
-/// round of errors, and hand the same [ThemeData] to every screenshot. The
-/// glyphs come from the faces registered in [_registerFonts], so the rendered
-/// type is correct regardless.
-ThemeData _theme() {
-  final cached = _cachedTheme;
-  if (cached != null) {
-    return cached;
-  }
-
-  late ThemeData built;
-  // Synchronous on purpose: an `await` here would sit in flutter_test's fake
-  // time inside a test body and never resolve. Building the theme is sync; the
-  // google_fonts failures arrive later on futures created inside this zone, so
-  // the zone's error handler still catches them.
-  runZonedGuarded(
-    () {
-      built = AppTheme.darkTheme;
-    },
-    (Object error, StackTrace stack) {
-      // Expected: "font X was not found in the application assets".
-    },
-  );
-
-  _cachedTheme = built;
-  return built;
-}
-
-Widget _app(
-  ThemeData theme,
-  Widget home, {
-  List<Override> overrides = const <Override>[],
-}) {
+Widget _app(Widget home, {List<Override> overrides = const <Override>[]}) {
   return ProviderScope(
     overrides: overrides,
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: theme,
+      theme: AppTheme.darkTheme,
       home: home,
     ),
   );
@@ -224,19 +139,6 @@ Future<void> _shoot(
   await _rest(tester);
   if (afterPump != null) {
     await afterPump(tester);
-  }
-
-  // google_fonts is configured not to fetch at runtime, so it raises
-  // "font X was not found in the application assets" for each variant. That is
-  // expected here: the glyphs come from the faces registered in setUp, not from
-  // google_fonts' own loader. Let those futures resolve, then drain them so
-  // they do not surface as post-test failures.
-  await tester.runAsync(
-    () => Future<void>.delayed(const Duration(milliseconds: 50)),
-  );
-  await tester.pump();
-  while (tester.takeException() != null) {
-    // Discard; see comment above.
   }
 
   // Written through the framework's golden pipeline rather than a manual
@@ -280,7 +182,6 @@ void main() {
       tester,
       '01-onboarding-intro',
       widget: _app(
-        _theme(),
         const OnboardingScreen(),
         overrides: <Override>[
           onboardingProvider.overrideWith(_FreshOnboarding.new),
@@ -294,7 +195,6 @@ void main() {
       tester,
       '02-onboarding-handoff',
       widget: _app(
-        _theme(),
         const OnboardingScreen(),
         overrides: <Override>[
           onboardingProvider.overrideWith(_FreshOnboarding.new),
@@ -311,7 +211,6 @@ void main() {
   });
 
   testWidgets('teleprompter — parsed screenplay', (tester) async {
-    final theme = _theme();
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -332,7 +231,7 @@ void main() {
         container: container,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: theme,
+          theme: AppTheme.darkTheme,
           home: const Scaffold(
             backgroundColor: AppTheme.background,
             body: SafeArea(child: ScriptScrollView()),
@@ -343,7 +242,6 @@ void main() {
   });
 
   testWidgets('take library', (tester) async {
-    final theme = _theme();
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -361,7 +259,7 @@ void main() {
         container: container,
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          theme: theme,
+          theme: AppTheme.darkTheme,
           home: _sheetHost(
             ScriptHistorySheet(
               onSelectSession: (_) async {},
@@ -378,7 +276,6 @@ void main() {
       tester,
       '05-director-tips',
       widget: _app(
-        _theme(),
         _sheetHost(
           DirectorTipsSheet(
             primaryLabel: 'Start directing',

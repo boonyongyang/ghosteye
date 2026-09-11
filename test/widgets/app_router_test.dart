@@ -57,16 +57,11 @@ Future<void> _pumpApp(
         ),
         gemmaProvider.overrideWith(
           () => _FakeGemmaNotifier(
-            const GemmaState(
-              phase: GemmaPhase.downloading,
-              progress: 12,
-            ),
+            const GemmaState(phase: GemmaPhase.downloading, progress: 12),
           ),
         ),
       ],
-      child: MaterialApp.router(
-        routerConfig: createAppRouter(),
-      ),
+      child: MaterialApp.router(routerConfig: createAppRouter()),
     ),
   );
 
@@ -77,10 +72,7 @@ Future<void> _pumpApp(
 
 void main() {
   testWidgets('fresh installs route to onboarding first', (tester) async {
-    await _pumpApp(
-      tester,
-      onboardingStatus: const OnboardingStatus.initial(),
-    );
+    await _pumpApp(tester, onboardingStatus: const OnboardingStatus.initial());
 
     expect(find.text('Keep the shot on the device'), findsOneWidget);
     expect(find.text('Next'), findsOneWidget);
@@ -88,10 +80,7 @@ void main() {
   });
 
   testWidgets('start setup advances from onboarding to setup', (tester) async {
-    await _pumpApp(
-      tester,
-      onboardingStatus: const OnboardingStatus.initial(),
-    );
+    await _pumpApp(tester, onboardingStatus: const OnboardingStatus.initial());
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
@@ -100,7 +89,9 @@ void main() {
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
     expect(
-        find.text('Direct the tone, then keep the good takes'), findsOneWidget);
+      find.text('Direct the tone, then keep the good takes'),
+      findsOneWidget,
+    );
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
@@ -122,12 +113,12 @@ void main() {
   });
 
   testWidgets('skip also advances from onboarding to setup', (tester) async {
-    await _pumpApp(
-      tester,
-      onboardingStatus: const OnboardingStatus.initial(),
-    );
+    await _pumpApp(tester, onboardingStatus: const OnboardingStatus.initial());
 
-    await tester.tap(find.text('Skip'));
+    final skipButton = tester.widget<TextButton>(
+      find.widgetWithText(TextButton, 'Skip'),
+    );
+    skipButton.onPressed!();
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     await tester.pump();
@@ -140,8 +131,9 @@ void main() {
     );
   });
 
-  testWidgets('returning users bypass onboarding and land on setup',
-      (tester) async {
+  testWidgets('returning users bypass onboarding and land on setup', (
+    tester,
+  ) async {
     await _pumpApp(
       tester,
       onboardingStatus: const OnboardingStatus(
