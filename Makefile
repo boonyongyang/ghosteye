@@ -18,11 +18,14 @@ MODEL_PATH_ARGS := $(if $(MODEL_PATH),--dart-define=GHOSTEYE_GEMMA_MODEL_PATH="$
 FORMAT_DIRS := lib test tool packages/ghosteye_frame_ffi/lib
 SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
+SCREENSHOT_FONT_DIR ?= .screenshot-fonts
+GOOGLE_FONTS_RAW ?= https://raw.githubusercontent.com/google/fonts/main/ofl
+
 .PHONY: help bootstrap doctor devices emulators analyze test verify benchmark format fix \
 	clean pub-outdated config-copy config-check config-example run run-config \
 	run-local-model run-android run-android-local-model run-ios \
 	run-ios-local-model logs build-apk-debug build-ios-debug build-web-debug \
-	brand-assets todo bundle-ids docs docs-audit
+	brand-assets todo bundle-ids docs docs-audit screenshots
 
 help:
 	@printf "Ghosteye maintainer commands\n\n"
@@ -87,6 +90,20 @@ verify:
 
 benchmark:
 	$(FLUTTER) test benchmark/preprocessing_benchmark.dart
+
+# Regenerates docs/screenshots/*.png from the real widget tree.
+# Lives outside test/ so `flutter test` never runs it. The two Google Fonts
+# families the theme uses are fetched into a gitignored directory first --
+# without them the headless engine renders every glyph as a filled box.
+screenshots:
+	@mkdir -p $(SCREENSHOT_FONT_DIR)
+	@for f in CourierPrime-Regular CourierPrime-Bold CourierPrime-Italic CourierPrime-BoldItalic; do \
+		[ -s $(SCREENSHOT_FONT_DIR)/$$f.ttf ] || curl -sSfL "$(GOOGLE_FONTS_RAW)/courierprime/$$f.ttf" -o $(SCREENSHOT_FONT_DIR)/$$f.ttf; \
+	done
+	@[ -s $(SCREENSHOT_FONT_DIR)/CormorantGaramond-var.ttf ] || \
+		curl -sSfL "$(GOOGLE_FONTS_RAW)/cormorantgaramond/CormorantGaramond%5Bwght%5D.ttf" \
+			-o $(SCREENSHOT_FONT_DIR)/CormorantGaramond-var.ttf
+	$(FLUTTER) test --update-goldens tool/screenshots/generate_screenshots.dart
 
 format:
 	$(DART) format $(FORMAT_DIRS)

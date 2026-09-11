@@ -27,7 +27,7 @@ These items should happen before broad external testing or store submission.
 - [ ] Validate iPhone first-run setup on physical hardware
   Acceptance criteria: same validation flow as Android, plus GPU-to-CPU fallback messaging is confirmed
 - [ ] Prepare store metadata
-  Acceptance criteria: screenshots, support URL, privacy-policy plan, and listing copy are ready
+  Acceptance criteria: screenshots, support URL, privacy-policy plan, and listing copy are ready. Doc-quality UI screenshots now regenerate from the real widget tree via `make screenshots` (see [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)); store listings additionally need on-device captures showing the live camera feed and real model output.
 
 ## Priority 1: Creator workflow improvements
 
