@@ -4,22 +4,13 @@ import 'package:ghosteye/services/script_export_service.dart';
 
 void main() {
   const entries = <ScriptEntry>[
-    ScriptEntry(
-      type: ScriptEntryType.slugline,
-      text: 'INT. CAB - NIGHT',
-    ),
+    ScriptEntry(type: ScriptEntryType.slugline, text: 'INT. CAB - NIGHT'),
     ScriptEntry(
       type: ScriptEntryType.action,
       text: 'Streetlight fractures over the windshield.',
     ),
-    ScriptEntry(
-      type: ScriptEntryType.character,
-      text: 'MARA',
-    ),
-    ScriptEntry(
-      type: ScriptEntryType.dialogue,
-      text: 'Keep the lens steady.',
-    ),
+    ScriptEntry(type: ScriptEntryType.character, text: 'MARA'),
+    ScriptEntry(type: ScriptEntryType.dialogue, text: 'Keep the lens steady.'),
   ];
 
   test('buildDocument formats Fountain output with screenplay headers', () {
@@ -58,22 +49,24 @@ void main() {
     expect(document.text, contains('Character: MARA'));
   });
 
-  test('buildDocument appends notes to Fountain output as a boneyard block',
-      () {
-    final service = ScriptExportService();
+  test(
+    'buildDocument appends notes to Fountain output as a boneyard block',
+    () {
+      final service = ScriptExportService();
 
-    final document = service.buildDocument(
-      format: ScriptExportFormat.fountain,
-      entries: entries,
-      title: 'Current take',
-      notes: 'Push in slowly on the second line.',
-    );
+      final document = service.buildDocument(
+        format: ScriptExportFormat.fountain,
+        entries: entries,
+        title: 'Current take',
+        notes: 'Push in slowly on the second line.',
+      );
 
-    expect(document.text, contains('/*'));
-    expect(document.text, contains('Notes:'));
-    expect(document.text, contains('Push in slowly on the second line.'));
-    expect(document.text.trimRight().endsWith('*/'), isTrue);
-  });
+      expect(document.text, contains('/*'));
+      expect(document.text, contains('Notes:'));
+      expect(document.text, contains('Push in slowly on the second line.'));
+      expect(document.text.trimRight().endsWith('*/'), isTrue);
+    },
+  );
 
   test('buildDocument appends notes to plain-text output', () {
     final service = ScriptExportService();

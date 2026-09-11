@@ -8,10 +8,7 @@ import 'package:image/image.dart' as img;
 /// Runs synchronously and is intended to be called once per completed take,
 /// so the decode/resize/encode cost stays off the per-frame hot path.
 class ThumbnailEncoder {
-  const ThumbnailEncoder({
-    this.maxDimension = 160,
-    this.quality = 55,
-  });
+  const ThumbnailEncoder({this.maxDimension = 160, this.quality = 55});
 
   /// Longest-side length, in pixels, of the generated thumbnail.
   final int maxDimension;

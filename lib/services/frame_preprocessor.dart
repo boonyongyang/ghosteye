@@ -24,22 +24,23 @@ abstract class FramePreprocessor {
     Duration workerDelay = Duration.zero,
     String? ffiLibraryPath,
   }) {
-    final resolvedSettings = settings.backend == FramePreprocessorBackend.ffi &&
-            !supportsBackend(FramePreprocessorBackend.ffi)
-        ? settings.copyWith(backend: FramePreprocessorBackend.dart)
-        : settings;
+    final resolvedSettings =
+        settings.backend == FramePreprocessorBackend.ffi &&
+                !supportsBackend(FramePreprocessorBackend.ffi)
+            ? settings.copyWith(backend: FramePreprocessorBackend.dart)
+            : settings;
 
     return switch (resolvedSettings.backend) {
       FramePreprocessorBackend.dart => DartFramePreprocessor(
-          settings: resolvedSettings,
-          workerDelay: workerDelay,
-          ffiLibraryPath: ffiLibraryPath,
-        ),
+        settings: resolvedSettings,
+        workerDelay: workerDelay,
+        ffiLibraryPath: ffiLibraryPath,
+      ),
       FramePreprocessorBackend.ffi => FfiFramePreprocessor(
-          settings: resolvedSettings,
-          workerDelay: workerDelay,
-          ffiLibraryPath: ffiLibraryPath,
-        ),
+        settings: resolvedSettings,
+        workerDelay: workerDelay,
+        ffiLibraryPath: ffiLibraryPath,
+      ),
     };
   }
 
@@ -160,17 +161,23 @@ class _WorkerFramePreprocessor implements FramePreprocessor {
     _errorPort = ReceivePort()..listen(_handleWorkerError);
     _exitPort = ReceivePort()..listen(_handleWorkerExit);
 
-    _workerIsolate = await Isolate.spawn<_WorkerBootstrapMessage>(
-      _workerMain,
-      _WorkerBootstrapMessage(
-        sendPort: _receivePort!.sendPort,
-        backend: settings.backend,
-        workerDelay: workerDelay,
-        ffiLibraryPath: ffiLibraryPath,
-      ),
-      onError: _errorPort!.sendPort,
-      onExit: _exitPort!.sendPort,
-    );
+    try {
+      _workerIsolate = await Isolate.spawn<_WorkerBootstrapMessage>(
+        _workerMain,
+        _WorkerBootstrapMessage(
+          sendPort: _receivePort!.sendPort,
+          backend: settings.backend,
+          workerDelay: workerDelay,
+          ffiLibraryPath: ffiLibraryPath,
+        ),
+        onError: _errorPort!.sendPort,
+        onExit: _exitPort!.sendPort,
+      );
+    } catch (error) {
+      _failPendingRequests(error);
+      _resetWorkerHandles();
+      rethrow;
+    }
 
     return completer.future;
   }
@@ -242,6 +249,7 @@ class _WorkerFramePreprocessor implements FramePreprocessor {
       _ => 'Unknown frame worker failure.',
     };
     _failPendingRequests(StateError(errorMessage));
+    _resetWorkerHandles();
   }
 
   void _handleWorkerExit(dynamic _) {
@@ -251,6 +259,7 @@ class _WorkerFramePreprocessor implements FramePreprocessor {
     _failPendingRequests(
       StateError('Frame preprocessing worker exited unexpectedly.'),
     );
+    _resetWorkerHandles();
   }
 
   void _failPendingRequests(Object error) {
@@ -265,6 +274,18 @@ class _WorkerFramePreprocessor implements FramePreprocessor {
       }
     }
     _pendingRequests.clear();
+  }
+
+  void _resetWorkerHandles() {
+    _workerIsolate?.kill(priority: Isolate.immediate);
+    _workerIsolate = null;
+    _receivePort?.close();
+    _errorPort?.close();
+    _exitPort?.close();
+    _receivePort = null;
+    _errorPort = null;
+    _exitPort = null;
+    _readyPortCompleter = null;
   }
 }
 
@@ -322,47 +343,44 @@ void _workerMain(_WorkerBootstrapMessage bootstrap) {
         height: height,
         format: format,
         planes: rawPlanes
-            .map((rawPlane) => FramePlaneData(
-                  bytes: (rawPlane[0] as TransferableTypedData)
-                      .materialize()
-                      .asUint8List(),
-                  bytesPerRow: rawPlane[1] as int,
-                  bytesPerPixel: rawPlane[2] as int,
-                ))
+            .map(
+              (rawPlane) => FramePlaneData(
+                bytes:
+                    (rawPlane[0] as TransferableTypedData)
+                        .materialize()
+                        .asUint8List(),
+                bytesPerRow: rawPlane[1] as int,
+                bytesPerPixel: rawPlane[2] as int,
+              ),
+            )
             .toList(growable: false),
       );
 
       final imageBytes = switch (bootstrap.backend) {
         FramePreprocessorBackend.dart => codec.convertFrameToImageBytes(
-            frame,
-            maxDimension: maxDimension,
-            jpegQuality: jpegQuality,
-          ),
+          frame,
+          maxDimension: maxDimension,
+          jpegQuality: jpegQuality,
+        ),
         FramePreprocessorBackend.ffi => _convertWithFfi(
-            ffi: ffi ??= GhosteyeFrameFfi(
-              libraryPath: bootstrap.ffiLibraryPath,
-            ),
-            frame: frame,
-            maxDimension: maxDimension,
-            jpegQuality: jpegQuality,
-          ),
+          ffi: ffi ??= GhosteyeFrameFfi(libraryPath: bootstrap.ffiLibraryPath),
+          frame: frame,
+          maxDimension: maxDimension,
+          jpegQuality: jpegQuality,
+        ),
       };
 
-      bootstrap.sendPort.send(
-        <Object?>[
-          'result',
-          requestId,
-          TransferableTypedData.fromList(<Uint8List>[imageBytes]),
-        ],
-      );
+      bootstrap.sendPort.send(<Object?>[
+        'result',
+        requestId,
+        TransferableTypedData.fromList(<Uint8List>[imageBytes]),
+      ]);
     } catch (error, stackTrace) {
-      bootstrap.sendPort.send(
-        <Object?>[
-          'error',
-          requestId,
-          '$error\n$stackTrace',
-        ],
-      );
+      bootstrap.sendPort.send(<Object?>[
+        'error',
+        requestId,
+        '$error\n$stackTrace',
+      ]);
     }
   });
 }
@@ -375,27 +393,27 @@ Uint8List _convertWithFfi({
 }) {
   return switch (frame.format) {
     'bgra8888' => ffi.convertBgra8888ToJpeg(
-        bytes: frame.planes.first.bytes,
-        width: frame.width,
-        height: frame.height,
-        bytesPerRow: frame.planes.first.bytesPerRow,
-        maxDimension: maxDimension,
-        quality: jpegQuality,
-      ),
+      bytes: frame.planes.first.bytes,
+      width: frame.width,
+      height: frame.height,
+      bytesPerRow: frame.planes.first.bytesPerRow,
+      maxDimension: maxDimension,
+      quality: jpegQuality,
+    ),
     'yuv420' => ffi.convertYuv420ToJpeg(
-        yPlane: frame.planes[0].bytes,
-        yBytesPerRow: frame.planes[0].bytesPerRow,
-        uPlane: frame.planes[1].bytes,
-        uBytesPerRow: frame.planes[1].bytesPerRow,
-        uBytesPerPixel: frame.planes[1].bytesPerPixel,
-        vPlane: frame.planes[2].bytes,
-        vBytesPerRow: frame.planes[2].bytesPerRow,
-        vBytesPerPixel: frame.planes[2].bytesPerPixel,
-        width: frame.width,
-        height: frame.height,
-        maxDimension: maxDimension,
-        quality: jpegQuality,
-      ),
+      yPlane: frame.planes[0].bytes,
+      yBytesPerRow: frame.planes[0].bytesPerRow,
+      uPlane: frame.planes[1].bytes,
+      uBytesPerRow: frame.planes[1].bytesPerRow,
+      uBytesPerPixel: frame.planes[1].bytesPerPixel,
+      vPlane: frame.planes[2].bytes,
+      vBytesPerRow: frame.planes[2].bytesPerRow,
+      vBytesPerPixel: frame.planes[2].bytesPerPixel,
+      width: frame.width,
+      height: frame.height,
+      maxDimension: maxDimension,
+      quality: jpegQuality,
+    ),
     _ => throw UnsupportedError('Unsupported camera format: ${frame.format}'),
   };
 }

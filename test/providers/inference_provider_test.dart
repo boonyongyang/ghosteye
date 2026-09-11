@@ -176,44 +176,51 @@ void main() {
   });
 
   group('inferenceProvider status side effects', () {
-    test('resets inferenceStatus to idle when camera is not yet ready',
-        () async {
-      final container = _containerWithLoadingDeps();
-      addTearDown(container.dispose);
+    test(
+      'resets inferenceStatus to idle when camera is not yet ready',
+      () async {
+        final container = _containerWithLoadingDeps();
+        addTearDown(container.dispose);
 
-      // Pre-set a non-idle status to verify the reset
-      container.read(inferenceStatusProvider.notifier).state =
-          const InferenceStatusState(activity: InferenceActivity.processing);
+        // Pre-set a non-idle status to verify the reset
+        container.read(inferenceStatusProvider.notifier).state =
+            const InferenceStatusState(activity: InferenceActivity.processing);
 
-      // Listening triggers the StreamProvider body
-      container.listen(inferenceProvider, (_, __) {});
-      await Future<void>.delayed(Duration.zero);
+        // Listening triggers the StreamProvider body
+        container.listen(inferenceProvider, (_, __) {});
+        await Future<void>.delayed(Duration.zero);
 
-      expect(
-        container.read(inferenceStatusProvider).activity,
-        equals(InferenceActivity.idle),
-      );
-    });
+        expect(
+          container.read(inferenceStatusProvider).activity,
+          equals(InferenceActivity.idle),
+        );
+      },
+    );
 
     test(
-        'camera-unavailable path dominates even when onboarding has not been seen',
-        () async {
-      // Camera is still loading → the null-camera guard fires before
-      // the onboarding check, so the result is still idle.
-      final container = _containerWithLoadingDeps(
-        onboardingFactory: () => _ReadyOnboardingController(
-          const OnboardingStatus(introComplete: true, directorTipsSeen: false),
-        ),
-      );
-      addTearDown(container.dispose);
+      'camera-unavailable path dominates even when onboarding has not been seen',
+      () async {
+        // Camera is still loading → the null-camera guard fires before
+        // the onboarding check, so the result is still idle.
+        final container = _containerWithLoadingDeps(
+          onboardingFactory:
+              () => _ReadyOnboardingController(
+                const OnboardingStatus(
+                  introComplete: true,
+                  directorTipsSeen: false,
+                ),
+              ),
+        );
+        addTearDown(container.dispose);
 
-      container.listen(inferenceProvider, (_, __) {});
-      await Future<void>.delayed(Duration.zero);
+        container.listen(inferenceProvider, (_, __) {});
+        await Future<void>.delayed(Duration.zero);
 
-      expect(
-        container.read(inferenceStatusProvider).activity,
-        equals(InferenceActivity.idle),
-      );
-    });
+        expect(
+          container.read(inferenceStatusProvider).activity,
+          equals(InferenceActivity.idle),
+        );
+      },
+    );
   });
 }

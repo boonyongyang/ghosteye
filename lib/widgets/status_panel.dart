@@ -32,10 +32,7 @@ class StatusPanel extends StatelessWidget {
               child: const SizedBox(width: 4),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: child,
-              ),
+              child: Padding(padding: const EdgeInsets.all(18), child: child),
             ),
           ],
         ),

@@ -9,11 +9,7 @@ Future<void> _pump(WidgetTester tester, ProviderContainer container) {
   return tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        home: Scaffold(
-          body: TeleprompterControls(),
-        ),
-      ),
+      child: const MaterialApp(home: Scaffold(body: TeleprompterControls())),
     ),
   );
 }
@@ -30,8 +26,9 @@ void main() {
     expect(find.text('Reveal pace'), findsOneWidget);
   });
 
-  testWidgets('tapping a text size segment updates the provider',
-      (tester) async {
+  testWidgets('tapping a text size segment updates the provider', (
+    tester,
+  ) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -51,8 +48,9 @@ void main() {
     );
   });
 
-  testWidgets('tapping density and pace segments updates the provider',
-      (tester) async {
+  testWidgets('tapping density and pace segments updates the provider', (
+    tester,
+  ) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 

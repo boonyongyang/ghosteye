@@ -32,7 +32,10 @@ void main() {
         isTrue,
       );
       expect(_config(origin: ModelSourceOrigin.envUrl).isImportedFile, isFalse);
-      expect(_config(origin: ModelSourceOrigin.envPath).isImportedFile, isFalse);
+      expect(
+        _config(origin: ModelSourceOrigin.envPath).isImportedFile,
+        isFalse,
+      );
     });
   });
 
@@ -41,7 +44,7 @@ void main() {
       expect(
         _config(
           location:
-              'https://huggingface.co/google/gemma-3n-E2B-it-litert-preview/resolve/main/model.task',
+              'https://huggingface.co/example/gemma-4-E2B/resolve/main/model.litertlm',
         ).isHuggingFace,
         isTrue,
       );
@@ -55,8 +58,9 @@ void main() {
   group('ModelSourceConfig.modelId', () {
     test('derives the model id from the location file name', () {
       expect(
-        _config(location: 'https://cdn.example.com/models/gemma.litertlm')
-            .modelId,
+        _config(
+          location: 'https://cdn.example.com/models/gemma.litertlm',
+        ).modelId,
         equals('gemma.litertlm'),
       );
     });
@@ -68,7 +72,10 @@ void main() {
         origin: ModelSourceOrigin.importedFile,
         location: '/data/model.task',
       );
-      expect(config.signature, equals('importedFile:/data/model.task'));
+      expect(
+        config.signature,
+        equals('importedFile:/data/model.task:modelType:gemma4'),
+      );
     });
 
     test('changes when the source origin or location changes', () {

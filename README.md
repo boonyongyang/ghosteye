@@ -19,10 +19,10 @@ set, what is and is not real in them, and `make screenshots` to regenerate.
 
 ## Status
 
-- Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history with frame thumbnails, active/saved-take export, Model Center storage/source controls, performance presets, and teleprompter display controls.
-- The mainline runtime targets Gemma 3n on Android and physical iPhone hardware.
-- Production hosting, real-device validation, release identifiers, and store assets are still in progress.
-- Gemma 4 remains a separate spike, not a mainline migration target.
+- Mainline includes setup-handoff onboarding, source-aware setup, branded launch assets, local take history with frame thumbnails and shot notes, active/saved-take export, Model Center storage/source controls, performance presets, and persisted teleprompter controls.
+- The mainline runtime targets Gemma 4 E2B on Android and physical iPhone hardware.
+- Production hosting, real-device validation, release signing, and store assets are still in progress.
+- Gemma 4 E4B remains a higher-memory follow-up after E2B physical-device validation.
 
 ## Highlights
 
@@ -32,7 +32,7 @@ set, what is and is not real in them, and `make screenshots` to regenerate.
 - One-handed director command dock for capture, history, export, clear, and tips
 - Replayable director tips, local session history with per-take frame thumbnails and shot notes, and export/share for active or saved takes
 - Model Center for active source, local storage, reset, source switching, privacy status, and pacing presets
-- Teleprompter display controls for text size, line spacing, and reveal pace
+- Persisted teleprompter controls for text size, line spacing, and streamed reveal pace
 - Copyable technical diagnostics on setup failures for faster support triage
 - GPU-first startup with visible CPU fallback status
 - Local-first runtime with no server-side frame processing
@@ -66,12 +66,15 @@ Use a managed URL you control:
 
 ```json
 {
-  "GHOSTEYE_GEMMA_MODEL_URL": "https://your-cdn.example.com/models/gemma-3n-E2B-it-int4.litertlm",
+  "GHOSTEYE_GEMMA_MODEL_URL": "https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/7fa1d78473894f7e736a21d920c3aa80f950c0db/gemma-4-E2B-it.litertlm",
+  "GHOSTEYE_GEMMA_MODEL_TYPE": "gemma4",
   "GHOSTEYE_GEMMA_TOKEN": "optional_bearer_token_for_gated_downloads"
 }
 ```
 
 If the download is public, omit `GHOSTEYE_GEMMA_TOKEN`.
+
+`GHOSTEYE_GEMMA_MODEL_TYPE` defaults to `gemma4`. The current runtime dependency supports `gemma4`, `gemmaIt`, `general`, `deepSeek`, `qwen`, `qwen3`, `llama`, `hammer`, `functionGemma`, and `phi`; use non-default values only for local model-family tests.
 
 ### Local model options
 
@@ -80,7 +83,8 @@ If the download is public, omit `GHOSTEYE_GEMMA_TOKEN`.
 
 ```bash
 flutter run \
-  --dart-define=GHOSTEYE_GEMMA_MODEL_PATH=/absolute/path/to/gemma-3n-E2B-it-int4.litertlm
+  --dart-define=GHOSTEYE_GEMMA_MODEL_PATH=/absolute/path/to/gemma-4-E2B-it.litertlm \
+  --dart-define=GHOSTEYE_GEMMA_MODEL_TYPE=gemma4
 ```
 
 Imported models are copied into app storage and reused on later launches until you switch back to the managed download path.
@@ -105,9 +109,13 @@ make verify
 make run DEVICE=<device-id>
 make run-android
 make run-ios IOS_DEVICE=<physical-device-id>
-make run-local-model MODEL_PATH=/absolute/path/to/gemma-3n-E2B-it-int4.litertlm
+make run-local-model MODEL_PATH=/absolute/path/to/gemma-4-E2B-it.litertlm MODEL_TYPE=gemma4
+make build-apk-release
+make build-appbundle-release
 make docs-audit
 ```
+
+Android release builds require a local `android/key.properties` file that points at a production keystore. Copy `android/key.properties.example`, fill in the local values, and keep both `android/key.properties` and keystore files out of git.
 
 ## Project Docs
 
@@ -121,4 +129,4 @@ make docs-audit
 
 ## Release Readiness
 
-Ghosteye is close to public GitHub shape, with MIT licensing, passing local verification, and GitHub Actions verification in place. The remaining app-release blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, final app IDs, store assets, and support/privacy links.
+Ghosteye is close to public GitHub shape, with MIT licensing, passing local verification, and GitHub Actions verification in place. The remaining app-release blockers are tracked in [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md), [plan.md](plan.md), and [roadmap.md](roadmap.md), with the biggest items being production model hosting, physical-device validation, local release credentials, store assets, and support/privacy links.

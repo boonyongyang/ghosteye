@@ -16,26 +16,14 @@ void main() {
 
     final controller = container.read(scriptProvider.notifier);
     controller.startResponse(1);
-    controller.appendToken(
-      generationId: 1,
-      token: 'INT. APARTMENT - NIGHT\n',
-    );
+    controller.appendToken(generationId: 1, token: 'INT. APARTMENT - NIGHT\n');
     controller.appendToken(
       generationId: 1,
       token: 'Rain needles the window.\n',
     );
-    controller.appendToken(
-      generationId: 1,
-      token: 'MARA\n',
-    );
-    controller.appendToken(
-      generationId: 1,
-      token: '(beat)\n',
-    );
-    controller.appendToken(
-      generationId: 1,
-      token: 'This city never sleeps.',
-    );
+    controller.appendToken(generationId: 1, token: 'MARA\n');
+    controller.appendToken(generationId: 1, token: '(beat)\n');
+    controller.appendToken(generationId: 1, token: 'This city never sleeps.');
     controller.finishResponse(1);
 
     final state = container.read(scriptProvider);
@@ -57,16 +45,10 @@ void main() {
 
     final controller = container.read(scriptProvider.notifier);
     controller.startResponse(3);
-    controller.appendToken(
-      generationId: 3,
-      token: 'Rain over neon.\n',
-    );
+    controller.appendToken(generationId: 3, token: 'Rain over neon.\n');
     controller.cancelActiveResponse();
 
-    controller.appendToken(
-      generationId: 3,
-      token: 'This should never appear.',
-    );
+    controller.appendToken(generationId: 3, token: 'This should never appear.');
     controller.finishResponse(3);
 
     final state = container.read(scriptProvider);
@@ -76,33 +58,28 @@ void main() {
   });
 
   test(
-      'ScriptController clear resets visible script and later generations work',
-      () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    'ScriptController clear resets visible script and later generations work',
+    () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
 
-    final controller = container.read(scriptProvider.notifier);
-    controller.startResponse(1);
-    controller.appendToken(
-      generationId: 1,
-      token: 'INT. GARAGE - NIGHT',
-    );
-    controller.finishResponse(1);
+      final controller = container.read(scriptProvider.notifier);
+      controller.startResponse(1);
+      controller.appendToken(generationId: 1, token: 'INT. GARAGE - NIGHT');
+      controller.finishResponse(1);
 
-    controller.clear();
+      controller.clear();
 
-    controller.startResponse(2);
-    controller.appendToken(
-      generationId: 2,
-      token: 'EXT. ROOFTOP - DAWN',
-    );
-    controller.finishResponse(2);
+      controller.startResponse(2);
+      controller.appendToken(generationId: 2, token: 'EXT. ROOFTOP - DAWN');
+      controller.finishResponse(2);
 
-    final state = container.read(scriptProvider);
-    expect(state.entries, hasLength(1));
-    expect(state.entries.single.text, 'EXT. ROOFTOP - DAWN');
-    expect(state.activeGenerationId, isNull);
-  });
+      final state = container.read(scriptProvider);
+      expect(state.entries, hasLength(1));
+      expect(state.entries.single.text, 'EXT. ROOFTOP - DAWN');
+      expect(state.activeGenerationId, isNull);
+    },
+  );
 
   test('ScriptController syncs completed takes into saved history', () async {
     final container = ProviderContainer();

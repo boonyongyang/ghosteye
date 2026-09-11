@@ -34,25 +34,25 @@ class CameraFailure implements Exception {
   bool get canRetry => kind != CameraFailureKind.restricted;
 
   String get title => switch (kind) {
-        CameraFailureKind.permissionDenied => 'Grant Camera Access',
-        CameraFailureKind.permissionDeniedPermanently => 'Camera Access Needed',
-        CameraFailureKind.restricted => 'Camera Access Restricted',
-        CameraFailureKind.unavailable => 'Camera Unavailable',
-        CameraFailureKind.unknown => 'Camera Error',
-      };
+    CameraFailureKind.permissionDenied => 'Grant Camera Access',
+    CameraFailureKind.permissionDeniedPermanently => 'Camera Access Needed',
+    CameraFailureKind.restricted => 'Camera Access Restricted',
+    CameraFailureKind.unavailable => 'Camera Unavailable',
+    CameraFailureKind.unknown => 'Camera Error',
+  };
 
   String get guidance => switch (kind) {
-        CameraFailureKind.permissionDenied =>
-          'Ghosteye needs camera access to turn the live shot into screenplay text. Grant access, then retry.',
-        CameraFailureKind.permissionDeniedPermanently =>
-          'Camera access was denied earlier. Open Settings and enable Camera for Ghosteye, then return and retry.',
-        CameraFailureKind.restricted =>
-          'This device is restricting camera access, so Ghosteye cannot start the live director view right now.',
-        CameraFailureKind.unavailable =>
-          'Ghosteye could not find a usable camera on this device. Check device availability and retry.',
-        CameraFailureKind.unknown =>
-          'Ghosteye could not start the camera. Retry once, then check device permissions if it keeps failing.',
-      };
+    CameraFailureKind.permissionDenied =>
+      'Ghosteye needs camera access to turn the live shot into screenplay text. Grant access, then retry.',
+    CameraFailureKind.permissionDeniedPermanently =>
+      'Camera access was denied earlier. Open Settings and enable Camera for Ghosteye, then return and retry.',
+    CameraFailureKind.restricted =>
+      'This device is restricting camera access, so Ghosteye cannot start the live director view right now.',
+    CameraFailureKind.unavailable =>
+      'Ghosteye could not find a usable camera on this device. Check device availability and retry.',
+    CameraFailureKind.unknown =>
+      'Ghosteye could not start the camera. Retry once, then check device permissions if it keeps failing.',
+  };
 
   @override
   String toString() => message;
@@ -66,26 +66,27 @@ CameraFailure classifyCameraFailure(Object error) {
   if (error is CameraException) {
     return switch (error.code) {
       'CameraAccessDenied' => CameraFailure(
-          kind: CameraFailureKind.permissionDenied,
-          message: error.description ?? 'Camera access was denied.',
-          details: error,
-        ),
+        kind: CameraFailureKind.permissionDenied,
+        message: error.description ?? 'Camera access was denied.',
+        details: error,
+      ),
       'CameraAccessDeniedWithoutPrompt' => CameraFailure(
-          kind: CameraFailureKind.permissionDeniedPermanently,
-          message: error.description ??
-              'Camera access was previously denied and cannot be requested again from inside the app.',
-          details: error,
-        ),
+        kind: CameraFailureKind.permissionDeniedPermanently,
+        message:
+            error.description ??
+            'Camera access was previously denied and cannot be requested again from inside the app.',
+        details: error,
+      ),
       'CameraAccessRestricted' => CameraFailure(
-          kind: CameraFailureKind.restricted,
-          message: error.description ?? 'Camera access is restricted.',
-          details: error,
-        ),
+        kind: CameraFailureKind.restricted,
+        message: error.description ?? 'Camera access is restricted.',
+        details: error,
+      ),
       _ => CameraFailure(
-          kind: CameraFailureKind.unknown,
-          message: error.description ?? error.code,
-          details: error,
-        ),
+        kind: CameraFailureKind.unknown,
+        message: error.description ?? error.code,
+        details: error,
+      ),
     };
   }
 
@@ -105,10 +106,8 @@ CameraFailure classifyCameraFailure(Object error) {
 }
 
 class FrameSampler {
-  FrameSampler({
-    required this.interval,
-    NowProvider? now,
-  }) : _now = now ?? DateTime.now;
+  FrameSampler({required this.interval, NowProvider? now})
+    : _now = now ?? DateTime.now;
 
   Duration interval;
   final NowProvider _now;
@@ -152,9 +151,7 @@ class CameraSession {
   final FrameSampler sampler;
   final Duration sampleInterval;
 
-  CameraSession copyWith({
-    Duration? sampleInterval,
-  }) {
+  CameraSession copyWith({Duration? sampleInterval}) {
     return CameraSession(
       controller: controller,
       sampledFrames: sampledFrames,
@@ -185,9 +182,10 @@ class CameraService {
         selectedCamera,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup: Platform.isIOS
-            ? ImageFormatGroup.bgra8888
-            : ImageFormatGroup.yuv420,
+        imageFormatGroup:
+            Platform.isIOS
+                ? ImageFormatGroup.bgra8888
+                : ImageFormatGroup.yuv420,
       );
 
       await controller.initialize();

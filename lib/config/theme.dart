@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   const AppTheme._();
@@ -16,36 +15,43 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = ThemeData.dark(useMaterial3: true);
-    final textTheme =
-        GoogleFonts.courierPrimeTextTheme(base.textTheme).copyWith(
-      displaySmall: GoogleFonts.cormorantGaramond(
+    // Both families are bundled in assets/fonts and declared in pubspec, so the
+    // app never fetches type at runtime.
+    final monoTextTheme = base.textTheme.apply(fontFamily: 'CourierPrime');
+    final textTheme = monoTextTheme.copyWith(
+      displaySmall: monoTextTheme.displaySmall?.copyWith(
+        fontFamily: 'CormorantGaramond',
+        // Cormorant Garamond ships upstream as a single variable face, so the
+        // weight has to be selected through an axis rather than by picking a
+        // static file.
+        fontVariations: const <FontVariation>[FontVariation('wght', 700)],
         color: textPrimary,
         fontSize: 42,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.4,
       ),
-      titleLarge: GoogleFonts.courierPrime(
+      titleLarge: monoTextTheme.titleLarge?.copyWith(
         color: textPrimary,
         fontSize: 22,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
       ),
-      titleMedium: GoogleFonts.courierPrime(
+      titleMedium: monoTextTheme.titleMedium?.copyWith(
         color: textPrimary,
         fontSize: 16,
         fontWeight: FontWeight.w700,
       ),
-      bodyLarge: GoogleFonts.courierPrime(
+      bodyLarge: monoTextTheme.bodyLarge?.copyWith(
         color: textPrimary,
         fontSize: 16,
         height: 1.5,
       ),
-      bodyMedium: GoogleFonts.courierPrime(
+      bodyMedium: monoTextTheme.bodyMedium?.copyWith(
         color: textPrimary,
         fontSize: 14,
         height: 1.45,
       ),
-      bodySmall: GoogleFonts.courierPrime(
+      bodySmall: monoTextTheme.bodySmall?.copyWith(
         color: textMuted,
         fontSize: 12,
         height: 1.35,

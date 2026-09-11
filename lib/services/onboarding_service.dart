@@ -7,9 +7,8 @@ import 'script_history_service.dart';
 typedef LoadOnboardingPreferencesFn = Future<SharedPreferences> Function();
 
 class OnboardingService {
-  OnboardingService({
-    LoadOnboardingPreferencesFn? loadPreferences,
-  }) : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance;
+  OnboardingService({LoadOnboardingPreferencesFn? loadPreferences})
+    : _loadPreferences = loadPreferences ?? SharedPreferences.getInstance;
 
   static const onboardingIntroCompleteKey =
       'ghosteye.onboarding_intro_complete';
@@ -58,12 +57,15 @@ class OnboardingService {
   }
 
   bool _hasExistingUsage(SharedPreferences preferences) {
-    final installedSourceSignature =
-        preferences.getString(ModelSourceService.installedSourceSignatureKey);
-    final importedModelPath =
-        preferences.getString(ModelSourceService.importedModelPathKey);
-    final savedHistory =
-        preferences.getStringList(ScriptHistoryService.historyStorageKey);
+    final installedSourceSignature = preferences.getString(
+      ModelSourceService.installedSourceSignatureKey,
+    );
+    final importedModelPath = preferences.getString(
+      ModelSourceService.importedModelPathKey,
+    );
+    final savedHistory = preferences.getStringList(
+      ScriptHistoryService.historyStorageKey,
+    );
 
     return (installedSourceSignature?.isNotEmpty ?? false) ||
         (importedModelPath?.isNotEmpty ?? false) ||

@@ -2,11 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 
-enum AppHapticPattern {
-  selection,
-  action,
-  emphasis,
-}
+enum AppHapticPattern { selection, action, emphasis }
 
 class AppHaptics {
   const AppHaptics._();
@@ -18,8 +14,6 @@ class AppHaptics {
       AppHapticPattern.emphasis => HapticFeedback.mediumImpact(),
     };
 
-    unawaited(
-      future.catchError((Object _, StackTrace __) {}),
-    );
+    unawaited(future.catchError((Object _, StackTrace __) {}));
   }
 }

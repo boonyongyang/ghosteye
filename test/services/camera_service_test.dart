@@ -56,21 +56,25 @@ void main() {
       baseInterval: cinematicBase,
     );
 
-    expect(result.inMilliseconds,
-        greaterThanOrEqualTo(cinematicBase.inMilliseconds));
-  });
-
-  test('computeAdaptiveInterval default baseInterval is frameSampleInterval',
-      () {
-    final service = CameraService();
-
-    final withDefault = service.computeAdaptiveInterval(
-      previous: AppConstants.frameSampleInterval,
-      inferenceDuration: const Duration(milliseconds: 500),
+    expect(
+      result.inMilliseconds,
+      greaterThanOrEqualTo(cinematicBase.inMilliseconds),
     );
-
-    expect(withDefault, AppConstants.frameSampleInterval);
   });
+
+  test(
+    'computeAdaptiveInterval default baseInterval is frameSampleInterval',
+    () {
+      final service = CameraService();
+
+      final withDefault = service.computeAdaptiveInterval(
+        previous: AppConstants.frameSampleInterval,
+        inferenceDuration: const Duration(milliseconds: 500),
+      );
+
+      expect(withDefault, AppConstants.frameSampleInterval);
+    },
+  );
 
   test('classifyCameraFailure detects permanently denied permissions', () {
     final failure = classifyCameraFailure(

@@ -13,8 +13,8 @@ final reviewModeProvider = StateProvider<bool>((ref) {
 
 final performancePresetProvider =
     NotifierProvider<PerformancePresetController, PerformancePreset>(
-  PerformancePresetController.new,
-);
+      PerformancePresetController.new,
+    );
 
 class PerformancePresetController extends Notifier<PerformancePreset> {
   static const _key = 'ghosteye.performance_preset';

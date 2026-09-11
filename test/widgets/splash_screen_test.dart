@@ -50,12 +50,8 @@ Future<void> _pumpSplashScreen(
 ) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: <Override>[
-        gemmaProvider.overrideWith(() => notifier),
-      ],
-      child: const MaterialApp(
-        home: SplashScreen(),
-      ),
+      overrides: <Override>[gemmaProvider.overrideWith(() => notifier)],
+      child: const MaterialApp(home: SplashScreen()),
     ),
   );
 
@@ -64,8 +60,9 @@ Future<void> _pumpSplashScreen(
 }
 
 void main() {
-  testWidgets('SplashScreen shows managed download progress copy',
-      (tester) async {
+  testWidgets('SplashScreen shows managed download progress copy', (
+    tester,
+  ) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
         phase: GemmaPhase.downloading,
@@ -82,7 +79,9 @@ void main() {
     await _pumpSplashScreen(tester, notifier);
 
     expect(
-        find.textContaining('Downloading Gemma 3 Nano (42%)'), findsOneWidget);
+      find.textContaining('Downloading Gemma 4 E2B (42%)'),
+      findsOneWidget,
+    );
     expect(find.textContaining('Source: managed download'), findsOneWidget);
     expect(find.text('Active source'), findsOneWidget);
     expect(find.text('Before camera opens'), findsOneWidget);
@@ -94,8 +93,9 @@ void main() {
     expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
-  testWidgets('SplashScreen shows ready summary before opening camera',
-      (tester) async {
+  testWidgets('SplashScreen shows ready summary before opening camera', (
+    tester,
+  ) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
         phase: GemmaPhase.ready,
@@ -118,40 +118,42 @@ void main() {
   });
 
   testWidgets(
-      'SplashScreen shows setup guidance when no model source is configured',
-      (tester) async {
-    final notifier = _FakeGemmaNotifier(
-      const GemmaState(
-        phase: GemmaPhase.error,
-        message:
-            'Ghosteye needs a managed model download URL or a local model file before setup can continue.',
-        failureKind: GemmaStartupFailureKind.modelSource,
-      ),
-    );
+    'SplashScreen shows setup guidance when no model source is configured',
+    (tester) async {
+      final notifier = _FakeGemmaNotifier(
+        const GemmaState(
+          phase: GemmaPhase.error,
+          message:
+              'Ghosteye needs a managed model download URL or a local model file before setup can continue.',
+          failureKind: GemmaStartupFailureKind.modelSource,
+        ),
+      );
 
-    await _pumpSplashScreen(tester, notifier);
+      await _pumpSplashScreen(tester, notifier);
 
-    expect(find.text('Model setup failed'), findsOneWidget);
-    expect(find.text('Show details'), findsOneWidget);
-    expect(
-      find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
-      findsNothing,
-    );
+      expect(find.text('Model setup failed'), findsOneWidget);
+      expect(find.text('Show details'), findsOneWidget);
+      expect(
+        find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
+        findsNothing,
+      );
 
-    await tester.tap(find.text('Show details'));
-    await tester.pump();
+      await tester.tap(find.text('Show details'));
+      await tester.pump();
 
-    expect(
-      find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('Hugging Face'), findsNothing);
-    expect(find.text('Import local model'), findsOneWidget);
-    expect(find.text('Source controls'), findsNothing);
-  });
+      expect(
+        find.textContaining('--dart-define=GHOSTEYE_GEMMA_MODEL_URL'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Hugging Face'), findsNothing);
+      expect(find.text('Import local model'), findsOneWidget);
+      expect(find.text('Source controls'), findsNothing);
+    },
+  );
 
-  testWidgets('SplashScreen shows managed-download token guidance',
-      (tester) async {
+  testWidgets('SplashScreen shows managed-download token guidance', (
+    tester,
+  ) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
         phase: GemmaPhase.error,
@@ -178,8 +180,9 @@ void main() {
     expect(find.textContaining('Hugging Face'), findsNothing);
   });
 
-  testWidgets('SplashScreen exposes copyable technical diagnostics on expand',
-      (tester) async {
+  testWidgets('SplashScreen exposes copyable technical diagnostics on expand', (
+    tester,
+  ) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
         phase: GemmaPhase.error,
@@ -213,55 +216,58 @@ void main() {
   });
 
   testWidgets(
-      'SplashScreen offers reset cached install for model load failure',
-      (tester) async {
-    final notifier = _FakeGemmaNotifier(
-      const GemmaState(
-        phase: GemmaPhase.error,
-        message: 'Model could not be opened',
-        failureKind: GemmaStartupFailureKind.modelLoad,
-        source: ModelSourceConfig(
-          kind: ModelSourceKind.network,
-          origin: ModelSourceOrigin.envUrl,
-          location: 'https://cdn.example.com/gemma.task',
-          label: 'Managed download',
+    'SplashScreen offers reset cached install for model load failure',
+    (tester) async {
+      final notifier = _FakeGemmaNotifier(
+        const GemmaState(
+          phase: GemmaPhase.error,
+          message: 'Model could not be opened',
+          failureKind: GemmaStartupFailureKind.modelLoad,
+          source: ModelSourceConfig(
+            kind: ModelSourceKind.network,
+            origin: ModelSourceOrigin.envUrl,
+            location: 'https://cdn.example.com/gemma.task',
+            label: 'Managed download',
+          ),
         ),
-      ),
-    );
+      );
 
-    await _pumpSplashScreen(tester, notifier);
+      await _pumpSplashScreen(tester, notifier);
 
-    expect(find.text('Reset cached install'), findsOneWidget);
+      expect(find.text('Reset cached install'), findsOneWidget);
 
-    await tester.tap(find.text('Reset cached install'));
-    await tester.pump();
-    expect(notifier.resetCachedInstallCalled, isTrue);
-  });
+      await tester.tap(find.text('Reset cached install'));
+      await tester.pump();
+      expect(notifier.resetCachedInstallCalled, isTrue);
+    },
+  );
 
   testWidgets(
-      'SplashScreen offers reset cached install in fallback actions for network source',
-      (tester) async {
-    final notifier = _FakeGemmaNotifier(
-      const GemmaState(
-        phase: GemmaPhase.downloading,
-        progress: 20,
-        source: ModelSourceConfig(
-          kind: ModelSourceKind.network,
-          origin: ModelSourceOrigin.envUrl,
-          location: 'https://cdn.example.com/gemma.task',
-          label: 'Managed download',
+    'SplashScreen offers reset cached install in fallback actions for network source',
+    (tester) async {
+      final notifier = _FakeGemmaNotifier(
+        const GemmaState(
+          phase: GemmaPhase.downloading,
+          progress: 20,
+          source: ModelSourceConfig(
+            kind: ModelSourceKind.network,
+            origin: ModelSourceOrigin.envUrl,
+            location: 'https://cdn.example.com/gemma.task',
+            label: 'Managed download',
+          ),
         ),
-      ),
-    );
+      );
 
-    await _pumpSplashScreen(tester, notifier);
+      await _pumpSplashScreen(tester, notifier);
 
-    expect(find.text('Source controls'), findsOneWidget);
-    expect(find.text('Reset cached install'), findsOneWidget);
-  });
+      expect(find.text('Source controls'), findsOneWidget);
+      expect(find.text('Reset cached install'), findsOneWidget);
+    },
+  );
 
-  testWidgets('SplashScreen offers local import recovery actions',
-      (tester) async {
+  testWidgets('SplashScreen offers local import recovery actions', (
+    tester,
+  ) async {
     final notifier = _FakeGemmaNotifier(
       const GemmaState(
         phase: GemmaPhase.error,

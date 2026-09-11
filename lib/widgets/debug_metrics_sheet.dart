@@ -20,9 +20,10 @@ class DebugMetricsSheet extends ConsumerWidget {
     final rows = <_MetricRow>[
       _MetricRow(
         label: 'Sampler',
-        value: cameraSession == null
-            ? 'camera off'
-            : '${cameraSession.sampleInterval.inMilliseconds} ms',
+        value:
+            cameraSession == null
+                ? 'camera off'
+                : '${cameraSession.sampleInterval.inMilliseconds} ms',
       ),
       _MetricRow(
         label: 'Preprocessor',
@@ -32,9 +33,10 @@ class DebugMetricsSheet extends ConsumerWidget {
       if (gemmaState?.activeBackend case final backend?)
         _MetricRow(
           label: 'Model backend',
-          value: gemmaState!.usedFallback
-              ? '${backend.name.toUpperCase()} (fallback)'
-              : backend.name.toUpperCase(),
+          value:
+              gemmaState!.usedFallback
+                  ? '${backend.name.toUpperCase()} (fallback)'
+                  : backend.name.toUpperCase(),
           warning: gemmaState.usedFallback,
         ),
       if (_ms('Frame copy', metrics.frameCopy) case final r?) r,
@@ -43,10 +45,7 @@ class DebugMetricsSheet extends ConsumerWidget {
       if (_ms('First token', metrics.firstToken) case final r?) r,
       if (_ms('Full response', metrics.fullResponse) case final r?) r,
       if (inferenceStatus.lastInferenceDuration case final d?)
-        _MetricRow(
-          label: 'Last inference',
-          value: '${d.inMilliseconds} ms',
-        ),
+        _MetricRow(label: 'Last inference', value: '${d.inMilliseconds} ms'),
     ];
 
     return Container(
@@ -81,8 +80,10 @@ class DebugMetricsSheet extends ConsumerWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(999),
@@ -91,11 +92,11 @@ class DebugMetricsSheet extends ConsumerWidget {
                     child: Text(
                       'DEBUG',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.green,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                            letterSpacing: 0.8,
-                          ),
+                        color: Colors.green,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
                 ],
@@ -103,9 +104,9 @@ class DebugMetricsSheet extends ConsumerWidget {
               const SizedBox(height: 4),
               Text(
                 'Median latencies over the last sampling window.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white38,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.white38),
               ),
               const SizedBox(height: 16),
               ...rows.map(
@@ -115,20 +116,21 @@ class DebugMetricsSheet extends ConsumerWidget {
                     children: <Widget>[
                       Text(
                         row.label,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white38,
-                            ),
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.white38),
                       ),
                       const Spacer(),
                       Text(
                         row.value,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: row.warning
+                          color:
+                              row.warning
                                   ? const Color(0xFFFFA726)
                                   : Colors.white70,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'monospace',
-                            ),
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'monospace',
+                        ),
                       ),
                     ],
                   ),

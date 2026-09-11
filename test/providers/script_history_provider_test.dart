@@ -33,9 +33,7 @@ final _source = Uint8List.fromList(<int>[1, 2, 3, 4]);
 
 Future<ProviderContainer> _readyContainer(ThumbnailEncoder encoder) async {
   final container = ProviderContainer(
-    overrides: <Override>[
-      thumbnailEncoderProvider.overrideWithValue(encoder),
-    ],
+    overrides: <Override>[thumbnailEncoderProvider.overrideWithValue(encoder)],
   );
   addTearDown(container.dispose);
   await container.read(scriptHistoryProvider.future);
@@ -47,25 +45,31 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
   });
 
-  test('attaches an encoded thumbnail when a source frame is provided',
-      () async {
-    final container = await _readyContainer(_CountingEncoder());
+  test(
+    'attaches an encoded thumbnail when a source frame is provided',
+    () async {
+      final container = await _readyContainer(_CountingEncoder());
 
-    await container.read(scriptHistoryProvider.notifier).syncSession(
-          sessionId: 's1',
-          createdAt: DateTime.utc(2026, 5, 1),
-          entries: _entries,
-          thumbnailSource: _source,
-        );
+      await container
+          .read(scriptHistoryProvider.notifier)
+          .syncSession(
+            sessionId: 's1',
+            createdAt: DateTime.utc(2026, 5, 1),
+            entries: _entries,
+            thumbnailSource: _source,
+          );
 
-    final sessions = container.read(scriptHistoryProvider).valueOrNull!;
-    expect(sessions.single.thumbnail, equals('thumb-1'));
-  });
+      final sessions = container.read(scriptHistoryProvider).valueOrNull!;
+      expect(sessions.single.thumbnail, equals('thumb-1'));
+    },
+  );
 
   test('leaves the thumbnail null when no source frame is provided', () async {
     final container = await _readyContainer(_CountingEncoder());
 
-    await container.read(scriptHistoryProvider.notifier).syncSession(
+    await container
+        .read(scriptHistoryProvider.notifier)
+        .syncSession(
           sessionId: 's1',
           createdAt: DateTime.utc(2026, 5, 1),
           entries: _entries,

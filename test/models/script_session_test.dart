@@ -71,9 +71,13 @@ void main() {
       final session = _session(
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.action, text: 'Rain hits the window.'),
+            type: ScriptEntryType.action,
+            text: 'Rain hits the window.',
+          ),
           const ScriptEntry(
-              type: ScriptEntryType.slugline, text: 'INT. OFFICE - NIGHT'),
+            type: ScriptEntryType.slugline,
+            text: 'INT. OFFICE - NIGHT',
+          ),
           const ScriptEntry(type: ScriptEntryType.character, text: 'DETECTIVE'),
         ],
       );
@@ -85,7 +89,9 @@ void main() {
       final session = _session(
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.action, text: 'A figure emerges.'),
+            type: ScriptEntryType.action,
+            text: 'A figure emerges.',
+          ),
           const ScriptEntry(type: ScriptEntryType.character, text: 'MARCO'),
         ],
       );
@@ -97,7 +103,9 @@ void main() {
       final session = _session(
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.action, text: 'Darkness. A hum.'),
+            type: ScriptEntryType.action,
+            text: 'Darkness. A hum.',
+          ),
         ],
       );
 
@@ -120,7 +128,9 @@ void main() {
         entries: <ScriptEntry>[
           const ScriptEntry(type: ScriptEntryType.action, text: 'Hi.'),
           const ScriptEntry(
-              type: ScriptEntryType.action, text: 'Longer action here.'),
+            type: ScriptEntryType.action,
+            text: 'Longer action here.',
+          ),
         ],
       );
 
@@ -155,7 +165,9 @@ void main() {
       final original = _session(
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.slugline, text: 'INT. ROOM - NIGHT'),
+            type: ScriptEntryType.slugline,
+            text: 'INT. ROOM - NIGHT',
+          ),
           const ScriptEntry(type: ScriptEntryType.dialogue, text: 'Hello.'),
         ],
       );
@@ -173,7 +185,9 @@ void main() {
       final original = _session(
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.slugline, text: 'EXT. ROOFTOP - DUSK'),
+            type: ScriptEntryType.slugline,
+            text: 'EXT. ROOFTOP - DUSK',
+          ),
         ],
         mode: CinematicMode.sciFi,
         isFavorite: true,
@@ -222,14 +236,8 @@ void main() {
 
       final session = ScriptSession.fromJson(json);
 
-      expect(
-        session.createdAt,
-        equals(DateTime.fromMillisecondsSinceEpoch(0)),
-      );
-      expect(
-        session.updatedAt,
-        equals(DateTime.fromMillisecondsSinceEpoch(0)),
-      );
+      expect(session.createdAt, equals(DateTime.fromMillisecondsSinceEpoch(0)));
+      expect(session.updatedAt, equals(DateTime.fromMillisecondsSinceEpoch(0)));
     });
 
     test('fromJson handles an empty map with safe defaults', () {
@@ -247,7 +255,9 @@ void main() {
         isFavorite: false,
         entries: <ScriptEntry>[
           const ScriptEntry(
-              type: ScriptEntryType.slugline, text: 'INT. CAFE - DAY'),
+            type: ScriptEntryType.slugline,
+            text: 'INT. CAFE - DAY',
+          ),
         ],
       );
 

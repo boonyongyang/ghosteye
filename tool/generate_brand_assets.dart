@@ -163,10 +163,7 @@ void _writePng(String path, img.Image image, List<String> generatedFiles) {
 }
 
 class _AssetOptions {
-  const _AssetOptions({
-    required this.sourcePath,
-    required this.cropScale,
-  });
+  const _AssetOptions({required this.sourcePath, required this.cropScale});
 
   factory _AssetOptions.parse(List<String> args) {
     String? sourcePath;

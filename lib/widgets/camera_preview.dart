@@ -9,10 +9,7 @@ import '../services/app_haptics.dart';
 import '../services/camera_service.dart';
 
 class DirectorCameraPreview extends StatelessWidget {
-  const DirectorCameraPreview({
-    super.key,
-    required this.cameraState,
-  });
+  const DirectorCameraPreview({super.key, required this.cameraState});
 
   final AsyncValue<CameraSession> cameraState;
 
@@ -38,17 +35,15 @@ class DirectorCameraPreview extends StatelessWidget {
         );
       },
       loading: () => const _PreviewFallback(message: 'Starting camera'),
-      error: (error, stackTrace) =>
-          _PreviewFallback(failure: classifyCameraFailure(error)),
+      error:
+          (error, stackTrace) =>
+              _PreviewFallback(failure: classifyCameraFailure(error)),
     );
   }
 }
 
 class _PreviewFallback extends ConsumerWidget {
-  const _PreviewFallback({
-    this.message,
-    this.failure,
-  });
+  const _PreviewFallback({this.message, this.failure});
 
   final String? message;
   final CameraFailure? failure;
@@ -96,8 +91,11 @@ class _PreviewFallback extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.videocam_off_outlined,
-                  color: Colors.white70, size: 42),
+              const Icon(
+                Icons.videocam_off_outlined,
+                color: Colors.white70,
+                size: 42,
+              ),
               const SizedBox(height: 12),
               Text(
                 failure?.title ?? 'Camera not ready',

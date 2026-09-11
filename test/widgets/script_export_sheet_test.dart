@@ -55,17 +55,20 @@ Future<void> _openSheet(
       child: MaterialApp(
         home: Scaffold(
           body: Builder(
-            builder: (context) => TextButton(
-              onPressed: () => showModalBottomSheet<void>(
-                context: context,
-                builder: (_) => ScriptExportSheet(
-                  title: 'Take',
-                  entries: entries,
-                  notes: notes,
+            builder:
+                (context) => TextButton(
+                  onPressed:
+                      () => showModalBottomSheet<void>(
+                        context: context,
+                        builder:
+                            (_) => ScriptExportSheet(
+                              title: 'Take',
+                              entries: entries,
+                              notes: notes,
+                            ),
+                      ),
+                  child: const Text('open'),
                 ),
-              ),
-              child: const Text('open'),
-            ),
           ),
         ),
       ),
@@ -77,8 +80,9 @@ Future<void> _openSheet(
 }
 
 void main() {
-  testWidgets('share delegates the chosen format and notes to the service',
-      (tester) async {
+  testWidgets('share delegates the chosen format and notes to the service', (
+    tester,
+  ) async {
     final service = _RecordingExportService();
     await _openSheet(tester, service, notes: 'Push in on the door');
 
@@ -89,8 +93,9 @@ void main() {
     expect(service.sharedNotes, 'Push in on the door');
   });
 
-  testWidgets('copy delegates the chosen format and notes to the service',
-      (tester) async {
+  testWidgets('copy delegates the chosen format and notes to the service', (
+    tester,
+  ) async {
     final service = _RecordingExportService();
     await _openSheet(tester, service, notes: 'Reshoot wider');
 
@@ -101,8 +106,9 @@ void main() {
     expect(service.copiedNotes, 'Reshoot wider');
   });
 
-  testWidgets('export actions are disabled when there are no entries',
-      (tester) async {
+  testWidgets('export actions are disabled when there are no entries', (
+    tester,
+  ) async {
     final service = _RecordingExportService();
     await _openSheet(tester, service, entries: const <ScriptEntry>[]);
 

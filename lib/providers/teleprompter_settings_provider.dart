@@ -5,8 +5,8 @@ import 'preferences_provider.dart';
 
 final teleprompterSettingsProvider =
     NotifierProvider<TeleprompterSettingsController, TeleprompterSettings>(
-  TeleprompterSettingsController.new,
-);
+      TeleprompterSettingsController.new,
+    );
 
 class TeleprompterSettingsController extends Notifier<TeleprompterSettings> {
   static const _textSizeKey = 'ghosteye.teleprompter_text_size';

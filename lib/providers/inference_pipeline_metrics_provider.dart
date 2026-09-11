@@ -7,19 +7,21 @@ import '../models/frame_preprocessor_settings.dart';
 import '../models/inference_pipeline_metrics.dart';
 import '../services/frame_preprocessor.dart';
 
-final framePreprocessorSettingsProvider = Provider<FramePreprocessorSettings>(
-  (ref) {
-    final requested = FramePreprocessorSettings.fromEnvironment();
-    if (requested.backend == FramePreprocessorBackend.ffi &&
-        !FramePreprocessor.supportsBackend(FramePreprocessorBackend.ffi)) {
-      return requested.copyWith(backend: FramePreprocessorBackend.dart);
-    }
-    return requested;
-  },
-);
+final framePreprocessorSettingsProvider = Provider<FramePreprocessorSettings>((
+  ref,
+) {
+  final requested = FramePreprocessorSettings.fromEnvironment();
+  if (requested.backend == FramePreprocessorBackend.ffi &&
+      !FramePreprocessor.supportsBackend(FramePreprocessorBackend.ffi)) {
+    return requested.copyWith(backend: FramePreprocessorBackend.dart);
+  }
+  return requested;
+});
 
 final inferencePipelineMetricsProvider = StateNotifierProvider<
-    InferencePipelineMetricsNotifier, InferencePipelineMetrics>((ref) {
+  InferencePipelineMetricsNotifier,
+  InferencePipelineMetrics
+>((ref) {
   return InferencePipelineMetricsNotifier(
     settings: ref.watch(framePreprocessorSettingsProvider),
   );
@@ -30,18 +32,23 @@ class InferencePipelineMetricsNotifier
   InferencePipelineMetricsNotifier({
     required FramePreprocessorSettings settings,
     int? windowSize,
-  })  : windowSize = windowSize ?? AppConstants.metricsWindowSize,
-        _frameCopySamples =
-            ListQueue<int>(windowSize ?? AppConstants.metricsWindowSize),
-        _preprocessingSamples =
-            ListQueue<int>(windowSize ?? AppConstants.metricsWindowSize),
-        _modelInputSamples =
-            ListQueue<int>(windowSize ?? AppConstants.metricsWindowSize),
-        _firstTokenSamples =
-            ListQueue<int>(windowSize ?? AppConstants.metricsWindowSize),
-        _fullResponseSamples =
-            ListQueue<int>(windowSize ?? AppConstants.metricsWindowSize),
-        super(InferencePipelineMetrics(settings: settings));
+  }) : windowSize = windowSize ?? AppConstants.metricsWindowSize,
+       _frameCopySamples = ListQueue<int>(
+         windowSize ?? AppConstants.metricsWindowSize,
+       ),
+       _preprocessingSamples = ListQueue<int>(
+         windowSize ?? AppConstants.metricsWindowSize,
+       ),
+       _modelInputSamples = ListQueue<int>(
+         windowSize ?? AppConstants.metricsWindowSize,
+       ),
+       _firstTokenSamples = ListQueue<int>(
+         windowSize ?? AppConstants.metricsWindowSize,
+       ),
+       _fullResponseSamples = ListQueue<int>(
+         windowSize ?? AppConstants.metricsWindowSize,
+       ),
+       super(InferencePipelineMetrics(settings: settings));
 
   final int windowSize;
   final ListQueue<int> _frameCopySamples;
@@ -100,9 +107,10 @@ class InferencePipelineMetricsNotifier
 
     final ordered = samples.toList()..sort();
     final middleIndex = ordered.length ~/ 2;
-    final medianMicros = ordered.length.isOdd
-        ? ordered[middleIndex]
-        : ((ordered[middleIndex - 1] + ordered[middleIndex]) / 2).round();
+    final medianMicros =
+        ordered.length.isOdd
+            ? ordered[middleIndex]
+            : ((ordered[middleIndex - 1] + ordered[middleIndex]) / 2).round();
 
     return DurationMetricSnapshot(
       last: duration,

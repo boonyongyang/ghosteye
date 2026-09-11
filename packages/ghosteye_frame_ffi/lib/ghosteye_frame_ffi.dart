@@ -406,12 +406,12 @@ class _GhosteyeFrameBindings {
             .lookupFunction<_ActiveAllocationsNative, _ActiveAllocationsDart>(
           'ghosteye_frame_active_allocations',
         ),
-        _convertBgra8888ToJpeg = dylib.lookupFunction<
-            _ConvertBgraToJpegNative, _ConvertBgraToJpegDart>(
+        _convertBgra8888ToJpeg = dylib
+            .lookupFunction<_ConvertBgraToJpegNative, _ConvertBgraToJpegDart>(
           'ghosteye_bgra8888_to_jpeg',
         ),
-        _convertYuv420ToJpeg =
-            dylib.lookupFunction<_ConvertYuvToJpegNative, _ConvertYuvToJpegDart>(
+        _convertYuv420ToJpeg = dylib
+            .lookupFunction<_ConvertYuvToJpegNative, _ConvertYuvToJpegDart>(
           'ghosteye_yuv420_to_jpeg',
         ),
         _freeJpegBuffer =

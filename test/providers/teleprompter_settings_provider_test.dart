@@ -151,8 +151,9 @@ void main() {
       expect(prefs.getString('ghosteye.teleprompter_text_size'), 'compact');
       expect(prefs.getString('ghosteye.teleprompter_pace'), 'calm');
 
-      final rehydrated =
-          containerWith(prefs).read(teleprompterSettingsProvider);
+      final rehydrated = containerWith(
+        prefs,
+      ).read(teleprompterSettingsProvider);
       expect(rehydrated.textSize, TeleprompterTextSize.compact);
       expect(rehydrated.pace, TeleprompterPace.calm);
     });

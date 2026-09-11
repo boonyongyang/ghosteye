@@ -7,18 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 Future<OnboardingService> _createService({
   required SharedPreferences preferences,
 }) async {
-  return OnboardingService(
-    loadPreferences: () async => preferences,
-  );
+  return OnboardingService(loadPreferences: () async => preferences);
 }
 
 void main() {
   test('loadStatus seeds onboarding flags for legacy installs', () async {
-    SharedPreferences.setMockInitialValues(
-      <String, Object>{
-        ModelSourceService.installedSourceSignatureKey: 'envUrl:https://cdn',
-      },
-    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ModelSourceService.installedSourceSignatureKey: 'envUrl:https://cdn',
+    });
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(preferences: preferences);
 
@@ -30,10 +26,7 @@ void main() {
       preferences.getBool(OnboardingService.onboardingIntroCompleteKey),
       isTrue,
     );
-    expect(
-      preferences.getBool(OnboardingService.directorTipsSeenKey),
-      isTrue,
-    );
+    expect(preferences.getBool(OnboardingService.directorTipsSeenKey), isTrue);
   });
 
   test('loadStatus does not auto-complete fresh installs', () async {
@@ -48,11 +41,9 @@ void main() {
   });
 
   test('history also counts as existing usage for upgrade bypass', () async {
-    SharedPreferences.setMockInitialValues(
-      <String, Object>{
-        ScriptHistoryService.historyStorageKey: <String>['{"id":"saved-1"}'],
-      },
-    );
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      ScriptHistoryService.historyStorageKey: <String>['{"id":"saved-1"}'],
+    });
     final preferences = await SharedPreferences.getInstance();
     final service = await _createService(preferences: preferences);
 
@@ -74,9 +65,6 @@ void main() {
       preferences.getBool(OnboardingService.onboardingIntroCompleteKey),
       isTrue,
     );
-    expect(
-      preferences.getBool(OnboardingService.directorTipsSeenKey),
-      isTrue,
-    );
+    expect(preferences.getBool(OnboardingService.directorTipsSeenKey), isTrue);
   });
 }

@@ -5,10 +5,10 @@ This file turns the current backlog into an execution order. Use it when choosin
 ## Current product state
 
 - Runtime foundation: `stable enough for follow-up work`
-- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails, Model Center storage/source controls, performance presets, and teleprompter display controls implemented`
+- Branding, onboarding, setup, director controls, export, library, and diagnostics: `setup workspace, setup-handoff onboarding, command dock, active/saved-take export, take library with frame thumbnails and shot notes, copyable setup diagnostics, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
 - Biggest remaining risk: `real-device validation and production rollout details`
-- Known engineering-health gaps: `dependency refresh gated behind the Flutter upgrade, which is now spiked and host-green but awaiting on-device validation` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests including onboarding_screen, and the Dart-vs-FFI benchmark now addressed)
-- Recommended next phase: `release readiness (user/hardware-blocked) in parallel with engineering health and preference persistence (agent-executable)`
+- Known engineering-health gaps: `Gemma 4 runtime hardening awaits on-device validation; dependency refresh still gated behind the toolchain move` (FFI-in-CI, bash Makefile, CI docs-audit, preference persistence, logic-bearing widget tests including onboarding_screen, rendered UI screenshots, and the Dart-vs-FFI benchmark now addressed)
+- Recommended next phase: `release readiness first, creator workflow second`
 
 ## Priority 0: Ship-readiness
 
@@ -16,9 +16,9 @@ These items should happen before broad external testing or store submission.
 
 - [x] Finalize public repo basics
   Acceptance criteria: a top-level license is chosen, `RELEASE_CHECKLIST.md` stays current, the README stays public-facing with relative repo links, no obvious scaffold/package docs remain in the public tree, GitHub verification is enabled, and the internal FFI package stays clearly documented as internal-only
-- [ ] Choose the production Android application ID and iOS bundle ID
+- [x] Choose the production Android application ID and iOS bundle ID
   Acceptance criteria: no `com.example.ghosteye` identifiers remain in shipping configs
-- [ ] Host the Gemma 3n `.litertlm` or `.task` artifact on production infrastructure
+- [ ] Host the Gemma 4 E2B `.litertlm` artifact on production infrastructure
   Acceptance criteria: a stable managed URL exists and is documented in `config.json.example` or deployment docs
 - [ ] Decide the managed-download auth policy
   Acceptance criteria: app behavior is defined for public download, bearer-token gating, and missing-source recovery guidance
@@ -68,10 +68,15 @@ Why it matters:
 - The screenplay becomes easier to scan, remember, and compare later.
 
 Acceptance criteria:
-- Saved takes show a visual reference for the captured scene. Thumbnails are
-  derived once per take from the already-preprocessed frame JPEG (160px, q55),
-  stored inline as base64 so a take stays self-contained, and captured on the
-  take's first frame so the card art stays stable.
+- Saved takes show a visual reference for the captured scene. Thumbnails are derived once per take from the already-preprocessed frame JPEG and stored with the take.
+
+### 3.5 Shot notes
+
+- [x] Add a lightweight local shot-notes field to each take
+- [x] Include shot notes in Fountain and plain-text exports
+
+Acceptance criteria:
+- Notes stay local, remain attached to the take, and are included only when the user exports the take.
 
 ## Priority 2: Product controls and diagnostics
 
@@ -91,6 +96,7 @@ Acceptance criteria:
 
 - [x] Expose a few pacing presets such as `Cinematic`, `Balanced`, and `Fast`
 - [x] Tune frame sampling and inference cadence by preset
+- [x] Persist the selected performance preset and teleprompter display settings locally
 
 Acceptance criteria:
 - The user can choose between slower richer output and faster lighter output.
@@ -98,7 +104,7 @@ Acceptance criteria:
 ### 6. Setup observability
 
 - [x] Improve error surfaces for downloads, imports, and backend fallback
-- [x] Add a compact debug detail view for setup failures
+- [x] Add a compact, copyable debug detail view for setup failures
 
 Acceptance criteria:
 - Support and QA can diagnose setup problems without diving into native logs
@@ -159,6 +165,8 @@ Acceptance criteria:
 
 Triage finding (2026-07-09, Flutter 3.24.4): **no safe in-isolation bump is available.** Every *direct* dependency in `pubspec.yaml` (flutter_gemma, flutter_riverpod, go_router, camera, google_fonts, image, shared_preferences, share_plus, url_launcher, …) is already at its latest version resolvable under the pinned SDK — none appear in `flutter pub outdated`. The remaining ~100 "outdated" entries are transitive/dev packages whose `resolvable` equals `current`; their newer `latest` versions are gated behind a Flutter SDK upgrade or major-version constraint bumps. Bumping them in isolation would either fail to resolve or force a risky major jump (e.g. `flutter_lints` 4→6 enabling new lint rules) for no product value. **Item 11 therefore collapses into the Flutter-upgrade track (Priority 3):** do the dependency refresh together with the SDK upgrade, not before it.
 
+**Superseded (2026-09-11).** The toolchain moved to **Flutter 3.38.9 / Dart 3.10.8** alongside the Gemma 4 E2B runtime work, not to 3.44.7. The 3.44.7 spike below is kept as the record of how the upgrade cost was measured; the `flutter-upgrade-spike` branch is no longer a live plan and should not be merged.
+
 Upgrade spike finding (2026-07-26, target Flutter 3.44.7 / Dart 3.12.2): **host-side GO, pending device validation.** Evaluated on the isolated `flutter-upgrade-spike` branch; full report in [docs/FLUTTER_UPGRADE_SPIKE.md](docs/FLUTTER_UPGRADE_SPIKE.md) (the report is kept on mainline as the decision record; the upgrade code stays on the spike branch). The decisive risk — `flutter_gemma` compatibility — clears: `flutter_gemma 0.11.8` still resolves, the `background_downloader` override holds, `flutter analyze` is clean, and the suite is **281/281**. The cost is three changes that are **mutually atomic** (none can land on 3.24.4, so it is a single PR or nothing):
 
 1. `withOpacity` → `withValues` across **49 call sites / 13 files** — mechanical, no behavior change, but `withValues` does not exist in the 3.24.4 SDK.
@@ -193,43 +201,23 @@ Acceptance criteria:
 
 ## Priority 3: Research and branching work
 
-### Gemma 4 spike
+### Gemma 4 E4B follow-up
 
 - [ ] Create a separate spike branch
-- [ ] Upgrade Flutter and `flutter_gemma` on that branch
+- [x] Upgrade Flutter and `flutter_gemma` for Gemma 4 E2B
 - [ ] Verify install behavior, Android viability, iOS multimodal viability, and startup cost
 - [ ] Record a go/no-go recommendation
 
-The Flutter half of step 2 is already de-risked by the upgrade spike above (`flutter-upgrade-spike`, Flutter 3.44.7 host-green) — branch from it rather than repeating that work, and treat the `flutter_gemma` major bump as the actual unknown.
+The Flutter move already happened as part of the Gemma 4 E2B work (3.24.4 -> 3.38.9), so treat the remaining E4B unknowns as memory and latency on target devices rather than toolchain risk.
 
 Rule:
-- Do not mix this spike into the mainline Gemma 3n branch until it proves cross-platform multimodal parity.
-
-## Priority 4: Future candidates (post-release)
-
-Deliberately unscheduled; revisit after release readiness.
-
-- [ ] Take-library text search by title (filter tabs exist; free-text search does not)
-- [ ] Custom cinematic presets beyond the default three modes
-- [ ] Accessibility pass: semantics labels, contrast audit, large-type layout check
-- [ ] Localization scaffolding (`flutter_localizations`/`intl`) — all UI copy is hardcoded English today
-- [ ] Shareable export cards or thumbnail-embedded exports
+- Do not expand beyond Gemma 4 E2B until the E2B path proves cross-platform multimodal parity.
 
 ## Suggested build order
 
-1. ~~Exercise FFI native library in CI (item 9)~~ — done
-2. ~~CI and tooling hardening: docs-audit + bash Makefile (item 10)~~ — done; widget-test bullet remains
-3. ~~Preference persistence (item 8)~~ — done
-4. ~~Widget tests for logic-bearing surfaces (item 10)~~ — done (onboarding_screen deferred)
-5. ~~Preprocessing benchmark (item 12)~~ — done (FFI ~4–6x faster on host; keep it)
-6. ~~Dependency triage (item 11)~~ — done; refresh folded into the Flutter upgrade
-7. Release readiness (Priority 0) — user decisions + physical hardware
-8. Flutter upgrade + dependency refresh + Gemma 4 spike (Priority 3)
-
-The agent-executable engineering-health backlog (items 8–12) is now cleared.
-Remaining work is either maintainer/hardware-blocked (release readiness) or a
-larger toolchain effort best done as a dedicated spike (Flutter upgrade →
-Gemma 4).
+1. Release readiness and physical-device validation
+2. Creator workflow polish after thumbnails and shot notes
+3. Gemma 4 E4B follow-up only after E2B is proven on target hardware
 
 ## Notes for future agents
 

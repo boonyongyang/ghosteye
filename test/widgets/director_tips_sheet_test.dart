@@ -20,8 +20,9 @@ Future<void> _pump(
 }
 
 void main() {
-  testWidgets('renders the tips content and the provided primary label',
-      (tester) async {
+  testWidgets('renders the tips content and the provided primary label', (
+    tester,
+  ) async {
     await _pump(
       tester,
       primaryLabel: 'Start shooting',

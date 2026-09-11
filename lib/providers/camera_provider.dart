@@ -11,7 +11,8 @@ final cameraServiceProvider = Provider<CameraService>((ref) {
 
 final cameraProvider =
     AsyncNotifierProvider<CameraControllerNotifier, CameraSession>(
-        CameraControllerNotifier.new);
+      CameraControllerNotifier.new,
+    );
 
 final cameraSessionViewProvider = Provider<AsyncValue<CameraSession>>((ref) {
   return ref.watch(cameraProvider);
@@ -27,8 +28,9 @@ class CameraControllerNotifier extends AsyncNotifier<CameraSession> {
     });
 
     final service = ref.read(cameraServiceProvider);
-    _session =
-        await service.initialize(interval: AppConstants.frameSampleInterval);
+    _session = await service.initialize(
+      interval: AppConstants.frameSampleInterval,
+    );
     return _session!;
   }
 
@@ -75,9 +77,9 @@ class CameraControllerNotifier extends AsyncNotifier<CameraSession> {
   Future<void> refresh() async {
     state = const AsyncLoading();
     await ref.read(cameraServiceProvider).disposeSession(_session);
-    _session = await ref.read(cameraServiceProvider).initialize(
-          interval: AppConstants.frameSampleInterval,
-        );
+    _session = await ref
+        .read(cameraServiceProvider)
+        .initialize(interval: AppConstants.frameSampleInterval);
     state = AsyncData(_session!);
   }
 }

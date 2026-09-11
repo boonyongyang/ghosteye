@@ -1,5 +1,12 @@
 # Flutter Upgrade Spike — 3.24.4 → 3.44.7
 
+> **Superseded (2026-09-11).** Mainline moved to **Flutter 3.38.9 / Dart
+> 3.10.8** as part of the Gemma 4 E2B runtime work, not to 3.44.7. This report
+> is kept as the record of how the upgrade cost was measured — the atomicity
+> finding and the onboarding route-entry diagnosis both still hold. The
+> `flutter-upgrade-spike` branch is no longer a live plan and should not be
+> merged.
+
 Exploratory spike to answer: **can Ghosteye move off the pinned Flutter 3.24.4
 (Oct 2024) to current stable, and what does it cost?** This also unblocks the
 dependency refresh (roadmap item 11) and is prerequisite work for the Gemma 4

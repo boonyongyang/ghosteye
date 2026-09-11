@@ -5,11 +5,15 @@ Use this plan before TestFlight, Play internal testing, or broad public demos. A
 ## Prerequisites
 
 - A clean checkout on `main`
-- Flutter `3.24.4`
+- Flutter `3.38.9` / Dart `3.10.8`
 - One Android phone with camera access
 - One physical iPhone with camera access
-- A reachable Gemma 3n `.litertlm` or `.task` URL, or a local model file for sideload testing
+- A reachable Gemma 4 E2B `.litertlm` URL, or a local model file for sideload testing
 - `config.json` created from `config.json.example` when testing managed download
+
+Model type defaults to `gemma4`. For experimental local model-family tests, set `GHOSTEYE_GEMMA_MODEL_TYPE` in `config.json` or pass `MODEL_TYPE=gemma4`/`gemmaIt`/`general` to the Makefile local-model commands.
+
+The default iOS debug entitlements avoid paid-team-only memory capabilities so a personal development team can install the app for setup/UI testing. If a production-size model needs higher memory limits on iPhone, re-enable the relevant entitlements under a team profile that supports them before final runtime signoff.
 
 Run the local gate first:
 

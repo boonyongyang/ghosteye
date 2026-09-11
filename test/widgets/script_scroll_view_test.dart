@@ -11,23 +11,22 @@ Future<void> _pump(WidgetTester tester, ProviderContainer container) {
   return tester.pumpWidget(
     UncontrolledProviderScope(
       container: container,
-      child: const MaterialApp(
-        home: Scaffold(body: ScriptScrollView()),
-      ),
+      child: const MaterialApp(home: Scaffold(body: ScriptScrollView())),
     ),
   );
 }
 
 ScriptSession _session(List<ScriptEntry> entries) => ScriptSession(
-      id: 's1',
-      createdAt: DateTime.utc(2026, 5, 1),
-      updatedAt: DateTime.utc(2026, 5, 1),
-      entries: entries,
-    );
+  id: 's1',
+  createdAt: DateTime.utc(2026, 5, 1),
+  updatedAt: DateTime.utc(2026, 5, 1),
+  entries: entries,
+);
 
 void main() {
-  testWidgets('shows the live prompt when capture is enabled and empty',
-      (tester) async {
+  testWidgets('shows the live prompt when capture is enabled and empty', (
+    tester,
+  ) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
 
@@ -39,8 +38,9 @@ void main() {
     );
   });
 
-  testWidgets('shows the paused prompt when capture is disabled and empty',
-      (tester) async {
+  testWidgets('shows the paused prompt when capture is disabled and empty', (
+    tester,
+  ) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
     container.read(captureEnabledProvider.notifier).state = false;
@@ -53,10 +53,18 @@ void main() {
   testWidgets('renders loaded screenplay entries', (tester) async {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    container.read(scriptProvider.notifier).loadSessionForReview(
+    container
+        .read(scriptProvider.notifier)
+        .loadSessionForReview(
           _session(const <ScriptEntry>[
-            ScriptEntry(type: ScriptEntryType.slugline, text: 'INT. ROOM - NIGHT'),
-            ScriptEntry(type: ScriptEntryType.action, text: 'Rain taps the glass.'),
+            ScriptEntry(
+              type: ScriptEntryType.slugline,
+              text: 'INT. ROOM - NIGHT',
+            ),
+            ScriptEntry(
+              type: ScriptEntryType.action,
+              text: 'Rain taps the glass.',
+            ),
           ]),
         );
 

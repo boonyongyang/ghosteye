@@ -6,9 +6,9 @@ void main() {
     test('returns the last path segment of a managed URL', () {
       expect(
         AppConstants.modelIdFromLocation(
-          'https://cdn.example.com/models/gemma-3n-E2B-it-int4.task',
+          'https://cdn.example.com/models/gemma-4-E2B-it.litertlm',
         ),
-        equals('gemma-3n-E2B-it-int4.task'),
+        equals('gemma-4-E2B-it.litertlm'),
       );
     });
 
