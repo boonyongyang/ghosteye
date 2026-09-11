@@ -33,3 +33,6 @@ jobs:
 
       - name: Verify
         run: make verify
+
+      - name: Check the screenshot harness still runs
+        run: make screenshots-check

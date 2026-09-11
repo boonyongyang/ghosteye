@@ -23,6 +23,7 @@ make build-ios-debug    # flutter build ios --debug --no-codesign
 make brand-assets       # regenerate icons/launch assets from master source image
 make docs-audit         # check markdown for absolute local paths
 make screenshots        # regenerate docs/screenshots/*.png from the real widget tree (excluded from the CI suite)
+make screenshots-check  # prove the screenshot harness still compiles and runs (runs in CI)
 make todo               # search TODO/FIXME markers across source
 make bundle-ids         # find remaining example app identifiers before release
 ```

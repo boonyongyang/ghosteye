@@ -19,12 +19,14 @@ MODEL_TYPE_ARGS := $(if $(MODEL_TYPE),--dart-define=GHOSTEYE_GEMMA_MODEL_TYPE="$
 FORMAT_DIRS := lib test tool packages/ghosteye_frame_ffi/lib
 SCAN_DIRS := lib test android ios tool packages/ghosteye_frame_ffi
 
+SCREENSHOT_CHECK_DIR ?= build/screenshot-check
+
 .PHONY: help bootstrap doctor devices emulators analyze test verify benchmark format fix \
 	clean pub-outdated config-copy config-check config-example run run-config \
 	run-local-model run-android run-android-local-model run-ios \
 	run-ios-local-model logs build-apk-debug build-ios-debug build-web-debug \
 	build-apk-release build-appbundle-release \
-	brand-assets todo bundle-ids docs docs-audit screenshots
+	brand-assets todo bundle-ids docs docs-audit screenshots screenshots-check
 
 help:
 	@printf "Ghosteye maintainer commands\n\n"
@@ -97,6 +99,20 @@ benchmark:
 # bundled in assets/fonts, so this needs no network access.
 screenshots:
 	$(FLUTTER) test --update-goldens tool/screenshots/generate_screenshots.dart
+
+# Compiles and runs the screenshot harness against a throwaway output dir.
+# The harness lives outside test/, so `make verify` never touches it and it can
+# rot silently -- a renamed widget or dropped dependency would only surface the
+# next time someone ran `make screenshots`. This proves it still runs without
+# comparing pixels, which would be brittle across platforms.
+screenshots-check:
+	@rm -rf $(SCREENSHOT_CHECK_DIR)
+	@GHOSTEYE_SCREENSHOT_OUT=$(SCREENSHOT_CHECK_DIR) \
+		$(FLUTTER) test --update-goldens tool/screenshots/generate_screenshots.dart
+	@test "$$(ls -1 $(SCREENSHOT_CHECK_DIR)/*.png 2>/dev/null | wc -l)" -ge 5 \
+		|| { echo "screenshot harness produced no output"; exit 1; }
+	@rm -rf $(SCREENSHOT_CHECK_DIR)
+	@echo "Screenshot harness runs clean."
 
 format:
 	$(DART) format $(FORMAT_DIRS)
