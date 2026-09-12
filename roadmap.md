@@ -162,13 +162,14 @@ Acceptance criteria:
 - [x] Cover `AppTheme` typography so the bundled brand families cannot silently regress to platform defaults
 - [x] Cover `readPersistedEnum` and `FramePreprocessorSettings.copyWith`
 - [x] Run the screenshot harness in CI (`make screenshots-check`)
+- [x] Guard the smallest realistic viewport (`test/widgets/compact_viewport_test.dart`, 320x568)
 
 Why it matters:
 - The brand faces are bundled and referenced by string. A rename on either the theme side or the pubspec side would drop the type back to a platform default with nothing failing, and Cormorant Garamond is a variable face whose weight comes from a `fontVariations` axis rather than a static file -- losing that renders every display title at regular weight. `test/config/theme_test.dart` pins both sides together, checks the declared font files exist, and asserts no runtime font-fetching dependency returns.
 - The screenshot harness lives outside `test/`, so `make verify` never touched it and it could rot silently. `make screenshots-check` compiles and runs it against a throwaway directory in CI, without comparing pixels (which would be brittle across platforms).
 
 Acceptance criteria:
-- Reverting the theme to generic families, dropping the `fontVariations` axis, breaking the enum fallback, or renaming a widget the harness uses all fail CI. Each assertion above was mutation-checked.
+- Reverting the theme to generic families, dropping the `fontVariations` axis, breaking the enum fallback, renaming a widget the harness uses, or introducing a layout overflow at 320x568 all fail CI. Each assertion above was mutation-checked.
 
 ### 11. Dependency and toolchain refresh
 

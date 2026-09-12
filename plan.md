@@ -44,7 +44,7 @@ Treat the next phase as a product-experience revamp across setup, onboarding, an
 - [x] Confirm whether the current export/share implementation is intended to land now.
 - [x] If export/share is accepted, mark the export items complete in this file and in `roadmap.md`.
 - [x] Capture screenshots for onboarding, setup (installing and failure), history, and export — `make screenshots` renders these from the real widget tree into `docs/screenshots/` (see [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md)). The director screen is **not** covered: its camera layer needs a real plugin `CameraController`, so it requires an on-device capture.
-- [ ] Review the app on at least one compact phone viewport before changing layout density.
+- [x] Review the app on at least one compact phone viewport before changing layout density — `test/widgets/compact_viewport_test.dart` pumps onboarding (including the dense model-source page) and both setup states at 320x568 and fails on any `RenderFlex` overflow. All four lay out cleanly today; the assertion is mutation-checked, and onboarding survives even tighter viewports because it scrolls.
 
 Acceptance criteria:
 
