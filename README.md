@@ -9,9 +9,9 @@ captured headlessly at a 390x844 phone viewport. The screenplay formatting is
 the app's own Fountain parser classifying a streamed token sequence, and the
 take below is the one that run produced.
 
-| Onboarding | Teleprompter | Take library |
-|---|---|---|
-| ![Ghosteye onboarding intro screen](docs/screenshots/01-onboarding-intro.png) | ![Teleprompter rendering a parsed screenplay scene](docs/screenshots/03-teleprompter.png) | ![Take library listing a saved take](docs/screenshots/04-take-library.png) |
+| Onboarding | Teleprompter | Setup | Take library |
+|---|---|---|---|
+| ![Ghosteye onboarding intro screen](docs/screenshots/01-onboarding-intro.png) | ![Teleprompter rendering a parsed screenplay scene](docs/screenshots/03-teleprompter.png) | ![Setup screen downloading the on-device model](docs/screenshots/06-setup-progress.png) | ![Take library listing a saved take](docs/screenshots/04-take-library.png) |
 
 The live camera feed and real Gemma inference need physical hardware, so they
 are not pictured. See [docs/SCREENSHOTS.md](docs/SCREENSHOTS.md) for the full
