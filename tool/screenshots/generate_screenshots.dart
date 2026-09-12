@@ -23,10 +23,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ghosteye/config/theme.dart';
 import 'package:ghosteye/models/onboarding_status.dart';
+import 'package:ghosteye/models/model_source.dart';
+import 'package:ghosteye/providers/gemma_provider.dart';
 import 'package:ghosteye/providers/onboarding_provider.dart';
 import 'package:ghosteye/providers/script_provider.dart';
 import 'package:ghosteye/screens/onboarding_screen.dart';
+import 'package:ghosteye/screens/splash_screen.dart';
+import 'package:ghosteye/services/gemma_service.dart';
 import 'package:ghosteye/widgets/director_tips_sheet.dart';
+import 'package:ghosteye/widgets/model_center_sheet.dart';
+import 'package:ghosteye/widgets/script_export_sheet.dart';
 import 'package:ghosteye/widgets/script_history_sheet.dart';
 import 'package:ghosteye/widgets/script_scroll_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -121,6 +127,18 @@ Future<void> _rest(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 450));
   await tester.pump(const Duration(milliseconds: 450));
   await tester.pump();
+}
+
+/// Hosts a widget that expects real bottom-sheet constraints. The scrolling
+/// [_sheetHost] gives its child unbounded height, which the export sheet's
+/// inner layout cannot resolve.
+Widget _bottomSheetHost(Widget child) {
+  return Scaffold(
+    backgroundColor: AppTheme.background,
+    body: SafeArea(
+      child: Align(alignment: Alignment.bottomCenter, child: child),
+    ),
+  );
 }
 
 Future<void> _shoot(
@@ -271,6 +289,113 @@ void main() {
     );
   });
 
+  testWidgets('setup — installing', (tester) async {
+    await _shoot(
+      tester,
+      '06-setup-progress',
+      widget: _app(
+        const SplashScreen(),
+        overrides: <Override>[
+          gemmaProvider.overrideWith(
+            () => _FixedGemma(
+              const GemmaState(
+                phase: GemmaPhase.downloading,
+                progress: 62,
+                message: 'Downloading the on-device model',
+                source: _managedSource,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  });
+
+  testWidgets('setup — failure with diagnostics', (tester) async {
+    await _shoot(
+      tester,
+      '07-setup-failure',
+      widget: _app(
+        const SplashScreen(),
+        overrides: <Override>[
+          gemmaProvider.overrideWith(
+            () => _FixedGemma(
+              const GemmaState(
+                phase: GemmaPhase.error,
+                message: 'The model download could not be reached.',
+                source: _managedSource,
+                failureKind: GemmaStartupFailureKind.network,
+                diagnosticDetail:
+                    'SocketException: Failed host lookup: '
+                    "'cdn.example.com' (OS Error: No address associated "
+                    'with hostname, errno = 7)',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  });
+
+  testWidgets('model center', (tester) async {
+    await _shoot(
+      tester,
+      '08-model-center',
+      widget: _app(
+        _sheetHost(
+          ModelCenterSheet(
+            onResetCachedInstall: () {},
+            onImportLocalModel: () async {},
+            onUseConfiguredSource: () async {},
+          ),
+        ),
+        overrides: <Override>[
+          gemmaProvider.overrideWith(
+            () => _FixedGemma(
+              const GemmaState(
+                phase: GemmaPhase.ready,
+                source: _managedSource,
+                activeBackend: RuntimeBackend.gpu,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  });
+
+  testWidgets('export sheet', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final script = container.read(scriptProvider.notifier)..startResponse(1);
+    for (final token in _scene.split(' ')) {
+      script.appendToken(generationId: 1, token: '$token ');
+    }
+    script.finishResponse(1);
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+
+    await _shoot(
+      tester,
+      '09-export',
+      widget: UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.darkTheme,
+          home: _bottomSheetHost(
+            ScriptExportSheet(
+              title: 'Rain-streaked apartment',
+              entries: container.read(scriptProvider).entries,
+              capturedAt: DateTime(2026, 9, 12, 21, 14),
+              notes: 'Hold the two-shot a beat longer before the cut.',
+            ),
+          ),
+        ),
+      ),
+    );
+  });
+
   testWidgets('director tips', (tester) async {
     await _shoot(
       tester,
@@ -286,6 +411,44 @@ void main() {
     );
   });
 }
+
+/// Drives the setup screen into a fixed phase. `ensureReady` is overridden so
+/// the screen does not try to touch a real model on first frame.
+class _FixedGemma extends GemmaNotifier {
+  _FixedGemma(this.initialState);
+
+  final GemmaState initialState;
+
+  @override
+  Future<GemmaState> build() async => initialState;
+
+  @override
+  Future<void> ensureReady() async {
+    state = AsyncData(initialState);
+  }
+
+  @override
+  Future<void> importLocalModel() async {}
+
+  @override
+  Future<void> useManagedDownload() async {}
+
+  @override
+  Future<void> resetCachedInstall() async {}
+
+  @override
+  Future<void> resetConversation() async {}
+
+  @override
+  Future<void> cancelGeneration() async {}
+}
+
+const _managedSource = ModelSourceConfig(
+  kind: ModelSourceKind.network,
+  origin: ModelSourceOrigin.envUrl,
+  location: 'https://cdn.example.com/models/gemma-4-E2B-it.litertlm',
+  label: 'Managed download',
+);
 
 class _FreshOnboarding extends OnboardingController {
   @override

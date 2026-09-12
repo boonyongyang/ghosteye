@@ -24,6 +24,11 @@ hand-built fixtures:
 - **The take library** card was not constructed by hand either. It is the take
   that the teleprompter run above produced, after it synced through
   `ScriptHistoryService` — which is why it reports its own line count.
+- **The export sheet** lists the entries from that same parsed take.
+
+The setup and Model Center shots drive the real screens through fixed
+`GemmaState` phases, so the copy, the failure classification and the source
+details are the app's own — no model is installed to produce them.
 
 What these images **cannot** show is the two things that need physical
 hardware:
@@ -53,6 +58,25 @@ The live screenplay surface. Everything below the slugline was classified by
 the app's Fountain parser from a raw token stream.
 
 ![Teleprompter showing a parsed screenplay scene](screenshots/03-teleprompter.png)
+
+## Setup
+
+The first-run model setup workspace, in progress and in failure. The failure
+view carries a per-kind support hint and a copyable technical block behind
+"Show details", so support and QA can diagnose without native logs.
+
+| Installing | Failure with diagnostics |
+|---|---|
+| ![Setup screen downloading the on-device model](screenshots/06-setup-progress.png) | ![Setup failure screen showing a network error](screenshots/07-setup-failure.png) |
+
+## Model Center and export
+
+Active source, backend and storage controls; and the export sheet that hands a
+take off as Fountain or plain text.
+
+| Model Center | Export |
+|---|---|
+| ![Model Center sheet showing the active source and backend](screenshots/08-model-center.png) | ![Export sheet offering Fountain and plain text](screenshots/09-export.png) |
 
 ## Take library and director tips
 
