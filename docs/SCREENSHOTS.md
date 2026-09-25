@@ -35,7 +35,7 @@ hardware:
 
 - **The live camera feed.** `DirectorCameraPreview` needs a real plugin
   `CameraController`, so the Director screen's camera layer is not captured.
-- **Real Gemma 3n inference.** The screenplay text above is a fixed sample fed
+- **Real Gemma 4 E2B inference.** The screenplay text above is a fixed sample fed
   through the parser, *not* model output. On-device inference needs an ARM
   device and a real model file.
 
