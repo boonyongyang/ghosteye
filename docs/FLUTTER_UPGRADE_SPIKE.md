@@ -5,7 +5,8 @@
 > is kept as the record of how the upgrade cost was measured — the atomicity
 > finding and the onboarding route-entry diagnosis both still hold. The
 > `flutter-upgrade-spike` branch is no longer a live plan and should not be
-> merged.
+> merged. Its six commits exist only there (tip `08c2b30`); everything worth
+> keeping is in this document, so the branch is safe to prune.
 
 Exploratory spike to answer: **can Ghosteye move off the pinned Flutter 3.24.4
 (Oct 2024) to current stable, and what does it cost?** This also unblocks the

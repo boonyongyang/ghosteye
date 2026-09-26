@@ -5,7 +5,7 @@ This file is the repo's working implementation checklist. Completed work stays c
 ## Overall status
 
 - Mainline branch status: `Gemma 4 E2B setup workspace, setup-handoff onboarding, director command dock, public-doc cleanup, branding polish, take library with mode badges, favorites, frame thumbnails, and shot notes, copyable setup diagnostics, Model Center source/storage controls, persisted performance and teleprompter settings, and runtime recovery hardening implemented`
-- Verification status: `make verify passing on 2026-08-01 after release-hardening changes`
+- Verification status: `make verify passing on 2026-09-25 on Flutter 3.38.9 — flutter analyze clean, 320/320 tests`
 - Deployment readiness: `needs local release credentials, hardware validation, production model hosting, support/privacy URLs, and store prep`
 - Gemma 4 status: `E2B runtime is mainline; E4B remains a higher-memory follow-up after physical-device validation`
 - Next product phase: `release readiness and physical-device validation before broader release polish`

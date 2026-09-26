@@ -4,13 +4,13 @@ This checklist is the release gate for making Ghosteye public on GitHub or prepa
 
 ## Current Gate
 
-- Repo verification: `make verify` passing on 2026-08-01 after release-hardening changes.
-- Markdown audit: `make docs-audit` passing on 2026-08-01.
-- Diff hygiene: `git diff --check` passing on 2026-08-01.
+- Repo verification: `make verify` passing on 2026-09-25 on Flutter 3.38.9 — `flutter analyze` clean, 320/320 tests.
+- Markdown audit: `make docs-audit` passing on 2026-09-25.
+- Diff hygiene: `git diff --check` passing on 2026-09-25.
 - TODO audit: `make todo` has no current TODO/FIXME markers.
 - Device discovery: `make devices` passing on 2026-08-01; only iOS simulator, macOS, and Chrome targets were visible, with no physical Android/iPhone target available for signoff.
 - Native runtime assets: `flutter_gemma 0.16.5` Android LiteRT-LM/qdrant-edge archives checksum-verified and packaged in the debug APK on 2026-08-01.
-- GitHub CI: `.github/workflows/verify.yml` runs docs audit, whitespace checks, and `make verify` on pushes and pull requests.
+- GitHub CI: `.github/workflows/verify.yml` runs docs audit, whitespace checks, `make verify`, and `make screenshots-check` on pushes to `main` and on pull requests.
 - Device testing: `docs/DEVICE_TEST_PLAN.md` documents the required physical Android/iPhone validation pass.
 - GitHub repo: `boonyongyang/ghosteye`, public.
 
