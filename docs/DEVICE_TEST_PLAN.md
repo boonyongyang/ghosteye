@@ -162,7 +162,11 @@ Pass criteria:
 
 - Each failure produces a distinct action path.
 - Reset, retry, local import, and managed-source recovery remain reachable.
-- No private URL/token value is shown in normal user-facing text.
+- No private URL/token value is shown in normal user-facing text. The managed
+  URL and token are stripped from `GemmaState.diagnosticDetail` by
+  `redactModelSourceSecrets`, which host tests enforce — but still check the
+  "Show details" block and the clipboard copy on device, since only hardware
+  produces the real plugin error strings.
 
 ## Evidence To Record
 

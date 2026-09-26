@@ -171,6 +171,17 @@ Why it matters:
 Acceptance criteria:
 - Reverting the theme to generic families, dropping the `fontVariations` axis, breaking the enum fallback, renaming a widget the harness uses, or introducing a layout overflow at 320x568 all fail CI. Each assertion above was mutation-checked.
 
+### 12.6 Diagnostic secret redaction — done
+
+- [x] Strip the managed-download URL and token out of `GemmaState.diagnosticDetail` before it reaches the setup-failure details block
+
+Why it matters:
+- `docs/DEVICE_TEST_PLAN.md` already listed "no private URL/token value is shown in normal user-facing text" as a pass criterion, but nothing enforced it and the code did not honour it. `diagnosticDetail` was the raw `error.toString()`, and the setup-failure screen both renders it and offers it as a **clipboard copy** — the copy support asks for, which then lands in issue reports. `flutter_gemma` builds its own error strings from the request it was handed, so a failed download can echo the signed URL or the bearer token straight back.
+- Redaction happens in `redactModelSourceSecrets` (`lib/services/gemma_service.dart`), applied at the single point where a raw error becomes user-visible, rather than at each widget. The URL is stripped before the token so a token carried in a query string leaves no partially-redacted remnant. Local file paths are deliberately preserved: they are not secrets and they are the most useful part of an import failure.
+
+Acceptance criteria:
+- A managed-download failure whose error text contains the URL or the token produces a `diagnosticDetail` containing neither, while the underlying failure text still survives for support. Mutation-checked twice: neutering the redaction fails 4 tests, and swapping the URL/token order fails the query-string case.
+
 ### 11. Dependency and toolchain refresh
 
 - [x] Triage the outdated packages (`flutter pub outdated`)

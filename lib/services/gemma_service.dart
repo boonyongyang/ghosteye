@@ -116,6 +116,46 @@ bool shouldRecycleConversation({
       historyCharacters >= maxHistoryCharacters;
 }
 
+/// Substituted for a managed-download URL in support-facing text.
+const redactedUrlPlaceholder = '<redacted managed URL>';
+
+/// Substituted for a managed-download token in support-facing text.
+const redactedTokenPlaceholder = '<redacted token>';
+
+/// Removes managed-download secrets from support-facing diagnostic text.
+///
+/// `flutter_gemma` composes its own error strings from the request it was
+/// handed, so a failed download can echo the signed URL or the bearer token
+/// straight back to us. That text reaches `GemmaState.diagnosticDetail`, which
+/// the setup-failure screen renders and offers as a clipboard copy — the exact
+/// payload that ends up pasted into a bug report. Scrub it here, at the one
+/// place the raw error is turned into something user-visible, rather than at
+/// each point of display.
+///
+/// Local file paths are deliberately left intact: they are not secrets, and
+/// they are the most useful part of an import failure. Any non-empty token is
+/// redacted regardless of length — a pathologically short token will mangle
+/// unrelated text, which is strictly better than leaking it.
+String redactModelSourceSecrets(String detail, ModelSourceConfig? source) {
+  if (source == null || detail.isEmpty) {
+    return detail;
+  }
+
+  var redacted = detail;
+
+  // The URL goes first: if the token is carried as a query parameter, removing
+  // the whole URL takes the token with it and leaves no partial match behind.
+  if (source.isNetwork && source.location.isNotEmpty) {
+    redacted = redacted.replaceAll(source.location, redactedUrlPlaceholder);
+  }
+
+  if (source.token case final token? when token.isNotEmpty) {
+    redacted = redacted.replaceAll(token, redactedTokenPlaceholder);
+  }
+
+  return redacted;
+}
+
 GemmaStartupFailure classifyGemmaStartupFailure(
   Object error, {
   ModelSourceConfig? source,
