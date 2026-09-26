@@ -381,4 +381,86 @@ void main() {
       );
     },
   );
+
+  group('redactModelSourceSecrets', () {
+    const url = 'https://models.example.test/gemma-4-E2B-it.litertlm';
+    const token = 'hf_exampleTokenValue0123456789';
+
+    const managed = ModelSourceConfig(
+      kind: ModelSourceKind.network,
+      origin: ModelSourceOrigin.envUrl,
+      location: url,
+      label: 'Managed download',
+      token: token,
+    );
+
+    test('strips the bearer token out of diagnostic text', () {
+      const raw = 'DownloadException: 401 with Authorization: Bearer $token';
+
+      final redacted = redactModelSourceSecrets(raw, managed);
+
+      expect(redacted, isNot(contains(token)));
+      expect(redacted, contains(redactedTokenPlaceholder));
+      // The rest of the message has to survive or support loses the diagnosis.
+      expect(redacted, contains('401'));
+    });
+
+    test('strips the managed URL out of diagnostic text', () {
+      const raw = 'SocketException: failed host lookup for $url';
+
+      final redacted = redactModelSourceSecrets(raw, managed);
+
+      expect(redacted, isNot(contains(url)));
+      expect(redacted, contains(redactedUrlPlaceholder));
+      expect(redacted, contains('failed host lookup'));
+    });
+
+    test('strips a token carried inside the URL query string', () {
+      // The URL is redacted before the token so a token embedded in the query
+      // leaves no partially-redacted remnant behind.
+      const signed = '$url?access_token=$token';
+      const source = ModelSourceConfig(
+        kind: ModelSourceKind.network,
+        origin: ModelSourceOrigin.envUrl,
+        location: signed,
+        label: 'Managed download',
+        token: token,
+      );
+
+      final redacted = redactModelSourceSecrets(
+        'Install failed for $signed',
+        source,
+      );
+
+      expect(redacted, isNot(contains(token)));
+      expect(redacted, isNot(contains(url)));
+      expect(redacted, 'Install failed for $redactedUrlPlaceholder');
+    });
+
+    test('leaves a local file path intact', () {
+      const source = ModelSourceConfig(
+        kind: ModelSourceKind.file,
+        origin: ModelSourceOrigin.importedFile,
+        location: '/data/user/0/app/files/model.litertlm',
+        label: 'Imported local model',
+      );
+      const raw = 'FileSystemException: /data/user/0/app/files/model.litertlm';
+
+      // Paths are not secrets and are the most useful part of an import
+      // failure, so they are deliberately preserved.
+      expect(redactModelSourceSecrets(raw, source), raw);
+    });
+
+    test('returns the text unchanged when there is no source', () {
+      const raw = 'PlatformException: model init failed';
+
+      expect(redactModelSourceSecrets(raw, null), raw);
+    });
+
+    test('leaves text that holds no secrets untouched', () {
+      const raw = 'PlatformException: GPU delegate unavailable';
+
+      expect(redactModelSourceSecrets(raw, managed), raw);
+    });
+  });
 }

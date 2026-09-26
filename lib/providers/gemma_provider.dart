@@ -125,25 +125,31 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
       );
     } catch (error) {
       final failure = classifyGemmaStartupFailure(error, source: source);
+      final failedSource = source ?? service.currentSource;
       state = AsyncData(
         GemmaState(
           phase: GemmaPhase.error,
           message: failure.message,
-          source: source ?? service.currentSource,
+          source: failedSource,
           failureKind: failure.kind,
           activeBackend: service.currentSnapshot?.backend,
           usedFallback: service.currentSnapshot?.usedFallback ?? false,
-          diagnosticDetail: _diagnosticDetailFor(failure, error),
+          diagnosticDetail: _diagnosticDetailFor(failure, error, failedSource),
         ),
       );
     }
   }
 
+  /// Builds the support-facing detail string, with managed-download secrets
+  /// stripped — this value is rendered and offered as a clipboard copy, so the
+  /// raw error must never reach it unscrubbed.
   static String? _diagnosticDetailFor(
     GemmaStartupFailure failure,
     Object error,
+    ModelSourceConfig? source,
   ) {
-    final detail = (failure.originalError ?? error).toString().trim();
+    final raw = (failure.originalError ?? error).toString().trim();
+    final detail = redactModelSourceSecrets(raw, source);
     return detail.isEmpty ? null : detail;
   }
 
@@ -173,7 +179,14 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
-          diagnosticDetail: _diagnosticDetailFor(failure, error),
+          // Scrub against the configured source, not the placeholder file
+          // source above: a token set for managed download can still surface in
+          // an import-path error.
+          diagnosticDetail: _diagnosticDetailFor(
+            failure,
+            error,
+            ref.read(gemmaServiceProvider).currentSource,
+          ),
           clearActiveBackend: true,
         ),
       );
@@ -187,18 +200,19 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
       await ensureReady();
     } catch (error) {
       final failure = classifyGemmaStartupFailure(error);
+      final currentSource = ref.read(gemmaServiceProvider).currentSource;
       state = AsyncData(
         GemmaState(
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
-          source: ref.read(gemmaServiceProvider).currentSource,
+          source: currentSource,
           activeBackend:
               ref.read(gemmaServiceProvider).currentSnapshot?.backend,
           usedFallback:
               ref.read(gemmaServiceProvider).currentSnapshot?.usedFallback ??
               false,
-          diagnosticDetail: _diagnosticDetailFor(failure, error),
+          diagnosticDetail: _diagnosticDetailFor(failure, error, currentSource),
         ),
       );
     }
@@ -221,16 +235,17 @@ class GemmaNotifier extends AsyncNotifier<GemmaState> {
         ),
       );
     } catch (error) {
+      final currentSource = ref.read(gemmaServiceProvider).currentSource;
       final failure = classifyGemmaStartupFailure(
         error,
-        source: ref.read(gemmaServiceProvider).currentSource,
+        source: currentSource,
       );
       state = AsyncData(
         previousState.copyWith(
           phase: GemmaPhase.error,
           message: failure.message,
           failureKind: failure.kind,
-          diagnosticDetail: _diagnosticDetailFor(failure, error),
+          diagnosticDetail: _diagnosticDetailFor(failure, error, currentSource),
           clearActiveBackend: true,
         ),
       );

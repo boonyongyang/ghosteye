@@ -52,6 +52,7 @@ class _FakeInferenceModel extends InferenceModel {
 Future<ModelSourceService> _createSourceService({
   required PickModelFileFn pickModelFile,
   String? configuredModelUrl,
+  String? configuredToken,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final preferences = await SharedPreferences.getInstance();
@@ -61,6 +62,7 @@ Future<ModelSourceService> _createSourceService({
     loadDocumentsDirectory: () async => Directory.systemTemp,
     pickModelFile: pickModelFile,
     configuredModelUrl: configuredModelUrl,
+    configuredToken: configuredToken,
   );
 }
 
@@ -126,5 +128,49 @@ void main() {
     expect(state!.phase, GemmaPhase.error);
     expect(state.failureKind, GemmaStartupFailureKind.modelSource);
     expect(state.message, contains('managed model download URL'));
+  });
+
+  test('a managed-download failure never leaks the URL or token into the '
+      'copyable diagnostic detail', () async {
+    const url = 'https://models.example.test/gemma-4-E2B-it.litertlm';
+    const token = 'hf_exampleTokenValue0123456789';
+
+    final sourceService = await _createSourceService(
+      pickModelFile: () async => null,
+      configuredModelUrl: url,
+      configuredToken: token,
+    );
+    final gemmaService = GemmaService(
+      modelSourceService: sourceService,
+      isModelInstalled: (_) async => false,
+      installModel: ({required source, onProgress}) async {},
+      // Stand in for a plugin error that echoes the request back at us.
+      createModel:
+          (_) async =>
+              throw Exception('init failed for $url (Bearer $token)'),
+    );
+    final container = ProviderContainer(
+      overrides: <Override>[
+        gemmaServiceProvider.overrideWithValue(gemmaService),
+      ],
+    );
+    addTearDown(container.dispose);
+    addTearDown(gemmaService.dispose);
+
+    await container.read(gemmaProvider.future);
+    await container.read(gemmaProvider.notifier).ensureReady();
+
+    final state = container.read(gemmaProvider).valueOrNull;
+    expect(state, isNotNull);
+    expect(state!.phase, GemmaPhase.error);
+
+    final detail = state.diagnosticDetail;
+    expect(detail, isNotNull);
+    expect(detail, isNot(contains(token)));
+    expect(detail, isNot(contains(url)));
+    expect(detail, contains(redactedTokenPlaceholder));
+    expect(detail, contains(redactedUrlPlaceholder));
+    // Still useful to support: the underlying failure text survives.
+    expect(detail, contains('init failed'));
   });
 }
